@@ -1,0 +1,33 @@
+name: PwX Engine Windows CI
+
+on:
+  push:
+    paths:
+      - 'pwxengine/**'
+      - '.github/workflows/pwxengine-windows.yml'
+  pull_request:
+    paths:
+      - 'pwxengine/**'
+      - '.github/workflows/pwxengine-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install .NET SDK 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Verify build environment
+        shell: pwsh
+        run: ./pwxengine/scripts/Check-Environment.ps1
+      - name: Run PS51 and PS7 smoke tests (including PS7 single-file publish)
+        shell: pwsh
+        run: ./pwxengine/tests/Run-Smoke.ps1 -Target All -SingleFile
