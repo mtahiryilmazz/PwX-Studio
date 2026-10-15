@@ -41,17 +41,17 @@ foreach ($t in $targets) {
     Add-Row $t 'T-005' 'Türkçe karakterler' ($o -match 'ğüşıöçĞÜŞİÖÇ')
 }
 
-# PS7 GUI host must compile against the Windows Desktop framework and forward native arguments.
+# PS7 GUI host must compile and propagate the script's exit N value to the process.
 if ($targets -contains 'PS7') {
     $guiOut = Join-Path $root 'artifacts\test-results\PS7-GUI\hello-gui.exe'
     $guiRes = & $build -Source $sample -Output $guiOut -Target PS7 -Mode Gui -Force
     if ($guiRes.Success -and (Test-Path -LiteralPath $guiRes.OutputPath)) {
-        & $guiRes.OutputPath
+        & $guiRes.OutputPath -Code 17
         $guiExit = $LASTEXITCODE
-        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host başlar ve varsayılan çıkış koduyla kapanır' ($guiExit -eq 0) "alınan: $guiExit"
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir' ($guiExit -eq 17) "beklenen: 17; alınan: $guiExit"
     }
     else {
-        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host başlar ve varsayılan çıkış koduyla kapanır' $false 'GUI derlemesi başarısız'
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir' $false 'GUI derlemesi başarısız'
     }
 }
 
