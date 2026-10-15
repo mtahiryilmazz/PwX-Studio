@@ -104,8 +104,20 @@ namespace PwX.BuildHost
                     // This follows Microsoft's hosting sample: a top-level "exit N"
                     // reaches PSHost.SetShouldExit, while AddArgument binds script params.
                     ps.AddScript(File.ReadAllText(scriptPath));
-                    foreach (string arg in args)
-                        ps.AddArgument(arg);
+                    // pwsh -File gibi: "-Ad deger" adlandirilmis parametre, digerleri konumsal.
+                    // (Hepsini AddArgument ile gecmek "-Message abc -Code 5" gibi cagrilari bozar.)
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        string a = args[i];
+                        if (a.Length > 1 && a[0] == '-' && char.IsLetter(a[1]))
+                        {
+                            string name = a.Substring(1);
+                            bool nextIsParam = i + 1 < args.Length && args[i + 1].Length > 1 && args[i + 1][0] == '-' && char.IsLetter(args[i + 1][1]);
+                            if (i + 1 < args.Length && !nextIsParam) ps.AddParameter(name, args[++i]);
+                            else ps.AddParameter(name);
+                        }
+                        else ps.AddArgument(a);
+                    }
 
                     try { ps.Invoke(); }
                     catch (RuntimeException ex)
