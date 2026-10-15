@@ -97,21 +97,11 @@ namespace PwX.BuildHost
                 using (PowerShell ps = PowerShell.Create())
                 {
                     ps.Runspace = rs;
-                    ps.AddCommand(scriptPath);
-
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        string a = args[i];
-                        if (a.Length > 1 && a[0] == '-' && char.IsLetter(a[1]))
-                        {
-                            string name = a.Substring(1);
-                            if (i + 1 < args.Length && !(args[i + 1].Length > 1 && args[i + 1][0] == '-' && char.IsLetter(args[i + 1][1])))
-                                ps.AddParameter(name, args[++i]);
-                            else
-                                ps.AddParameter(name);
-                        }
-                        else ps.AddArgument(a);
-                    }
+                    // Let PowerShell bind the original argument vector. Hand-parsing switches here
+                    // breaks native forms such as -Name:value, negative values, and positional args.
+                    ps.AddScript("param($scriptPath, $forwardArgs) & $scriptPath @forwardArgs")
+                      .AddArgument(scriptPath)
+                      .AddArgument(args);
 
                     try
                     {
