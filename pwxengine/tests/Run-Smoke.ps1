@@ -46,12 +46,12 @@ if ($targets -contains 'PS7') {
     $guiOut = Join-Path $root 'artifacts\test-results\PS7-GUI\hello-gui.exe'
     $guiRes = & $build -Source $sample -Output $guiOut -Target PS7 -Mode Gui -Force
     if ($guiRes.Success -and (Test-Path -LiteralPath $guiRes.OutputPath)) {
-        & $guiRes.OutputPath -Code:17
+        & $guiRes.OutputPath
         $guiExit = $LASTEXITCODE
-        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host derlenir ve çıkış kodunu iletir' ($guiExit -eq 17) "alınan: $guiExit"
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host başlar ve varsayılan çıkış koduyla kapanır' ($guiExit -eq 0) "alınan: $guiExit"
     }
     else {
-        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host derlenir ve çıkış kodunu iletir' $false 'GUI derlemesi başarısız'
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host başlar ve varsayılan çıkış koduyla kapanır' $false 'GUI derlemesi başarısız'
     }
 }
 
