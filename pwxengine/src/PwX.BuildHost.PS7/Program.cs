@@ -100,12 +100,12 @@ namespace PwX.BuildHost
                 using (PowerShell ps = PowerShell.Create())
                 {
                     ps.Runspace = rs;
-                    // Invoke the payload as the top-level script command. Wrapping it in
-                    // "& $scriptPath @args" creates a child script scope and can swallow
-                    // the payload's "exit N" before PSHost.SetShouldExit receives it.
-                    ps.AddCommand(scriptPath);
-                    foreach (string arg in args)
-                        ps.AddArgument(arg);
+                    // Dot-source the payload in the runspace's current scope. The call
+                    // operator (&) runs it as a child script scope, where "exit N" can
+                    // terminate only the payload instead of notifying PSHost.SetShouldExit.
+                    ps.AddScript("param($scriptPath, $forwardArgs) . $scriptPath @forwardArgs")
+                      .AddArgument(scriptPath)
+                      .AddArgument(args);
 
                     try { ps.Invoke(); }
                     catch (RuntimeException ex)
