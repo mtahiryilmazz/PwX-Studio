@@ -100,12 +100,12 @@ namespace PwX.BuildHost
                 using (PowerShell ps = PowerShell.Create())
                 {
                     ps.Runspace = rs;
-                    // Dot-source the payload in the runspace's current scope. The call
-                    // operator (&) runs it as a child script scope, where "exit N" can
-                    // terminate only the payload instead of notifying PSHost.SetShouldExit.
-                    ps.AddScript("param($scriptPath, $forwardArgs) . $scriptPath @forwardArgs")
-                      .AddArgument(scriptPath)
-                      .AddArgument(args);
+                    // Run the payload text as the pipeline's top-level script.
+                    // This follows Microsoft's hosting sample: a top-level "exit N"
+                    // reaches PSHost.SetShouldExit, while AddArgument binds script params.
+                    ps.AddScript(File.ReadAllText(scriptPath));
+                    foreach (string arg in args)
+                        ps.AddArgument(arg);
 
                     try { ps.Invoke(); }
                     catch (RuntimeException ex)
