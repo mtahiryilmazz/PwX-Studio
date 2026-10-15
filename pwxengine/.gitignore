@@ -1,0 +1,7 @@
+artifacts/logs/*
+artifacts/test-results/*
+!artifacts/logs/.gitkeep
+!artifacts/test-results/.gitkeep
+bin/
+obj/
+*.exe
