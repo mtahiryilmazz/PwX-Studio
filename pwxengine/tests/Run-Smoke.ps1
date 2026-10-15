@@ -41,6 +41,20 @@ foreach ($t in $targets) {
     Add-Row $t 'T-005' 'Türkçe karakterler' ($o -match 'ğüşıöçĞÜŞİÖÇ')
 }
 
+# PS7 GUI host must compile against the Windows Desktop framework and forward native arguments.
+if ($targets -contains 'PS7') {
+    $guiOut = Join-Path $root 'artifacts\test-results\PS7-GUI\hello-gui.exe'
+    $guiRes = & $build -Source $sample -Output $guiOut -Target PS7 -Mode Gui -Force
+    if ($guiRes.Success -and (Test-Path -LiteralPath $guiRes.OutputPath)) {
+        & $guiRes.OutputPath -Code 17
+        $guiExit = $LASTEXITCODE
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host derlenir ve çıkış kodunu iletir' ($guiExit -eq 17) "alınan: $guiExit"
+    }
+    else {
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host derlenir ve çıkış kodunu iletir' $false 'GUI derlemesi başarısız'
+    }
+}
+
 # T-009: sözdizimi hatası -> derleme başarısız, EXE oluşmamalı
 $bad = Join-Path ([IO.Path]::GetTempPath()) ('pwx-bad-' + [guid]::NewGuid().ToString('N') + '.ps1')
 [IO.File]::WriteAllText($bad, "Write-Output 'x'`r`nif ($true {", (New-Object Text.UTF8Encoding($true)))
