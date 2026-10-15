@@ -1,6 +1,6 @@
 ﻿#Requires -Version 5.1
 <#
-    PwX Studio v1.4.2 - PowerShell Executable Builder
+    PwX Studio v1.4.3 - PowerShell Executable Builder
     - ps2exe 1.0.18 modülünü otomatik kontrol eder ve gerekirse CurrentUser kapsamına kurar
     - Logo: dosyadan veya çok kaynaklı web aramasıyla (Iconify, Font Awesome, Google Material, Icons8) indir; derlemede ICO'ya dönüştür
     - Türkçe karakter uyumlu (dosya UTF-8 BOM'lu kaydedilmiştir; exe konsolu UTF-8 çıktı verir)
@@ -224,7 +224,7 @@ function Search-Icons([string]$query, [int]$sourceIndex, [string]$icons8ApiKey =
                 try {
                     $wc = New-Object System.Net.WebClient
                     $wc.Encoding = [System.Text.Encoding]::UTF8
-                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.4.1'
+                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.4.3'
                     $json = $wc.DownloadString($apiHost + '/search' + $queryPart) | ConvertFrom-Json
                     if ($json -and $null -ne $json.icons) { break }
                 } catch { $lastError = $_.Exception.Message }
@@ -245,7 +245,7 @@ function Search-Icons([string]$query, [int]$sourceIndex, [string]$icons8ApiKey =
         $i8url = 'https://search.icons8.com/api/iconsets/v5/search?term=' + [uri]::EscapeDataString($q) + '&amount=40&offset=0&language=en&authors=icons8&isFree=true&spellcheck=true&suggest=true'
         $wc8 = New-Object System.Net.WebClient
         $wc8.Encoding = [System.Text.Encoding]::UTF8
-        $wc8.Headers['User-Agent'] = 'PwX-Studio/1.4.1'
+        $wc8.Headers['User-Agent'] = 'PwX-Studio/1.4.3'
         if ($icons8ApiKey) { $wc8.Headers['Api-Key'] = $icons8ApiKey }
         try {
             $j8 = $wc8.DownloadString($i8url) | ConvertFrom-Json
@@ -343,7 +343,7 @@ function Get-ColorHex([System.Drawing.Color]$c) {
 #  Ana pencere
 # ------------------------------------------------------------------
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'PwX Studio v1.4.2'
+$form.Text = 'PwX Studio v1.4.3'
 $form.Size = New-Object System.Drawing.Size(870, 825)
 $form.StartPosition = 'CenterScreen'
 $form.FormBorderStyle = 'FixedSingle'
@@ -579,108 +579,56 @@ $txtVer.Text = '1.0.0.0'
 [void](Add-Label 'Şirket / Yayıncı:' 15 275)
 $txtCompany = Add-Text 15 295 370
 
-# Seçenekler
+# Seçenekler — sabit iki sütunlu hizalı düzen
 $grp = New-Object System.Windows.Forms.GroupBox
 $grp.Text = 'Seçenekler'
 $grp.Location = New-Object System.Drawing.Point(15, 335)
-$grp.Size = New-Object System.Drawing.Size(650, 210)
+$grp.Size = New-Object System.Drawing.Size(650, 246)
 $form.Controls.Add($grp)
 
+# Ana uygulama türü: tam satır, aynı başlangıç ve genişlik
 $rbConsole = New-Object System.Windows.Forms.RadioButton
 $rbConsole.Text = 'Konsol uygulaması (Write-Host / Read-Host kullanan scriptler)'
 $rbConsole.Location = New-Object System.Drawing.Point(15, 22)
-$rbConsole.AutoSize = $true
+$rbConsole.Size = New-Object System.Drawing.Size(610, 22)
+$rbConsole.AutoSize = $false
 $rbConsole.Checked = $true
 $grp.Controls.Add($rbConsole)
 
 $rbWin = New-Object System.Windows.Forms.RadioButton
 $rbWin.Text = 'Pencereli uygulama (konsol gizli - WinForms / WPF / sessiz scriptler)'
 $rbWin.Location = New-Object System.Drawing.Point(15, 46)
-$rbWin.AutoSize = $true
+$rbWin.Size = New-Object System.Drawing.Size(610, 22)
+$rbWin.AutoSize = $false
 $grp.Controls.Add($rbWin)
 
-$chkAdmin = New-Object System.Windows.Forms.CheckBox
-$chkAdmin.Text = 'Yönetici olarak çalıştır (UAC isteği)'
-$chkAdmin.Location = New-Object System.Drawing.Point(15, 72)
-$chkAdmin.AutoSize = $true
-$grp.Controls.Add($chkAdmin)
+# Seçenekler iki sütuna ayrıldı. Kontroller aynı genişlik ve satır aralığını kullanır.
+function Add-OptionCheckBox([string]$text, [int]$x, [int]$y, [string]$variableName, [bool]$checked = $false, [bool]$enabled = $true) {
+    $control = New-Object System.Windows.Forms.CheckBox
+    $control.Text = $text
+    $control.Location = New-Object System.Drawing.Point($x, $y)
+    $control.Size = New-Object System.Drawing.Size(300, 22)
+    $control.AutoSize = $false
+    $control.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+    $control.Checked = $checked
+    $control.Enabled = $enabled
+    $grp.Controls.Add($control)
+    Set-Variable -Name $variableName -Value $control -Scope 1
+}
 
-$chkRoot = New-Object System.Windows.Forms.CheckBox
-$chkRoot.Text = 'ps2exe 1.0.18: $ScriptRoot / $PSScriptRoot desteği'
-$chkRoot.Location = New-Object System.Drawing.Point(320, 72)
-$chkRoot.AutoSize = $true
-$chkRoot.Checked = $true
-$chkRoot.Enabled = $false
-$grp.Controls.Add($chkRoot)
-
-$chkUtf8 = New-Object System.Windows.Forms.CheckBox
-$chkUtf8.Text = 'Konsol çıktısı UTF-8 (Türkçe karakterler için önerilir)'
-$chkUtf8.Location = New-Object System.Drawing.Point(15, 98)
-$chkUtf8.AutoSize = $true
-$chkUtf8.Checked = $true
-$grp.Controls.Add($chkUtf8)
-
-# Gelişmiş ps2exe seçenekleri
-$chkX86 = New-Object System.Windows.Forms.CheckBox
-$chkX86.Text = '32-bit (x86)'
-$chkX86.Location = New-Object System.Drawing.Point(15, 124)
-$chkX86.AutoSize = $true
-$grp.Controls.Add($chkX86)
-
-$chkX64 = New-Object System.Windows.Forms.CheckBox
-$chkX64.Text = '64-bit (x64)'
-$chkX64.Location = New-Object System.Drawing.Point(125, 124)
-$chkX64.AutoSize = $true
-$chkX64.Checked = $true
-$grp.Controls.Add($chkX64)
-
-$chkUnicode = New-Object System.Windows.Forms.CheckBox
-$chkUnicode.Text = 'Unicode konsol'
-$chkUnicode.Location = New-Object System.Drawing.Point(235, 124)
-$chkUnicode.AutoSize = $true
-$grp.Controls.Add($chkUnicode)
-
-$chkConfig = New-Object System.Windows.Forms.CheckBox
-$chkConfig.Text = 'EXE.config oluştur (DPI/uyumluluk)'
-$chkConfig.Location = New-Object System.Drawing.Point(365, 124)
-$chkConfig.AutoSize = $true
-$grp.Controls.Add($chkConfig)
-
-$chkDpi = New-Object System.Windows.Forms.CheckBox
-$chkDpi.Text = 'DPIAware'
-$chkDpi.Location = New-Object System.Drawing.Point(15, 151)
-$chkDpi.AutoSize = $true
-$grp.Controls.Add($chkDpi)
-
-$chkWinFormsDpi = New-Object System.Windows.Forms.CheckBox
-$chkWinFormsDpi.Text = 'WinForms DPI (config zorunlu)'
-$chkWinFormsDpi.Location = New-Object System.Drawing.Point(125, 151)
-$chkWinFormsDpi.AutoSize = $true
-$grp.Controls.Add($chkWinFormsDpi)
-
-$chkSupportOS = New-Object System.Windows.Forms.CheckBox
-$chkSupportOS.Text = 'Yeni Windows sürüm bilgisi'
-$chkSupportOS.Location = New-Object System.Drawing.Point(355, 151)
-$chkSupportOS.AutoSize = $true
-$grp.Controls.Add($chkSupportOS)
-
-$chkLongPaths = New-Object System.Windows.Forms.CheckBox
-$chkLongPaths.Text = 'Uzun dosya yolları'
-$chkLongPaths.Location = New-Object System.Drawing.Point(15, 174)
-$chkLongPaths.AutoSize = $true
-$grp.Controls.Add($chkLongPaths)
-
-$chkPrepareDebug = New-Object System.Windows.Forms.CheckBox
-$chkPrepareDebug.Text = 'Hata ayıklama hazırlığı'
-$chkPrepareDebug.Location = New-Object System.Drawing.Point(185, 174)
-$chkPrepareDebug.AutoSize = $true
-$grp.Controls.Add($chkPrepareDebug)
-
-$chkNoOutput = New-Object System.Windows.Forms.CheckBox
-$chkNoOutput.Text = 'Standart çıktıyı bastır'
-$chkNoOutput.Location = New-Object System.Drawing.Point(365, 174)
-$chkNoOutput.AutoSize = $true
-$grp.Controls.Add($chkNoOutput)
+Add-OptionCheckBox 'Yönetici yetkisi (UAC)'                  15  72 'chkAdmin'
+Add-OptionCheckBox '$ScriptRoot / $PSScriptRoot desteği'   320  72 'chkRoot' $true $false
+Add-OptionCheckBox 'Konsol UTF-8 (Türkçe karakterler)'       15  96 'chkUtf8' $true
+Add-OptionCheckBox 'Standart çıktıyı bastır'                320  96 'chkNoOutput'
+Add-OptionCheckBox '32-bit (x86)'                            15 120 'chkX86'
+Add-OptionCheckBox '64-bit (x64)'                           320 120 'chkX64' $true
+Add-OptionCheckBox 'Unicode konsol'                          15 144 'chkUnicode'
+Add-OptionCheckBox 'EXE.config (DPI / uyumluluk)'           320 144 'chkConfig'
+Add-OptionCheckBox 'DPI farkındalığı'                        15 168 'chkDpi'
+Add-OptionCheckBox 'WinForms DPI (config gerekli)'          320 168 'chkWinFormsDpi'
+Add-OptionCheckBox 'Yeni Windows sürüm bilgisi'              15 192 'chkSupportOS'
+Add-OptionCheckBox 'Uzun dosya yolları'                    320 192 'chkLongPaths'
+Add-OptionCheckBox 'Hata ayıklama hazırlığı'                 15 216 'chkPrepareDebug'
 
 # Secenekler icin aciklama balonlari (fareyle uzerine gelince)
 $optionTips = New-Object System.Windows.Forms.ToolTip
@@ -766,7 +714,7 @@ function Set-MainLayout {
         $txtOut.Width = [Math]::Max(160, $btnOut.Left - $txtOut.Left - 10)
         $txtCompany.Width = [Math]::Max(160, $right - $txtCompany.Left)
 
-        $grp.Height = 210
+        $grp.Height = 246
         $grp.Width = $usableW
         $btnBuild.Top = $grp.Bottom + 20
         $btnBuild.Width = $usableW
@@ -839,15 +787,15 @@ $cmbSet = New-Object System.Windows.Forms.ComboBox
 $cmbSet.DropDownStyle = 'DropDownList'
 $cmbSet.Location = New-Object System.Drawing.Point(240, 32)
 $cmbSet.Size = New-Object System.Drawing.Size(210, 24)
-[void]$cmbSet.Items.Add('Tüm Kaynaklar')
-[void]$cmbSet.Items.Add('Iconify')
+[void]$cmbSet.Items.Add('Tüm kaynaklar (Iconify + Icons8)')
+[void]$cmbSet.Items.Add('Iconify - tüm setler')
 [void]$cmbSet.Items.Add('Renkli ikonlar')
 [void]$cmbSet.Items.Add('Tek renkli ikonlar')
 [void]$cmbSet.Items.Add('Font Awesome')
 [void]$cmbSet.Items.Add('Google Material')
 [void]$cmbSet.Items.Add('Icons8')
-[void]$cmbSet.Items.Add('Flaticon')
-[void]$cmbSet.Items.Add('Magnific Icons')
+[void]$cmbSet.Items.Add('Flaticon (web araması)')
+[void]$cmbSet.Items.Add('Magnific Icons (web araması)')
 $cmbSet.SelectedIndex = 0
 $dlg.Controls.Add($cmbSet)
 
@@ -915,7 +863,7 @@ function Invoke-IconDownload {
         $safeName = ([string]$script:selName.Name -replace '[^\w\-]', '_')
         $file = Join-Path $dir ($safeName + '.png')
         $wc = New-Object System.Net.WebClient
-        $wc.Headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) PwX-Studio/1.4.0'
+        $wc.Headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) PwX-Studio/1.4.3'
         $rawFile = Join-Path $dir ($safeName + '.download')
         $errors = New-Object System.Collections.Generic.List[string]
         $candidates = @(Get-IconPngCandidates $script:selName 256 (Get-CurrentHex))
@@ -997,7 +945,7 @@ $btnSearch.Add_Click({
                 $flow.Controls.Add($pb)
 
                 $wc = New-Object System.Net.WebClient
-                $wc.Headers['User-Agent'] = 'PwX-Studio/1.4.1'
+                $wc.Headers['User-Agent'] = 'PwX-Studio/1.4.3'
                 $state = [pscustomobject]@{ Box=$pb; FallbackUrl=(Get-IconResultFallbackPngUrl $iconItem 96 $hex); IsFallback=$false; Provider=$iconItem.Provider }
                 $wc.Add_DownloadDataCompleted({
                     param($sender, $e)
