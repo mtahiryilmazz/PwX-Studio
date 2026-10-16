@@ -1,9 +1,8 @@
 ﻿#Requires -Version 5.1
 <#
     PwX Studio v1.5.0 - PowerShell Executable Builder
-    - Varsayılan olarak yerel bağımsız "PwX Build Engine" kullanır (PS2EXE gerektirmez)
+    - Tamamen bağımsız yerli "PwX Build Engine" kullanır (PS2EXE bağımlılığı tamamen kaldırılmıştır)
     - PowerShell 5.1 (Windows Dahili csc.exe) ve PowerShell 7 (.NET 8 SDK) hedef desteği
-    - İsteğe bağlı geriye dönük uyumluluk için PS2EXE 1.0.18 modu desteği
     - Logo: dosyadan veya çok kaynaklı web aramasıyla (Iconify, Font Awesome, Google Material, Icons8) indir; derlemede ICO'ya dönüştür
     - Türkçe karakter uyumlu (dosya UTF-8 BOM'lu kaydedilmiştir; exe konsolu UTF-8 çıktı verir)
     Çalıştırma: powershell.exe -STA -ExecutionPolicy Bypass -File .\PwX-Studio-v1.5.0.ps1
@@ -581,62 +580,42 @@ $txtVer.Text = '1.0.0.0'
 [void](Add-Label 'Şirket / Yayıncı:' 15 275)
 $txtCompany = Add-Text 15 295 370
 
-# Dönüştürme Motoru & Hedef — PwX Engine ve PS2EXE seçimi
-$grpEngine = New-Object System.Windows.Forms.GroupBox
-$grpEngine.Text = 'Dönüştürme Motoru & Hedef'
-$grpEngine.Location = New-Object System.Drawing.Point(15, 332)
-$grpEngine.Size = New-Object System.Drawing.Size(650, 80)
-$form.Controls.Add($grpEngine)
-
-$rbEnginePwX = New-Object System.Windows.Forms.RadioButton
-$rbEnginePwX.Text = 'PwX Engine (Önerilen — PS2EXE bağımsız yerli motor)'
-$rbEnginePwX.Location = New-Object System.Drawing.Point(15, 20)
-$rbEnginePwX.Size = New-Object System.Drawing.Size(370, 22)
-$rbEnginePwX.Checked = $true
-$grpEngine.Controls.Add($rbEnginePwX)
-
-$rbEnginePs2Exe = New-Object System.Windows.Forms.RadioButton
-$rbEnginePs2Exe.Text = 'PS2EXE (Klasik uyumluluk)'
-$rbEnginePs2Exe.Location = New-Object System.Drawing.Point(395, 20)
-$rbEnginePs2Exe.Size = New-Object System.Drawing.Size(230, 22)
-$grpEngine.Controls.Add($rbEnginePs2Exe)
+# Hedef Çalışma Zamanı — PwX Build Engine
+$grpTarget = New-Object System.Windows.Forms.GroupBox
+$grpTarget.Text = 'Hedef Çalışma Zamanı (PwX Build Engine)'
+$grpTarget.Location = New-Object System.Drawing.Point(15, 332)
+$grpTarget.Size = New-Object System.Drawing.Size(650, 56)
+$form.Controls.Add($grpTarget)
 
 $rbTargetPS51 = New-Object System.Windows.Forms.RadioButton
 $rbTargetPS51.Text = 'PowerShell 5.1 (Dahili csc.exe)'
-$rbTargetPS51.Location = New-Object System.Drawing.Point(15, 48)
+$rbTargetPS51.Location = New-Object System.Drawing.Point(15, 22)
 $rbTargetPS51.Size = New-Object System.Drawing.Size(220, 22)
 $rbTargetPS51.Checked = $true
-$grpEngine.Controls.Add($rbTargetPS51)
+$grpTarget.Controls.Add($rbTargetPS51)
 
 $rbTargetPS7 = New-Object System.Windows.Forms.RadioButton
 $rbTargetPS7.Text = 'PowerShell 7.4+ (.NET 8 SDK)'
-$rbTargetPS7.Location = New-Object System.Drawing.Point(245, 48)
+$rbTargetPS7.Location = New-Object System.Drawing.Point(245, 22)
 $rbTargetPS7.Size = New-Object System.Drawing.Size(210, 22)
-$grpEngine.Controls.Add($rbTargetPS7)
+$grpTarget.Controls.Add($rbTargetPS7)
 
 $chkSingleFile = New-Object System.Windows.Forms.CheckBox
 $chkSingleFile.Text = 'Tek Dosya (Single-File)'
-$chkSingleFile.Location = New-Object System.Drawing.Point(465, 48)
+$chkSingleFile.Location = New-Object System.Drawing.Point(465, 22)
 $chkSingleFile.Size = New-Object System.Drawing.Size(170, 22)
 $chkSingleFile.Checked = $false
 $chkSingleFile.Enabled = $false
-$grpEngine.Controls.Add($chkSingleFile)
-
-$rbEnginePwX.Add_CheckedChanged({
-    $isPwX = $rbEnginePwX.Checked
-    $rbTargetPS51.Enabled = $isPwX
-    $rbTargetPS7.Enabled = $isPwX
-    $chkSingleFile.Enabled = ($isPwX -and $rbTargetPS7.Checked)
-})
+$grpTarget.Controls.Add($chkSingleFile)
 
 $rbTargetPS7.Add_CheckedChanged({
-    $chkSingleFile.Enabled = ($rbEnginePwX.Checked -and $rbTargetPS7.Checked)
+    $chkSingleFile.Enabled = $rbTargetPS7.Checked
 })
 
 # Seçenekler — sabit iki sütunlu hizalı düzen
 $grp = New-Object System.Windows.Forms.GroupBox
 $grp.Text = 'Seçenekler'
-$grp.Location = New-Object System.Drawing.Point(15, 420)
+$grp.Location = New-Object System.Drawing.Point(15, 396)
 $grp.Size = New-Object System.Drawing.Size(650, 246)
 $form.Controls.Add($grp)
 
@@ -696,7 +675,10 @@ $optionTipMap = @{
     $rbConsole = 'Konsol kullanan scriptler için seçin. Write-Host, Read-Host ve konsol mesajları görünür kalır.'
     $rbWin = 'Konsol penceresini gizler. WinForms/WPF arayüzleri veya arka planda sessiz çalışan scriptler için uygundur.'
     $chkAdmin = 'EXE açılırken Windows UAC yönetici izni ister. Yalnızca yönetici yetkisi gerektiren işlemler için etkinleştirin.'
-    $chkRoot = 'ScriptRoot ve PSScriptRoot değişkenlerinin EXE içindeki script klasörünü göstermesini sağlayan ps2exe uyumluluk seçeneğidir. Bu sürümde sabit olarak etkin.'
+    $rbTargetPS51 = 'PowerShell 5.1: Windows dahili csc.exe derleyicisiyle derler. Hedef makinede PowerShell 5.1 gerektirir; harici SDK gerektirmez.'
+    $rbTargetPS7 = 'PowerShell 7.4+: Microsoft.PowerShell.SDK ve .NET 8 kullanarak modern PowerShell 7 ortamı için bağımsız EXE üretir.'
+    $chkSingleFile = 'Tüm PS7 ve .NET bağımlılıklarını tek bir bağımsız .exe dosyasında paketler.'
+    $chkRoot = 'ScriptRoot ve PSScriptRoot değişkenlerinin EXE içindeki script klasörünü göstermesini sağlar. Sabit olarak etkin.'
     $chkUtf8 = 'Konsol metinlerinin UTF-8 kodlamasıyla gösterilmesini sağlar; Türkçe karakterlerin bozulma riskini azaltır.'
     $chkX86 = '32-bit Windows/uyumluluk hedefi için 32-bit EXE üretir. x64 ile aynı anda seçmeyin.'
     $chkX64 = '64-bit Windows için 64-bit EXE üretir. Modern Windows sistemlerinde genellikle önerilen seçenektir.'
@@ -738,7 +720,7 @@ $pic.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Form
 $txtOut.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $btnOut.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $txtCompany.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$grpEngine.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$grpTarget.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $grp.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $btnBuild.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $log.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right -bor [System.Windows.Forms.AnchorStyles]::Bottom
@@ -769,9 +751,9 @@ function Set-MainLayout {
         $txtOut.Width = [Math]::Max(160, $btnOut.Left - $txtOut.Left - 10)
         $txtCompany.Width = [Math]::Max(160, $right - $txtCompany.Left)
 
-        $grpEngine.Top = 332
-        $grpEngine.Width = $usableW
-        $grp.Top = $grpEngine.Bottom + 8
+        $grpTarget.Top = 332
+        $grpTarget.Width = $usableW
+        $grp.Top = $grpTarget.Bottom + 8
         $grp.Height = 246
         $grp.Width = $usableW
         $btnBuild.Top = $grp.Bottom + 12
@@ -1112,102 +1094,43 @@ $btnBuild.Add_Click({
         $outDir = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($outExe))
         if ($outDir -and -not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 
-        if ($rbEnginePwX.Checked) {
-            # -------------------------------------------------------------
-            #  PwX Build Engine (PS2EXE Bağımsız Yerli Motor)
-            # -------------------------------------------------------------
-            $engineScript = Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'
-            if (-not (Test-Path -LiteralPath $engineScript)) {
-                $engineScript = Join-Path (Get-Location) 'pwxengine\scripts\PwX-Build.ps1'
-            }
-            if (-not (Test-Path -LiteralPath $engineScript)) {
-                throw "PwX Build Engine betiği bulunamadı: $engineScript"
-            }
-
-            $target = if ($rbTargetPS7.Checked) { 'PS7' } else { 'PS51' }
-            $mode   = if ($rbWin.Checked) { 'Gui' } else { 'Console' }
-            $title  = if ($txtTitle.Text.Trim()) { $txtTitle.Text.Trim() } else { [IO.Path]::GetFileNameWithoutExtension($ps1) }
-            $comp   = $txtCompany.Text.Trim()
-            $ver    = if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' }
-
-            Write-Log "PwX Build Engine başlatılıyor... [Motor=PwX, Hedef=$target, Mod=$mode]"
-            $bArgs = @{
-                Source = $compileInput
-                Output = [IO.Path]::GetFullPath($outExe)
-                Target = $target
-                Mode   = $mode
-                Force  = $true
-            }
-            if ($iconForBuild) { $bArgs.Icon = $iconForBuild }
-            if ($title) { $bArgs.ProductName = $title; $bArgs.Description = $title }
-            if ($comp) { $bArgs.CompanyName = $comp }
-            if ($ver) { $bArgs.FileVersion = $ver; $bArgs.ProductVersion = $ver }
-            if ($chkX86.Checked) { $bArgs.Architecture = 'win-x86' }
-            if ($chkX64.Checked) { $bArgs.Architecture = 'win-x64' }
-            if ($target -eq 'PS7' -and $chkSingleFile.Checked) { $bArgs.SingleFile = $true }
-
-            Write-Log ('Seçenekler: ' + (($bArgs.Keys | Sort-Object) -join ', '))
-            $res = & $engineScript @bArgs
-            if ($null -ne $res -and -not $res.Success) {
-                throw "PwX Build Engine derleme hatası: $($res.Error)"
-            }
+        # -------------------------------------------------------------
+        #  PwX Build Engine (Yerli Bağımsız Motor)
+        # -------------------------------------------------------------
+        $engineScript = Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'
+        if (-not (Test-Path -LiteralPath $engineScript)) {
+            $engineScript = Join-Path (Get-Location) 'pwxengine\scripts\PwX-Build.ps1'
         }
-        else {
-            # -------------------------------------------------------------
-            #  PS2EXE Klasik Uyumluluk Modu
-            # -------------------------------------------------------------
-            Write-Log 'ps2exe modülü denetleniyor...'
-            $module = Get-Module -ListAvailable -Name ps2exe | Sort-Object Version -Descending | Select-Object -First 1
-            if (-not $module -or $module.Version -lt [version]'1.0.18') {
-                Write-Log 'ps2exe 1.0.18 CurrentUser kapsamına kuruluyor/güncelleniyor...'
-                $oldPolicy = $null
-                try {
-                    $repo = Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue
-                    if ($repo) {
-                        $oldPolicy = $repo.InstallationPolicy
-                        if ($oldPolicy -ne 'Trusted') { Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue }
-                    }
-                    Install-Module -Name ps2exe -RequiredVersion 1.0.18 -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
-                }
-                finally {
-                    if ($oldPolicy -and $oldPolicy -ne 'Trusted') {
-                        Set-PSRepository -Name PSGallery -InstallationPolicy $oldPolicy -ErrorAction SilentlyContinue
-                    }
-                }
-            }
-            Import-Module ps2exe -RequiredVersion 1.0.18 -Force -ErrorAction Stop
-            $cmd = Get-Command Invoke-PS2EXE -ErrorAction Stop
-            Write-Log "Kullanılan modül: $((Get-Module ps2exe | Select-Object -First 1).Version)"
+        if (-not (Test-Path -LiteralPath $engineScript)) {
+            throw "PwX Build Engine betiği bulunamadı: $engineScript"
+        }
 
-            $params = @{
-                inputFile = $compileInput
-                outputFile = [IO.Path]::GetFullPath($outExe)
-                version = $(if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' })
-                title = $(if ($txtTitle.Text.Trim()) { $txtTitle.Text.Trim() } else { [IO.Path]::GetFileNameWithoutExtension($ps1) })
-                company = $txtCompany.Text.Trim()
-            }
-            if ($rbWin.Checked) { $params.noConsole = $true }
-            if ($chkAdmin.Checked) { $params.requireAdmin = $true }
-            if ($iconForBuild) {
-                $params.iconFile = $iconForBuild
-                Write-Log 'ICO hem EXE kaynak simgesi hem de WinForms pencere simgesi için kullanılacak.'
-            }
-            if ($chkX86.Checked) { $params.x86 = $true }
-            if ($chkX64.Checked) { $params.x64 = $true }
-            if ($chkUnicode.Checked) { $params.UNICODEEncoding = $true }
-            if ($chkConfig.Checked) { $params.configFile = $true }
-            if ($chkDpi.Checked) { $params.DPIAware = $true }
-            if ($chkWinFormsDpi.Checked) { $params.winFormsDPIAware = $true }
-            if ($chkSupportOS.Checked) { $params.supportOS = $true }
-            if ($chkLongPaths.Checked) { $params.longPaths = $true }
-            if ($chkPrepareDebug.Checked) { $params.prepareDebug = $true }
-            if ($chkNoOutput.Checked) { $params.noOutput = $true }
-            if ($chkUtf8.Checked -and -not $chkUnicode.Checked) { Write-Log 'Not: UTF-8 kutusu eski özel derleyici içindi; ps2exe için Unicode konsol seçeneğini ayrıca işaretleyebilirsiniz.' }
+        $target = if ($rbTargetPS7.Checked) { 'PS7' } else { 'PS51' }
+        $mode   = if ($rbWin.Checked) { 'Gui' } else { 'Console' }
+        $title  = if ($txtTitle.Text.Trim()) { $txtTitle.Text.Trim() } else { [IO.Path]::GetFileNameWithoutExtension($ps1) }
+        $comp   = $txtCompany.Text.Trim()
+        $ver    = if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' }
 
-            Write-Log 'Derleme başladı...'
-            Write-Log ('Komut seçenekleri: ' + (($params.Keys | Sort-Object) -join ', '))
-            $result = Invoke-PS2EXE @params 2>&1
-            foreach ($line in $result) { if ($null -ne $line) { Write-Log ([string]$line) } }
+        Write-Log "PwX Build Engine başlatılıyor... [Hedef=$target, Mod=$mode]"
+        $bArgs = @{
+            Source = $compileInput
+            Output = [IO.Path]::GetFullPath($outExe)
+            Target = $target
+            Mode   = $mode
+            Force  = $true
+        }
+        if ($iconForBuild) { $bArgs.Icon = $iconForBuild }
+        if ($title) { $bArgs.ProductName = $title; $bArgs.Description = $title }
+        if ($comp) { $bArgs.CompanyName = $comp }
+        if ($ver) { $bArgs.FileVersion = $ver; $bArgs.ProductVersion = $ver }
+        if ($chkX86.Checked) { $bArgs.Architecture = 'win-x86' }
+        if ($chkX64.Checked) { $bArgs.Architecture = 'win-x64' }
+        if ($target -eq 'PS7' -and $chkSingleFile.Checked) { $bArgs.SingleFile = $true }
+
+        Write-Log ('Seçenekler: ' + (($bArgs.Keys | Sort-Object) -join ', '))
+        $res = & $engineScript @bArgs
+        if ($null -ne $res -and -not $res.Success) {
+            throw "PwX Build Engine derleme hatası: $($res.Error)"
         }
 
         if (-not (Test-Path -LiteralPath $outExe -PathType Leaf)) { throw 'Derleme tamamlandı görünse de EXE dosyası oluşmadı. Günlük çıktısını kontrol edin.' }

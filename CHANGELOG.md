@@ -23,21 +23,25 @@ Henüz yayımlanmamış geliştirmeler.
 
 ## [1.5.0] — 2026-10-16
 
+### Removed
+- **PS2EXE Bağımlılığı Tamamen Kaldırıldı:** `ps2exe` PowerShell modülü, PSGallery otomatik indirme/kurulum mekanizması, `Invoke-PS2EXE` çağrıları ve tüm ilişkili parametre eşlemeleri projeden tamamen temizlendi.
+- Dış modül veya internetten modül çekme zorunluluğu sonlandırıldı.
+
 ### Added
-- **PwX Build Engine Entegrasyonu:** PwX Studio grafik arayüzüne PS2EXE'den bağımsız yerel dönüştürme motoru entegre edildi.
-- **Hedef Çalışma Zamanı Seçimi:**
-  - **PowerShell 5.1:** Windows dahili `csc.exe` derleyicisi kullanılarak harici SDK veya internet gerektirmeden sıfır bağımlılıkla EXE üretimi.
-  - **PowerShell 7.4+:** Modern `.NET 8 SDK` ve `Microsoft.PowerShell.SDK` ile self-contained EXE üretimi.
-  - **Tek Dosya (Single-File):** PowerShell 7 için bağımsız, taşınabilir tek dosya EXE paketleme seçeneği.
-- **Dönüştürme Motoru Seçim Arayüzü:** Arayüze "Dönüştürme Motoru & Hedef" paneli eklendi; varsayılan olarak PwX Engine seçili gelirken geriye dönük uyumluluk için PS2EXE modu korunmuştur.
+- **%100 Yerli PwX Build Engine:** PwX Studio'nun tek ve bağımsız dönüştürme motoru olarak `pwxengine` doğrudan entegre edildi.
+- **Hedef Çalışma Zamanı (Target Runtime) Seçimi:**
+  - **PowerShell 5.1:** Windows dahili `csc.exe` C# derleyicisiyle sıfır bağımlılıkla hafif ve yerel `.exe` üretimi.
+  - **PowerShell 7.4+:** Modern `.NET 8 SDK` ve `Microsoft.PowerShell.SDK` ile self-contained `.exe` üretimi.
+  - **Tek Dosya (Single-File):** PowerShell 7 için tüm çalışma zamanını tek bir `.exe` içerisine paketleme desteği.
+- **Dinamik Hedef Arayüzü:** "Hedef Çalışma Zamanı (PwX Build Engine)" grubu eklendi; PS7 seçildiğinde Tek Dosya seçeneği dinamik olarak aktifleşir.
 
 ### Changed
-- Varsayılan EXE üretim altyapısı PS2EXE yerine yerli **PwX Build Engine** olarak güncellendi.
-- Arayüz pencere boyutu (`880x915` px) ve bileşen yerleşimleri yeni motor/hedef kontrollerini barındıracak şekilde uyarlandı.
-- Uygulama başlığı ve marka gösterimi `PwX Studio v1.5.0` olarak güncellendi.
+- PwX Studio tamamen harici paket bağımlılıksız, çevrimdışı çalışabilen bağımsız bir yapıya kavuşturuldu.
+- Arayüz boyutu ve yerleşimi (`880x915` px) yeni hedef kontrolleri için optimize edildi.
+- Uygulama marka başlığı `PwX Studio v1.5.0` olarak güncellendi.
 
 ### Fixed
-- `pwxengine/tests/Run-Smoke.ps1` duman test betiğinde kasıtlı sözdizimi reddi (`T-009`) sonrası kalan `$LASTEXITCODE = 1` durumunun CI runner'a sızması giderildi; açık `exit 0` eklenerek GitHub Actions CI süreci (Run #31) tamamen başarılı (yeşil) hâle getirildi.
+- `pwxengine/tests/Run-Smoke.ps1` test betiğinde kasıtlı sözdizimi reddi (`T-009`) sonrası kalan `$LASTEXITCODE = 1` sızıntısı giderildi; açık `exit 0` eklenerek GitHub Actions Windows CI süreci (Run #31) tamamen başarılı (yeşil) hâle getirildi.
 - Türkçe karakterler (`ş, ğ, ü, ç, ö, ı, İ`) ve UTF-8 BOM kodlama uyumluluğu korundu.
 
 ---
