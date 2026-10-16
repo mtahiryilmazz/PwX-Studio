@@ -100,24 +100,13 @@ namespace PwX.BuildHost
                 using (PowerShell ps = PowerShell.Create())
                 {
                     ps.Runspace = rs;
-                    // Run the payload text as the pipeline's top-level script.
-                    // This follows Microsoft's hosting sample: a top-level "exit N"
-                    // reaches PSHost.SetShouldExit, while AddArgument binds script params.
-                    ps.AddScript(File.ReadAllText(scriptPath));
-                    // pwsh -File gibi: "-Ad deger" adlandirilmis parametre, digerleri konumsal.
-                    // (Hepsini AddArgument ile gecmek "-Message abc -Code 5" gibi cagrilari bozar.)
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        string a = args[i];
-                        if (a.Length > 1 && a[0] == '-' && char.IsLetter(a[1]))
-                        {
-                            string name = a.Substring(1);
-                            bool nextIsParam = i + 1 < args.Length && args[i + 1].Length > 1 && args[i + 1][0] == '-' && char.IsLetter(args[i + 1][1]);
-                            if (i + 1 < args.Length && !nextIsParam) ps.AddParameter(name, args[++i]);
-                            else ps.AddParameter(name);
-                        }
-                        else ps.AddArgument(a);
-                    }
+                    // Payload metni pipeline'in ust duzey betigi olarak calisir (AddScript).
+                    // PowerShell kaynak kodunda (LocalPipeline.InvokeHelper) ust duzey 'exit N',
+                    // PSHost.SetShouldExit(N) cagrisina cevrilir. Betik DOSYASI olarak calistirilsaydi
+                    // (AddCommand(path)) 'exit' yalnizca $LASTEXITCODE'u ayarlar ve host'a bildirilmezdi.
+                    string scriptText = File.ReadAllText(scriptPath);
+                    ps.AddScript(scriptText);
+                    ScriptArguments.Apply(ps, scriptText, args);
 
                     try { ps.Invoke(); }
                     catch (RuntimeException ex)
@@ -126,18 +115,20 @@ namespace PwX.BuildHost
                         return 1;
                     }
 
+                    // Acik 'exit N' her zaman onceliklidir; betik daha once Write-Error ile
+                    // sonlandirici olmayan hata yazmis olsa bile N dondurulur.
+                    if (host.ShouldExit)
+                        return host.ExitCode;
+
                     if (ps.HadErrors && ps.Streams.Error.Count > 0)
                     {
                         ReportFatal(ps.Streams.Error[0].ToString());
                         return 1;
                     }
 
-                    if (host.ShouldExit)
-                        return host.ExitCode;
-
-                    object last = rs.SessionStateProxy.PSVariable.GetValue("LASTEXITCODE");
-                    int code;
-                    return last != null && int.TryParse(last.ToString(), out code) ? code : 0;
+                    // Normal bitis: pwsh -File ile ayni sekilde 0 (son yerel komutun
+                    // $LASTEXITCODE degeri islem cikis koduna sizdirilmaz).
+                    return 0;
                 }
             }
         }
@@ -211,8 +202,17 @@ namespace PwX.BuildHost
         }
 #endif
 
+        // PWX_ERROR_LOG ortam degiskeni doluysa hata iletisi iletisim kutusu yerine bu dosyaya eklenir.
+        // CI/otomasyonda GUI hostun MessageBox ile takili kalmasini onler ve testlerin hata metnini
+        // dogrulamasini saglar.
         private static void ReportFatal(string message)
         {
+            string log = Environment.GetEnvironmentVariable("PWX_ERROR_LOG");
+            if (!string.IsNullOrEmpty(log))
+            {
+                try { File.AppendAllText(log, message + Environment.NewLine, new UTF8Encoding(false)); } catch { }
+                return;
+            }
 #if PWX_GUI
             try { MessageBoxW(IntPtr.Zero, message, "PwX", 0x10); } catch { }
 #else
