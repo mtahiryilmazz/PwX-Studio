@@ -244,16 +244,11 @@ function Get-ColorHex([System.Drawing.Color]$c) {
 # ------------------------------------------------------------------
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'PwX Studio v1.5.0'
-$form.Size = New-Object System.Drawing.Size(880, 915)
+$form.Size = New-Object System.Drawing.Size(900, 880)
 $form.StartPosition = 'CenterScreen'
-$form.FormBorderStyle = 'FixedSingle'
-$form.MinimumSize = New-Object System.Drawing.Size(880, 915)
-$form.MaximumSize = New-Object System.Drawing.Size(880, 915)
-$form.MaximizeBox = $false
-# Sabit piksel yerleşimi: ilk açılışta DPI/font otomatik ölçeklemesi kontrolleri kaydırmasın.
-$form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::None
-$form.AutoScroll = $false
-$form.AutoScrollMinSize = [System.Drawing.Size]::Empty
+$form.FormBorderStyle = 'Sizable'
+$form.MinimumSize = New-Object System.Drawing.Size(720, 640)
+$form.MaximizeBox = $true
 $form.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 $form.BackColor = [System.Drawing.Color]::FromArgb(245, 247, 250)
 $form.ForeColor = [System.Drawing.Color]::FromArgb(32, 36, 42)
@@ -657,10 +652,16 @@ function Set-MainLayout {
         $btnBuild.Width = $usableW
         $log.Top = $btnBuild.Bottom + 8
         $log.Width = $usableW
-        $log.Height = [Math]::Max(80, $clientH - $log.Top - 15)
         $log.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-        $form.AutoScroll = $false
-        $form.AutoScrollMinSize = [System.Drawing.Size]::Empty
+        if ($clientH -lt 720) {
+            $form.AutoScroll = $true
+            $form.AutoScrollMinSize = New-Object System.Drawing.Size(680, 730)
+            $log.Height = 120
+        } else {
+            $form.AutoScroll = $false
+            $form.AutoScrollMinSize = [System.Drawing.Size]::Empty
+            $log.Height = [Math]::Max(90, $clientH - $log.Top - 15)
+        }
         if ($btnThemeToggle -and -not $btnThemeToggle.IsDisposed) { $btnThemeToggle.Invalidate() }
     } finally {
         $form.ResumeLayout($true)
