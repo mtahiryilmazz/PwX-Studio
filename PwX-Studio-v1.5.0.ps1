@@ -472,9 +472,9 @@ $txtVer.Text = '1.0.0.0'
 [void](Add-Label 'Şirket / Yayıncı:' 15 275)
 $txtCompany = Add-Text 15 295 370
 
-# Hedef Çalışma Zamanı — PwX Build Engine
+# Hedef Çalışma Zamanı — pwxe Build Engine
 $grpTarget = New-Object System.Windows.Forms.GroupBox
-$grpTarget.Text = 'Hedef Çalışma Zamanı (PwX Build Engine)'
+$grpTarget.Text = 'Hedef Çalışma Zamanı (pwxe)'
 $grpTarget.Location = New-Object System.Drawing.Point(15, 332)
 $grpTarget.Size = New-Object System.Drawing.Size(650, 56)
 $form.Controls.Add($grpTarget)
@@ -1050,14 +1050,30 @@ try {
         }
 
         # -------------------------------------------------------------
-        #  PwX Build Engine (Yerli Bağımsız Motor)
+        #  pwxe / PwX Build Engine (Hibrit Motor Tespiti)
         # -------------------------------------------------------------
-        $engineScript = Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'
-        if (-not (Test-Path -LiteralPath $engineScript)) {
-            $engineScript = Join-Path (Get-Location) 'pwxengine\scripts\PwX-Build.ps1'
+        $engineScript = $null
+        $possiblePaths = @(
+            (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
+            (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
+            (Join-Path (Get-Location) 'pwxengine\scripts\PwX-Build.ps1'),
+            (Join-Path (Get-Location) '..\pwxe\scripts\PwX-Build.ps1'),
+            (Join-Path $PSScriptRoot '..\pwxe\scripts\PwX-Build.ps1')
+        )
+        foreach ($p in $possiblePaths) {
+            if ($p -and (Test-Path -LiteralPath $p)) { $engineScript = $p; break }
         }
-        if (-not (Test-Path -LiteralPath $engineScript)) {
-            throw "PwX Build Engine betiği bulunamadı: $engineScript"
+
+        if (-not $engineScript) {
+            $pwxeMod = Get-Module -ListAvailable pwxe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($pwxeMod) {
+                $candidate = Join-Path $pwxeMod.ModuleBase 'scripts\PwX-Build.ps1'
+                if (Test-Path -LiteralPath $candidate) { $engineScript = $candidate }
+            }
+        }
+
+        if (-not $engineScript) {
+            throw "pwxe (PwX Build Engine) bulunamadı. Lütfen 'pwxe' modülünü kurun (Install-Module pwxe) veya motor klasörünün mevcut olduğunu doğrulayın."
         }
 
         $target = if ($rbTargetPS7.Checked) { 'PS7' } else { 'PS51' }
@@ -1066,7 +1082,7 @@ try {
         $comp   = $txtCompany.Text.Trim()
         $ver    = if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' }
 
-        Write-Log "PwX Build Engine başlatılıyor... [Hedef=$target, Mod=$mode]"
+        Write-Log "pwxe Motoru başlatılıyor... [Hedef=$target, Mod=$mode]"
         $bArgs = @{
             Source = $compileInput
             Output = [IO.Path]::GetFullPath($outExe)

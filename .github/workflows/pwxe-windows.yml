@@ -3,12 +3,12 @@ name: PwX Engine Windows CI
 on:
   push:
     paths:
-      - 'pwxengine/**'
-      - '.github/workflows/pwxengine-windows.yml'
+      - 'pwxe/**'
+      - '.github/workflows/pwxe-windows.yml'
   pull_request:
     paths:
-      - 'pwxengine/**'
-      - '.github/workflows/pwxengine-windows.yml'
+      - 'pwxe/**'
+      - '.github/workflows/pwxe-windows.yml'
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
       - name: GUI host logic tests
         shell: pwsh
-        run: ./pwxengine/tests/Test-GuiHostLogic.ps1
+        run: ./pwxe/tests/Test-GuiHostLogic.ps1
 
   smoke:
     runs-on: windows-latest
@@ -38,16 +38,16 @@ jobs:
           dotnet-version: 8.0.x
       - name: Verify build environment
         shell: pwsh
-        run: ./pwxengine/scripts/Check-Environment.ps1
+        run: ./pwxe/scripts/Check-Environment.ps1
       - name: Run PS51 and PS7 smoke tests (including PS7 single-file publish)
         shell: pwsh
-        run: ./pwxengine/tests/Run-Smoke.ps1 -Target All -SingleFile
+        run: ./pwxe/tests/Run-Smoke.ps1 -Target All -SingleFile
       - name: Upload test artifacts and logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pwxengine-test-results
+          name: pwxe-test-results
           path: |
-            pwxengine/artifacts/test-results/**/*.log
-            pwxengine/artifacts/**/*.log
+            pwxe/artifacts/test-results/**/*.log
+            pwxe/artifacts/**/*.log
           if-no-files-found: ignore

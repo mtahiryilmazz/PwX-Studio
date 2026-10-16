@@ -6,89 +6,58 @@
 
 <p align="center">
   <strong>PowerShell Script to EXE Builder — Windows GUI Application</strong><br>
-  <em>PowerShell betiklerinizi sıfır dış bağımlılıkla modern, bağımsız ve yerel Windows (.exe) uygulamalarına dönüştürün.</em>
+  <em>PowerShell betiklerinizi grafik arayüz üzerinden modern, bağımsız ve yerel Windows (.exe) uygulamalarına dönüştürün.</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/mtahiryilmazz/pwxstudio/releases/latest"><img src="https://img.shields.io/badge/release-v1.5.0-blue.svg?style=flat-square" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg?style=flat-square" alt="Platform: Windows">
-  <img src="https://img.shields.io/badge/PowerShell-5.1%20%7C%207.4%2B-5391FE.svg?style=flat-square" alt="PowerShell 5.1 & 7.4+">
-  <img src="https://img.shields.io/badge/Engine-PwX%20Build%20Engine%20(Yerli)-success.svg?style=flat-square" alt="PwX Build Engine">
+  <img src="https://img.shields.io/badge/Engine-pwxe-success.svg?style=flat-square" alt="Engine: pwxe">
 </p>
+
+---
+
+> ⚡ **Komut Satırı / CI/CD Kullanıcıları:** PwX Studio'nun arka planında çalışan çekirdek dönüştürme motoru bağımsız bir CLI ve PowerShell modülü olarak da sunulmaktadır. Terminalden derleme ve otomasyon için [**pwxe (PwX Engine)**](https://github.com/mtahiryilmazz/pwxe) reposunu ziyaret edebilirsiniz.
 
 ---
 
 ## 📖 İçindekiler
 
 - [Hakkında](#-hakkında)
-- [Temel Özellikler](#-temel-özellikler)
-- [Mimari ve Dönüştürme Motoru](#-mimari-ve-dönüştürme-motoru)
-- [Ekran Görüntüsü](#-ekran-görüntüsü)
+- [Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
+- [Arayüz ve Ekran Görüntüsü](#-arayüz-ve-ekran-görüntüsü)
 - [Sistem Gereksinimleri](#-sistem-gereksinimleri)
-- [Kurulum ve Çalıştırma](#-kurulum-ve-çalıştırma)
-- [Kullanım Rehberi](#-kullanım-rehberi)
+- [Hızlı Başlangıç & Kullanım](#-hızlı-başlangıç--kullanım)
 - [Simge (Icon) Yönetimi](#-simge-icon-yönetimi)
-- [Geliştirme ve Test](#-geliştirme-ve-test)
-- [Sürümler ve Değişiklikler](#-sürümler-ve-değişiklikler)
+- [Açık / Koyu Tema Desteği](#-açık--koyu-tema-desteği)
 - [Lisans](#-lisans)
 
 ---
 
 ## 🌟 Hakkında
 
-**PwX Studio**, PowerShell (`.ps1`) betiklerini tek tıklamayla bağımsız Windows çalıştırılabilir (`.exe`) dosyalarına dönüştüren modern grafik arayüzlü bir geliştirici aracıdır.
+**PwX Studio**, PowerShell (`.ps1`) betiklerinizi tek bir tıklamayla taşınabilir Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürmek için tasarlanmış, modern ve kullanıcı dostu bir masaüstü uygulamasıdır.
 
-Sistem yöneticileri, DevOps mühendisleri ve Windows geliştiricileri için tasarlanmış olan PwX Studio; komut satırı karmaşasını ortadan kaldırır, kaynak kodunuza özel uygulama simgeleri ekler ve betiklerinizi son kullanıcılara güvenle dağıtılabilir profesyonel masaüstü araçlarına dönüştürür.
-
-> [!IMPORTANT]
-> **v1.5.0 ile Büyük Dönüşüm:** Önceki sürümlerde kullanılan harici `ps2exe` modülü ve internetten modül çekme zorunluluğu tamamen kaldırılmıştır. PwX Studio artık **%100 yerli ve bağımsız "PwX Build Engine"** motoru ile çalışır.
+Komut satırı karmaşası olmadan betiklerinizi seçebilir, görsel uygulama simgeleri ekleyebilir, PowerShell 5.1 veya modern PowerShell 7.4+ çalışma zamanlarını belirleyerek son kullanıcıya dağıtılabilir profesyonel uygulamalar üretebilirsiniz.
 
 ---
 
-## 🚀 Temel Özellikler
+## 🚀 Öne Çıkan Özellikler
 
-- **⚡ Sıfır Dış Bağımlılık & Çevrimdışı (Offline) Çalışma:** Harici PowerShell modülü indirme ihtiyacı yoktur. İzole veya kapalı devre kurumsal ağlarda kusursuz çalışır.
-- **🎯 Çift Hedef Çalışma Zamanı (Target Runtime):**
-  - **PowerShell 5.1 (Klasik / Hafif):** Windows'ta yerleşik gelen `csc.exe` (Roslyn / .NET Framework) ile ek hiçbir SDK gerektirmeden ultra hafif `.exe` üretir.
-  - **PowerShell 7.4+ (Modern & Yüksek Performans):** Modern `.NET 8 SDK` ve `Microsoft.PowerShell.SDK` ile en yeni PowerShell dil özelliklerini destekler.
-- **📦 Tek Dosya (Single-File) Paketleme:** PowerShell 7 derlemelerinde tüm çalışma zamanı kütüphanelerini tek bir bağımsız `.exe` içinde paketleme imkânı.
-- **🎨 Gelişmiş Çift Katmanlı Simge Yönetimi:**
-  - **EXE Dosya Simgesi:** Windows Gezgini ve dosya özelliklerinde görünen yüksek çözünürlüklü simge.
-  - **Pencere & Görev Çubuğu Simgesi:** Betik içerisindeki WinForms form pencerelerine simgenin otomatik olarak enjekte edilmesi.
-- **🌐 Dahili İkon Arama & İndirme:** Iconify ve Icons8 entegrasyonuyla doğrudan arayüzden binlerce vektörel ikonu arayıp `.ico` formatına otomatik dönüştürme.
-- **🌗 Açık / Koyu Tema Desteği:** Tek tıkla göz yormayan modern koyu veya aydınlık arayüz teması.
-- **📋 Gerçek Zamanlı Günlük Kayıtları (Build Logs):** Derleme sürecini, parametreleri ve varsa hata detaylarını adım adım gösteren arayüz konsolu.
+- **🖥️ Tamamen Responsive Arayüz:** Sabit pencere kısıtlaması olmadan pencereyi serbestçe yeniden boyutlandırabilir, ekranı kaplayabilir ve küçük ekranlarda otomatik kaydırma çubuğu ile rahatça çalışabilirsiniz.
+- **⚡ Dahili pwxe Motoru:** Harici `ps2exe` modülü zorunluluğu yoktur. İzole veya kapalı devre ağlarda tamamen çevrimdışı (offline) çalışır.
+- **🎯 Çift Hedef Çalışma Zamanı:**
+  - **PowerShell 5.1:** Sıfır ek gereksinimle hafif ve anında açılan yerel `.exe` çıktısı (~500 KB).
+  - **PowerShell 7.4+:** En yeni PowerShell dil özellikleri ve opsiyonel **Tek Dosya (Single-File)** paketleme desteği.
+- **🖼️ Dahili Web İkon Arama:** Iconify ve Icons8 entegrasyonuyla binlerce vektörel ikonu uygulama içinden arayabilir, tek tıkla indirip çok boyutlu `.ico` formatına otomatik dönüştürebilirsiniz.
+- **🛡️ Otomatik Form Simgesi Enjeksiyonu:** Seçilen simge yalnızca Windows Gezgini'nde değil, betik içindeki WinForms pencerelerinin başlık çubuğunda ve Windows görev çubuğunda da otomatik olarak gösterilir.
+- **🌗 Lucide Açık / Koyu Tema:** Göz yormayan, sistemle uyumlu modern tema geçişi.
+- **📋 Gerçek Zamanlı Günlük Kayıtları:** Derleme sürecini, parametreleri ve varsa hata detaylarını adım adım gösteren konsol ekranı.
 
 ---
 
-## 🏗️ Mimari ve Dönüştürme Motoru
-
-```mermaid
-graph TD
-    A[Kaynak Betik .ps1] --> C{Hedef Çalışma Zamanı}
-    B[Uygulama Simgesi .ico] --> C
-    
-    C -->|PowerShell 5.1| D[Windows Yerleşik csc.exe]
-    C -->|PowerShell 7.4+| E[.NET 8 SDK / Microsoft.PowerShell.SDK]
-    
-    D --> F[Hafif Yerel EXE ~1 MB]
-    E -->|Tek Dosya Opsiyonu| G[Modern Bağımsız EXE]
-```
-
-PwX Studio iki farklı derleme hattı sunar:
-
-| Özellik | PowerShell 5.1 Hedefi | PowerShell 7.4+ Hedefi |
-| :--- | :--- | :--- |
-| **Derleyici** | Windows Dahili `csc.exe` | `dotnet publish` (.NET 8 SDK) |
-| **Gereksinim** | Ek kurulum gerekmez | .NET 8 SDK & PS 7 |
-| **Çıktı Boyutu** | ~1 MB (Ultra Hafif) | Self-Contained (~70 MB) veya Framework-Dependent |
-| **Single-File Desteği** | Doğal Tek Dosya | Opsiyonel Tek Dosya (`.exe`) |
-| **Kullanım Alanı** | Klasik Windows araçları, hafif yardımcılar | Modern modüller, yüksek performanslı otomasyonlar |
-
----
-
-## 📸 Ekran Görüntüsü
+## 📸 Arayüz ve Ekran Görüntüsü
 
 <p align="center">
   <img src="screenshots/pwx_main_window.png" alt="PwX Studio Ana Pencere" width="800">
@@ -98,75 +67,45 @@ PwX Studio iki farklı derleme hattı sunar:
 
 ## 💻 Sistem Gereksinimleri
 
-- **İşletim Sistemi:** Windows 10, Windows 11 veya Windows Server 2016 ve üzeri (x64 / x86)
-- **Minimum Çalışma Zamanı:** Windows PowerShell 5.1 (Windows ile kurulu gelir)
-- **Ek Geliştirici Gereksinimi (Yalnızca PS7 derlemesi için):** [.NET 8 SDK](https://dotnet.microsoft.com/download)
+- **İşletim Sistemi:** Windows 10, Windows 11 veya Windows Server 2016+ (x64 / x86)
+- **PowerShell:** Windows PowerShell 5.1 (Windows ile yerleşik gelir)
+- *(İsteğe Bağlı)* Yalnızca PowerShell 7.4+ hedefiyle derleme yapmak için: [.NET 8 SDK](https://dotnet.microsoft.com/download)
 
 ---
 
-## 📥 Kurulum ve Çalıştırma
+## 📥 Hızlı Başlangıç & Kullanım
 
-PwX Studio kurulum gerektirmez, doğrudan taşınabilir (portable) olarak çalışır:
+PwX Studio taşınabilirdir (portable), kurulum gerektirmez:
 
-1. [Releases](https://github.com/mtahiryilmazz/pwxstudio/releases/latest) sayfasından en son sürümü indirin.
-2. `PwX-Studio-v1.5.0.exe` dosyasını çalıştırın.
-3. Veya PowerShell üzerinden kaynak kod ile çalıştırmak için:
-   ```powershell
-   powershell.exe -ExecutionPolicy Bypass -File .\PwX-Studio-v1.5.0.ps1
-   ```
-
----
-
-## 🛠️ Kullanım Rehberi
-
-1. **Kaynak Betiği Seçin:** `.ps1` uzantılı PowerShell betiğinizi "Gözat" ile seçin veya yolunu girin.
-2. **Çıktı EXE Yolunu Belirleyin:** Üretilecek `.exe` dosyasının adını ve konumunu belirleyin.
-3. **Simge Ekleyin (İsteğe Bağlı):**
-   - Kendi `.ico` veya `.png` dosyanızı seçin.
-   - Ya da "İkon Ara" düğmesiyle kütüphaneden arayıp tek tıkla indirin.
-4. **Hedef Çalışma Zamanını Belirleyin:**
-   - **PowerShell 5.1** (Önerilen: Hafif ve bağımlılıksız)
-   - **PowerShell 7.4+** (Modern betikler için)
-5. **Seçenekleri Yapılandırın:**
-   - Konsolsuz (Pencere Modu) / Konsol Açık
-   - Yönetici (UAC / Run as Admin) yetkisi isteme
-   - Mimari seçimi (x64 / x86)
-   - Sürüm ve Telif Bilgileri (Ürün Adı, Şirket, Dosya Sürümü)
-6. **"EXE Oluştur"** düğmesine tıklayın.
+1. [Releases](https://github.com/mtahiryilmazz/pwxstudio/releases/latest) sayfasından `PwX-Studio-v1.5.0.exe` dosyasını indirin ve çalıştırın.
+2. **Kaynak Betik:** Dönüştürmek istediğiniz `.ps1` dosyasını seçin.
+3. **Çıktı Yolu:** Üretilecek `.exe` dosyasının adını ve kaydedileceği konumu belirleyin.
+4. **Simge Ekleme:** Kendi `.ico` dosyanızı seçin veya "Web'den Ara" butonuna basarak kütüphaneden beğendiğiniz bir ikonu seçin.
+5. **Hedef Çalışma Zamanı:** PowerShell 5.1 veya PowerShell 7.4+ seçeneğini belirleyin.
+6. **Seçenekler:** Konsol uygulaması veya pencereli (arka plan) mod, yönetici yetkisi (UAC), x64/x86 mimari tercihlerini yapılandırın.
+7. **"EXE OLUŞTUR"** butonuna tıklayın.
 
 ---
 
 ## 🖼️ Simge (Icon) Yönetimi
 
-PwX Studio, simgeleri iki düzeyde işler:
-1. **Dosya Düzeyi (PE Header):** Windows Explorer dosya simgesini doğrudan ikona dönüştürür.
-2. **Pencere Düzeyi (WinForms Bootstrap):** Eğer betiğiniz bir WinForms arayüzü içeriyorsa, form başlatıcıları otomatik tespit edilir ve simge pencerenin başlık çubuğuna ve görev çubuğuna otomatik olarak atanır.
+PwX Studio, simgeleri iki ayrı katmanda işler:
+1. **EXE Dosya Simgesi:** Windows Gezgini, masaüstü kısayolları ve dosya listelerinde görünen simgedir.
+2. **Pencere Simgesi (Bootstrap):** Betiğiniz WinForms arayüzü içeriyorsa, form kurucuları otomatik tespit edilerek simge pencerenin sol üst köşesine ve görev çubuğuna otomatik entegre edilir.
 
 ---
 
-## 🧪 Geliştirme ve Test
+## 🔗 Ekosistem & Dönüştürme Motoru
 
-PwX Studio dahili motoru (`pwxengine`), kapsamlı test senaryolarıyla doğrulanır. Test paketini yerel ortamınızda çalıştırmak için:
+PwX ekosistemi iki ana parçadan oluşur:
 
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\pwxengine\tests\Run-Smoke.ps1
-```
-
-Bu test şunları denetler:
-- PowerShell 5.1 `csc.exe` derleme hattı
-- Konsollu ve konsolsuz pencere modları
-- Parametre aktarımı ve çıkış kodları (`exit code`)
-- Gömülü kaynaklar ve ICO simgesi doğrulama
-- Sözdizimi hatası tespiti ve güvenli derleme reddi
-
----
-
-## 📜 Sürümler ve Değişiklikler
-
-Tüm sürüm geçmişi ve ayrıntılı değişiklik kayıtları için [CHANGELOG.md](CHANGELOG.md) dosyasına göz atabilirsiniz.
+| Proje | Tür | Açıklama |
+| :--- | :--- | :--- |
+| **[PwX Studio](https://github.com/mtahiryilmazz/pwxstudio)** | Desktop GUI | Grafik arayüz, tema, simge seçici ve görsel derleme |
+| **[pwxe](https://github.com/mtahiryilmazz/pwxe)** | CLI / Modül | Terminal, otomasyon, PSGallery (`Install-Module pwxe`) ve CI/CD derleme motoru |
 
 ---
 
 ## 📄 Lisans
 
-Bu proje [MIT Lisansı](LICENSE) kapsamında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakabilirsiniz.
+Bu proje [MIT Lisansı](LICENSE) kapsamında lisanslanmıştır.
