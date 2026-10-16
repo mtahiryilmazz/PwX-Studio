@@ -34,14 +34,22 @@ Henüz yayımlanmamış geliştirmeler.
   - **PowerShell 7.4+:** Modern `.NET 8 SDK` ve `Microsoft.PowerShell.SDK` ile self-contained `.exe` üretimi.
   - **Tek Dosya (Single-File):** PowerShell 7 için tüm çalışma zamanını tek bir `.exe` içerisine paketleme desteği.
 - **Dinamik Hedef Arayüzü:** "Hedef Çalışma Zamanı (PwX Build Engine)" grubu eklendi; PS7 seçildiğinde Tek Dosya seçeneği dinamik olarak aktifleşir.
+- **Dinamik Başlık ve EXE Adı Senkronizasyonu:** "Uygulama Adı / Başlık" alanında yapılan düzenlemeler, çıktı `.exe` dosyasının adını anlık (`Add_TextChanged`) olarak günceller; özel sürüm veya adlandırmalar doğrudan hedef dosyaya yansıtılır.
+- **10x5 Kompakt Vektör İkon Izgarası:** İkon arama ve önizleme alanı 10x5 düzenine genişletildi, simgelerin daha düzenli, kompakt ve akıcı listelenmesi sağlandı.
+- **Ücretsiz & Popüler Vektör İkon Kaynakları:** Harici API zorunlulukları kaldırılarak ücretsiz ve zengin ikon kaynakları önceliklendirildi.
 
 ### Changed
 - PwX Studio tamamen harici paket bağımlılıksız, çevrimdışı çalışabilen bağımsız bir yapıya kavuşturuldu.
 - **Responsive & Sizable Pencere:** Sabit boyut kilidi kaldırıldı; pencere serbestçe yeniden boyutlandırılabilir, tam ekran yapılabilir hâle getirildi ve küçük ekranlar için dinamik kaydırma çubuğu (`AutoScroll`) eklendi.
 - **Motor Ayrıştırması (pwxe):** Çekirdek derleme motoru `pwxe` olarak adlandırılarak [github.com/mtahiryilmazz/pwxe](https://github.com/mtahiryilmazz/pwxe) adresinde bağımsız bir CLI & modül deposuna ayrıldı; PwX Studio hem sistemdeki `pwxe` modülünü hem de dahili kopyayı destekleyen hibrit yapıya kavuşturuldu.
+- **Betik Değişiminde Otomatik Yenileme:** Kullanıcı yeni veya farklı bir `.ps1` dosyası seçtiğinde, uygulama adı ve hedef EXE adı yeni seçilen dosya adıyla otomatik olarak güncellenir.
+- **Bağımsız Çalışma Zamanı ve Konsol Modu:** PowerShell 5.1 / PowerShell 7 seçimi ile Konsol / GUI (Pencere) modu seçimleri birbirinden bağımsız, birbirini ezmeyen uyumlu bir yapıya kavuşturuldu.
 - Uygulama marka başlığı `PwX Studio v1.5.0` olarak güncellendi.
 
 ### Fixed
+- Farklı `.ps1` dosyaları yüklendiğinde uygulama adının eski seçilen dosyada takılı kalma sorunu giderildi.
+- "Uygulama Adı" değiştirildiğinde veya sürüm numarası girildiğinde dosya adının eski betik adı olarak kalması sorunu çözüldü; doğrudan kullanıcının yazdığı isimle derlenmesi sağlandı.
+- Belirli kombinasyonlarda "EXE Oluştur" butonuna basıldığında uygulamanın beklenmedik şekilde kapanmasına yol açan doğrulama ve enjeksiyon hataları giderildi.
 - `pwxengine/tests/Run-Smoke.ps1` test betiğinde kasıtlı sözdizimi reddi (`T-009`) sonrası kalan `$LASTEXITCODE = 1` sızıntısı giderildi; açık `exit 0` eklenerek GitHub Actions Windows CI süreci (Run #31) tamamen başarılı (yeşil) hâle getirildi.
 - Arayüz içindeki tüm User-Agent istemci tanımlayıcıları `PwX-Studio/1.5.0` olarak güncellendi.
 - Türkçe karakterler (`ş, ğ, ü, ç, ö, ı, İ`) ve UTF-8 BOM kodlama uyumluluğu korundu.

@@ -33,8 +33,19 @@
 - Yeni **"Hedef Çalışma Zamanı (pwxe)"** kontrol grubu eklendi.
 - Açık (Light) ve Koyu (Dark) Lucide tema desteği korundu.
 
-### 5. 🛡️ CI/CD ve Kararlılık İyileştirmeleri
+### 5. 🔄 Dinamik Başlık & EXE İsmi Senkronizasyonu
+- **Gerçek Zamanlı Çıktı Güncelleme:** "Uygulama Adı / Başlık" alanında yapılan herhangi bir değişiklik, hedef `.exe` dosya adına anında yansıtılır (örn. `app-v1.ps1` seçilip başlık `app` ve sürüm `1.0.0.0` yapıldığında dosya adı kesin olarak `app.exe` olur).
+- **Akıllı Betik Geçişi:** Yeni veya farklı bir `.ps1` dosyası yüklendiğinde, başlık ve hedef dosya adı otomatik olarak yeni betiğe göre güncellenir.
+- **Kullanıcı Tercihi Koruması:** "Farklı Kaydet..." ile kullanıcı tarafından özel olarak belirlenen çıktı dosya yolları korunur.
+
+### 6. 🎨 10x5 Kompakt Vektör İkon Izgarası & Popüler Kaynaklar
+- İkon arama ve seçim ızgarası 10x5 ölçüsüne optimize edildi; daha fazla simge kompakt ve temiz bir düzende görüntülenir.
+- Dış API bağımlılıkları kaldırılarak popüler, ücretsiz vektör ikon kütüphaneleri (Iconify, Lucide, Material) yerel vektörel önizleme ile entegre edildi.
+
+### 7. 🛡️ CI/CD ve Kararlılık İyileştirmeleri
 - GitHub Actions CI/CD test ortamında sözdizimi doğrulama ve derleme testleri %100 başarılı (yeşil) hâle getirildi.
+- Hedef çalışma zamanı (PS5.1 / PS7) ile çalıştırma modları (Konsol / GUI) tamamen bağımsızlaştırıldı.
+- Derleme anında pencere kapanmasına neden olan beklenmedik doğrulama ve simge işleme hataları tamamen giderildi.
 - Türkçe karakter desteği (`ş, ğ, ü, ç, ö, ı, İ`) ve UTF-8 BOM kodlama kararlılığı sağlandı.
 
 ---
@@ -49,8 +60,13 @@
 - `pwxengine` dönüştürme motoru doğrudan GUI içerisine entegre edildi.
 - PowerShell 5.1 ve PowerShell 7.4+ çalışma zamanı radyo butonları ve "Tek Dosya (Single-File)" onay kutusu.
 - WinForms form kurucuları için güvenli `$script:PwXEmbeddedIcon` bootstrap enjeksiyonu.
+- Dinamik iki yönlü başlık ve EXE dosya adı senkronizasyonu (`Add_TextChanged`).
+- 10x5 vektör ikon ızgarası ve genişletilmiş ücretsiz ikon kaynakları.
 
 ### 🔧 Düzeltmeler (Fixed)
+- Yeni `.ps1` seçildiğinde başlığın eski dosyada takılı kalması düzeltildi.
+- Başlık değiştirildiğinde veya sürüm girildiğinde EXE adının eski betik adı kalması sorunu giderildi.
+- Belirli kombinasyonlarda "EXE Oluştur"a basıldığında GUI'nin kapanma hatası giderildi.
 - `pwxengine/tests/Run-Smoke.ps1` test betiğinde kasıtlı sözdizimi hatası testi (`T-009`) sonrası kalan `$LASTEXITCODE` sızıntısı giderildi.
 - Dağıtım ve simge işleme sıralamasındaki zamanlama hataları düzeltildi.
 

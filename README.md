@@ -50,7 +50,8 @@ Komut satırı karmaşası olmadan betiklerinizi seçebilir, görsel uygulama si
 - **🎯 Çift Hedef Çalışma Zamanı:**
   - **PowerShell 5.1:** Sıfır ek gereksinimle hafif ve anında açılan yerel `.exe` çıktısı (~500 KB).
   - **PowerShell 7.4+:** En yeni PowerShell dil özellikleri ve opsiyonel **Tek Dosya (Single-File)** paketleme desteği.
-- **🖼️ Dahili Web İkon Arama:** Iconify ve Icons8 entegrasyonuyla binlerce vektörel ikonu uygulama içinden arayabilir, tek tıkla indirip çok boyutlu `.ico` formatına otomatik dönüştürebilirsiniz.
+- **🔄 Dinamik Başlık & Çıktı Senkronizasyonu:** "Uygulama Adı / Başlık" alanında yapılan düzenlemeler anında hedef `.exe` dosya adına yansıtılır; yeni betik seçildiğinde başlık ve dosya adı otomatik yenilenir.
+- **🖼️ 10x5 Vektör İkon Arama:** Popüler ücretsiz vektörel ikon kütüphaneleri (Iconify, Material, Lucide) entegrasyonuyla binlerce ikonu uygulama içinden arayabilir, tek tıkla indirip çok boyutlu `.ico` formatına otomatik dönüştürebilirsiniz.
 - **🛡️ Otomatik Form Simgesi Enjeksiyonu:** Seçilen simge yalnızca Windows Gezgini'nde değil, betik içindeki WinForms pencerelerinin başlık çubuğunda ve Windows görev çubuğunda da otomatik olarak gösterilir.
 - **🌗 Lucide Açık / Koyu Tema:** Göz yormayan, sistemle uyumlu modern tema geçişi.
 - **📋 Gerçek Zamanlı Günlük Kayıtları:** Derleme sürecini, parametreleri ve varsa hata detaylarını adım adım gösteren konsol ekranı.

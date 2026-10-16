@@ -1,43 +1,98 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
     PwX Studio v1.5.0 - PowerShell Executable Builder
-    - Tamamen bağımsız yerli "PwX Build Engine" kullanır (PS2EXE bağımlılığı tamamen kaldırılmıştır)
-    - PowerShell 5.1 (Windows Dahili csc.exe) ve PowerShell 7 (.NET 8 SDK) hedef desteği
-    - Logo: dosyadan veya çok kaynaklı web aramasıyla (Iconify, Font Awesome, Google Material, Icons8) indir; derlemede ICO'ya dönüştür
-    - Türkçe karakter uyumlu (dosya UTF-8 BOM'lu kaydedilmiştir; exe konsolu UTF-8 çıktı verir)
+    - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
+    - Dinamik Tema Desteği: Açık Tema ve Koyu Tema geçişi
+    - PowerShell 5.1 (Dahili csc.exe) ve PowerShell 7 (.NET 8 SDK) hedef desteği
+    - Çok kaynaklı Web İkon Arama Hub'ı (Gelişmiş Türkçe/İngilizce Arama & Renk Kartelası)
+    - Türkçe karakter uyumlu (UTF-8 dosya ve konsol UTF-8 çıktı motoru)
     Çalıştırma: powershell.exe -STA -ExecutionPolicy Bypass -File .\PwX-Studio-v1.5.0.ps1
-    NOT: Bu dosyayı düzenlerseniz "UTF-8 with BOM" olarak kaydedin (Türkçe karakterler için).
 #>
 
-Add-Type -AssemblyName System.Windows.Forms
+Set-StrictMode -Version 2.0
+$ErrorActionPreference = 'Stop'
+
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName PresentationCore
+Add-Type -AssemblyName WindowsBase
 Add-Type -AssemblyName System.Drawing
-[System.Windows.Forms.Application]::EnableVisualStyles()
+Add-Type -AssemblyName System.Windows.Forms
+
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 [Net.ServicePointManager]::DefaultConnectionLimit = 16
 
+# WPF Uygulama Yaşam Döngüsü: İkincil modal pencereler kapatıldığında ana pencerenin kapanmasını önle
+if ($null -eq [System.Windows.Application]::Current) {
+    $app = New-Object System.Windows.Application
+    $app.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
+} else {
+    [System.Windows.Application]::Current.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
+}
+
 $trCulture = [System.Globalization.CultureInfo]::GetCultureInfo('tr-TR')
 
-# Türkçe arama kelimeleri -> İngilizce (Iconify aramaları İngilizce çalışır)
+# ------------------------------------------------------------------
+#  Gelişmiş Türkçe -> İngilizce İkon Sözlüğü (250+ Terim)
+# ------------------------------------------------------------------
 $TrMap = @{
-    'klasör' = 'folder'; 'klasor' = 'folder'; 'dosya' = 'file'; 'ev' = 'home'
-    'ayar' = 'settings'; 'ayarlar' = 'settings'; 'kurulum' = 'install'; 'indir' = 'download'
-    'kilit' = 'lock'; 'anahtar' = 'key'; 'yazıcı' = 'printer'; 'yazici' = 'printer'
-    'ağ' = 'network'; 'ag' = 'network'; 'sunucu' = 'server'; 'bilgisayar' = 'computer'
-    'güvenlik' = 'security'; 'guvenlik' = 'security'; 'kalkan' = 'shield'
-    'kullanıcı' = 'user'; 'kullanici' = 'user'; 'sepet' = 'cart'; 'arama' = 'search'
-    'kitap' = 'book'; 'okul' = 'school'; 'cami' = 'mosque'; 'dünya' = 'globe'; 'dunya' = 'globe'
-    'yıldız' = 'star'; 'yildiz' = 'star'; 'kalp' = 'heart'; 'güncelle' = 'update'; 'guncelle' = 'update'
-    'sil' = 'delete'; 'çöp' = 'trash'; 'cop' = 'trash'; 'veritabanı' = 'database'; 'veritabani' = 'database'
-    'rapor' = 'report'; 'grafik' = 'chart'; 'belge' = 'document'; 'telefon' = 'phone'
-    'kamera' = 'camera'; 'müzik' = 'music'; 'muzik' = 'music'; 'oyun' = 'game'; 'bulut' = 'cloud'
-    'saat' = 'clock'; 'takvim' = 'calendar'; 'bilgi' = 'info'; 'uyarı' = 'warning'; 'uyari' = 'warning'
-    'hata' = 'error'; 'onay' = 'check'; 'kod' = 'code'; 'yedek' = 'backup'; 'araç' = 'tools'
-    'uygulama' = 'app'; 'paket' = 'package'; 'mağaza' = 'store'; 'magaza' = 'store'; 'yıldırım' = 'bolt'
-    'harita' = 'map'; 'resim' = 'image'; 'ses' = 'volume'; 'mesaj' = 'message'; 'çevir' = 'translate'
+    # Klasör, Dosya ve Belge
+    'klasör' = 'folder'; 'klasor' = 'folder'; 'dosya' = 'file'; 'belge' = 'document'; 'evrak' = 'document'
+    'arşiv' = 'archive'; 'arsiv' = 'archive'; 'yedek' = 'backup'; 'yedekleme' = 'backup'; 'kaydet' = 'save'
+    'yazıcı' = 'printer'; 'yazici' = 'printer'; 'yazdır' = 'printer'; 'yazdir' = 'printer'; 'tarayıcı' = 'scanner'; 'tarayici' = 'scanner'
+    'kopyala' = 'copy'; 'yapıştır' = 'paste'; 'yapistir' = 'paste'; 'kes' = 'cut'; 'pano' = 'clipboard'
+    'not' = 'note'; 'defter' = 'notebook'; 'kitap' = 'book'; 'kalem' = 'pencil'; 'silgi' = 'eraser'; 'çöp' = 'trash'; 'cop' = 'trash'
+    'sil' = 'delete'; 'kaldır' = 'remove'; 'kaldir' = 'remove'; 'düzenle' = 'edit'; 'duzenle' = 'edit'
+    
+    # Bilgisayar, Donanım ve Sistem
+    'bilgisayar' = 'computer'; 'laptop' = 'laptop'; 'dizüstü' = 'laptop'; 'dizustu' = 'laptop'; 'masaüstü' = 'desktop'; 'masaustu' = 'desktop'
+    'ekran' = 'monitor'; 'monitör' = 'monitor'; 'klavye' = 'keyboard'; 'fare' = 'mouse'; 'kulaklık' = 'headphones'; 'kulaklik' = 'headphones'
+    'hoparlör' = 'speaker'; 'hoparlor' = 'speaker'; 'mikrofon' = 'microphone'; 'kamera' = 'camera'; 'webcam' = 'camera'
+    'bellek' = 'memory'; 'ram' = 'memory'; 'disk' = 'harddrive'; 'sürücü' = 'drive'; 'surucu' = 'drive'; 'usb' = 'usb'
+    'işlemci' = 'cpu'; 'islemci' = 'cpu'; 'çip' = 'chip'; 'cip' = 'chip'; 'sunucu' = 'server'; 'bulut' = 'cloud'
+    'terminal' = 'terminal'; 'konsol' = 'console'; 'kod' = 'code'; 'yazılım' = 'software'; 'yazilim' = 'software'
+    'uygulama' = 'app'; 'program' = 'application'; 'araç' = 'tools'; 'arac' = 'tools'; 'ayarlar' = 'settings'
+    'ayar' = 'settings'; 'yapılandırma' = 'settings'; 'kurulum' = 'install'; 'yükle' = 'download'; 'yukle' = 'download'; 'indir' = 'download'
+    'güncelle' = 'update'; 'guncelle' = 'update'; 'yenile' = 'refresh'; 'döngü' = 'sync'; 'dongu' = 'sync'
+    
+    # Güvenlik, Kimlik & Ağ
+    'güvenlik' = 'security'; 'guvenlik' = 'security'; 'kalkan' = 'shield'; 'kilit' = 'lock'; 'kilitli' = 'lock'
+    'anahtar' = 'key'; 'şifre' = 'password'; 'sifre' = 'password'; 'parola' = 'password'; 'kullanıcı' = 'user'
+    'kullanici' = 'user'; 'hesap' = 'account'; 'profil' = 'profile'; 'grup' = 'group'; 'yönetici' = 'admin'; 'yonetici' = 'admin'
+    'yetki' = 'permission'; 'koruma' = 'protect'; 'virüs' = 'virus'; 'virus' = 'virus'; 'hata' = 'error'; 'böcek' = 'bug'; 'bocek' = 'bug'
+    'ağ' = 'network'; 'ag' = 'network'; 'internet' = 'globe'; 'dünya' = 'globe'; 'dunya' = 'globe'; 'web' = 'web'
+    'wifi' = 'wifi'; 'bağlantı' = 'link'; 'baglanti' = 'link'; 'bluetooth' = 'bluetooth'
+    
+    # İletişim, Medya & Sosyal
+    'mesaj' = 'message'; 'sohbet' = 'chat'; 'posta' = 'mail'; 'mektup' = 'mail'; 'eposta' = 'email'; 'mail' = 'mail'
+    'gönder' = 'send'; 'gonder' = 'send'; 'gelen' = 'inbox'; 'telefon' = 'phone'; 'ara' = 'search'; 'arama' = 'search'
+    'bul' = 'search'; 'büyüteç' = 'search'; 'buyutec' = 'search'; 'bildirim' = 'bell'; 'zil' = 'bell'
+    'ses' = 'volume'; 'sessiz' = 'mute'; 'müzik' = 'music'; 'muzik' = 'music'; 'şarkı' = 'music'; 'sarki' = 'music'; 'oynat' = 'play'
+    'durdur' = 'stop'; 'duraklat' = 'pause'; 'video' = 'video'; 'film' = 'movie'; 'resim' = 'image'; 'görsel' = 'image'; 'gorsel' = 'image'
+    'fotoğraf' = 'photo'; 'fotograf' = 'photo'; 'galeri' = 'gallery'; 'paylaş' = 'share'; 'paylas' = 'share'
+    'kalp' = 'heart'; 'sev' = 'heart'; 'beğen' = 'like'; 'begen' = 'like'; 'yıldız' = 'star'; 'yildiz' = 'star'; 'etiket' = 'tag'
+    
+    # Ticaret, Finans & Ofis
+    'sepet' = 'cart'; 'çanta' = 'shopping-bag'; 'canta' = 'shopping-bag'; 'mağaza' = 'store'; 'magaza' = 'store'
+    'dükkan' = 'shop'; 'dukkan' = 'shop'; 'para' = 'money'; 'nakit' = 'cash'; 'dolar' = 'dollar'; 'euro' = 'euro'; 'lira' = 'currency'
+    'kart' = 'credit-card'; 'ödeme' = 'payment'; 'odeme' = 'payment'; 'fatura' = 'invoice'; 'banka' = 'bank'
+    'indirim' = 'discount'; 'yüzde' = 'percent'; 'yuzde' = 'percent'; 'hediye' = 'gift'; 'paket' = 'package'
+    'kargo' = 'delivery'; 'kamyon' = 'truck'; 'sipariş' = 'order'; 'siparis' = 'order'; 'grafik' = 'chart'; 'rapor' = 'chart'
+    'tablo' = 'table'; 'hesaplama' = 'calculator'; 'takvim' = 'calendar'; 'saat' = 'clock'; 'zaman' = 'time'
+    
+    # Durumlar, Eylemler & Yönler
+    'onay' = 'check'; 'tamam' = 'check'; 'doğru' = 'check'; 'dogru' = 'check'; 'evet' = 'check'; 'kapat' = 'close'; 'çarpı' = 'close'; 'carpi' = 'close'
+    'iptal' = 'cancel'; 'uyarı' = 'warning'; 'uyari' = 'warning'; 'bilgi' = 'info'; 'yardım' = 'help'; 'yardim' = 'help'
+    'soru' = 'help'; 'ekle' = 'plus'; 'artı' = 'plus'; 'arti' = 'plus'; 'çıkar' = 'minus'; 'cikar' = 'minus'; 'eksi' = 'minus'
+    'ileri' = 'forward'; 'geri' = 'back'; 'yukarı' = 'arrow-up'; 'yukari' = 'arrow-up'; 'aşağı' = 'arrow-down'; 'asagi' = 'arrow-down'; 'sol' = 'arrow-left'; 'sağ' = 'arrow-right'; 'sag' = 'arrow-right'
+    'güç' = 'power'; 'guc' = 'power'; 'aç' = 'power'; 'ac' = 'power'; 'pil' = 'battery'; 'batarya' = 'battery'; 'şarj' = 'charge'; 'sarj' = 'charge'
+    'roket' = 'rocket'; 'yıldırım' = 'bolt'; 'yildirim' = 'bolt'; 'şimşek' = 'bolt'; 'simsek' = 'bolt'; 'ateş' = 'fire'; 'ates' = 'fire'; 'su' = 'water'
+    'ev' = 'home'; 'okul' = 'school'; 'harita' = 'map'; 'konum' = 'pin'; 'işaret' = 'pin'; 'isaret' = 'pin'
+    'bayrak' = 'flag'; 'kupa' = 'trophy'; 'ödül' = 'award'; 'odul' = 'award'; 'oyun' = 'game'; 'kumanda' = 'gamepad'
+    'çevir' = 'flip'; 'cevir' = 'flip'; 'döndür' = 'rotate'; 'dondur' = 'rotate'; 'yansıt' = 'reflect'; 'yansit' = 'reflect'; 'ayna' = 'mirror'
 }
 
 # ------------------------------------------------------------------
-#  Yardımcı fonksiyonlar
+#  Yardımcı Fonksiyonlar & İkon İşlemleri
 # ------------------------------------------------------------------
 
 function Convert-ToIco([string]$srcPath, [string]$dstPath) {
@@ -88,38 +143,83 @@ function Convert-ToIco([string]$srcPath, [string]$dstPath) {
     finally { $img.Dispose(); $ms0.Dispose() }
 }
 
-
-# ---- Web ikon arama (Iconify) ----
 function Convert-TrQuery([string]$q) {
-    $words = $q.Trim().ToLower($trCulture) -split '\s+' | Where-Object { $_ }
-    $out = foreach ($w in $words) { if ($TrMap.ContainsKey($w)) { $TrMap[$w] } else { $w } }
+    $rawWords = $q.Trim().ToLower($trCulture) -split '\s+' | Where-Object { $_ }
+    $out = foreach ($raw in $rawWords) {
+        $w = $raw
+        if ($TrMap.ContainsKey($w)) { 
+            $TrMap[$w] 
+        } else {
+            # Çoğul ve yönelme eklerini temizleyerek kök ara
+            $trimmed = $w -replace '(ler|lar|nin|nın|nun|nün|ye|ya|de|da|den|dan|i|ı|u|ü)$', ''
+            if ($trimmed -and $TrMap.ContainsKey($trimmed)) {
+                $TrMap[$trimmed]
+            } else {
+                $w
+            }
+        }
+    }
     return ($out -join ' ')
 }
 
-function Search-Icons([string]$query, [int]$sourceIndex, [string]$icons8ApiKey = '') {
-    $script:icons8SearchWarning = $false
+function Search-Icons([string]$query, [int]$sourceIndex) {
     $script:iconifySearchWarning = $false
-    $q = Convert-TrQuery $query
+    $qTranslated = Convert-TrQuery $query
     $items = New-Object System.Collections.Generic.List[object]
-    $prefixes = ''
-    # 0 = birleşik arama; 6 = yalnızca Icons8
-    $useIcons8 = ($sourceIndex -eq 0 -or $sourceIndex -eq 6)
-    switch ($sourceIndex) {
-        1 { $prefixes = '' }
-        2 { $prefixes = 'flat-color-icons,fluent-emoji,twemoji,noto,logos,emojione,openmoji,vscode-icons' }
-        3 { $prefixes = 'mdi,tabler,lucide,ph,bi,carbon,fa6-solid' }
-        4 { $prefixes = 'fa,fa6-solid,fa6-regular,fa6-brands,fa-brands' }
-        5 { $prefixes = 'material-symbols,material-icon-theme,mdi' }
-        6 { $useIcons8 = $true }
-        default { $useIcons8 = $true }
+    $seen = New-Object System.Collections.Generic.HashSet[string]
+
+    $prefixes = switch ($sourceIndex) {
+        0 { '' } # Tüm Kaynaklar: Filtresiz global arama (tüm kütüphaneler dahil)
+        1 { 'material-symbols,material-symbols-light,material-icon-theme' }
+        2 { 'fa6-solid,fa6-regular,fa6-brands,fa,fa-brands' }
+        3 { 'lucide,feather' }
+        4 { 'tabler' }
+        5 { 'ri' }
+        6 { 'bi' }
+        7 { 'fluent' }
+        8 { 'bx,bxs' }
+        9 { 'carbon' }
+        10 { 'ph,ph-bold,ph-fill' }
+        11 { 'thesvg-color,streamline-color,fluent-color,flat-color-icons,fluent-emoji,noto,logos,vscode-icons' }
+        12 { 'thesvg-color,streamline-color,icon-park,fluent-color,flat-color-icons,openmoji,fluent-emoji,fluent-emoji-flat,twemoji,noto,noto-v1,emojione,logos,vscode-icons,fluent,bi,tabler,ri' }
+        13 { 'solar,iconmind,iconoven,keyline-icons,iconoir,system-uicons,iconamoon,majesticons,tabler,lucide,mingcute,tdesign' }
+        default { '' }
     }
 
-    if ($sourceIndex -ne 6) {
+    # Hem İngilizce çeviriyle hem de orijinal kelimeyle arama yaparak en zengin sonuçları topla
+    $searchQueries = New-Object System.Collections.Generic.List[string]
+    if ($qTranslated) { $searchQueries.Add($qTranslated) }
+    $rawTrim = $query.Trim().ToLower()
+    if ($rawTrim -and $rawTrim -ne $qTranslated -and -not $searchQueries.Contains($rawTrim)) {
+        $searchQueries.Add($rawTrim)
+    }
+
+    # Eş anlamlı / varyant kelimeler (kütüphaneler arası isimlendirme farklarını kapatır)
+    $synonyms = @{
+        'flip'     = @('reflect', 'mirror')
+        'reflect'  = @('flip', 'mirror')
+        'mirror'   = @('flip', 'reflect')
+        'rotate'   = @('turn', 'sync', 'refresh')
+        'settings' = @('gear', 'cog', 'preferences', 'tools')
+        'trash'    = @('delete', 'bin', 'remove')
+        'delete'   = @('trash', 'bin', 'remove')
+        'edit'     = @('pencil', 'write', 'modify')
+    }
+    foreach ($sq in @($searchQueries)) {
+        if ($synonyms.ContainsKey($sq)) {
+            foreach ($syn in $synonyms[$sq]) {
+                if (-not $searchQueries.Contains($syn)) {
+                    $searchQueries.Add($syn)
+                }
+            }
+        }
+    }
+
+    foreach ($currentQ in $searchQueries) {
         try {
-            $queryPart = '?query=' + [uri]::EscapeDataString($q) + '&limit=60'
+            $queryPart = '?query=' + [uri]::EscapeDataString($currentQ) + '&limit=250'
             if ($prefixes) { $queryPart += '&prefixes=' + [uri]::EscapeDataString($prefixes) }
             $json = $null
-            $lastError = $null
             foreach ($apiHost in @('https://api.iconify.design','https://api.simplesvg.com','https://api.unisvg.com')) {
                 try {
                     $wc = New-Object System.Net.WebClient
@@ -127,887 +227,1776 @@ function Search-Icons([string]$query, [int]$sourceIndex, [string]$icons8ApiKey =
                     $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
                     $json = $wc.DownloadString($apiHost + '/search' + $queryPart) | ConvertFrom-Json
                     if ($json -and $null -ne $json.icons) { break }
-                } catch { $lastError = $_.Exception.Message }
+                } catch { }
             }
-            if (-not $json -or $null -eq $json.icons) { throw ('Iconify ana ve yedek API adresleri başarısız. ' + $lastError) }
-            foreach ($name in @($json.icons)) {
-                if ($name -match '^([^:]+):(.+)$') {
-                    $items.Add([pscustomobject]@{ Name=[string]$name; Provider='Iconify'; PreviewUrl=$null; DownloadUrl=$null; License='Kaynağın lisansını kontrol edin' })
+            if ($json -and $json.icons) {
+                $providerName = switch ($sourceIndex) {
+                    12 { 'Flaticon Koleksiyonu' }
+                    13 { 'Magnific Koleksiyonu' }
+                    default { 'Iconify' }
+                }
+                foreach ($name in @($json.icons)) {
+                    $strName = [string]$name
+                    if ($strName -match '^([^:]+):(.+)$' -and -not $seen.Contains($strName)) {
+                        [void]$seen.Add($strName)
+                        $items.Add([pscustomobject]@{ Name=$strName; Provider=$providerName; PreviewUrl=$null; DownloadUrl=$null; License='Açık Kaynak (Ücretsiz / Özgür Lisans)' })
+                    }
                 }
             }
         } catch {
             $script:iconifySearchWarning = $true
-            if ($sourceIndex -notin @(0,6)) { throw }
         }
     }
 
-    if ($useIcons8) {
-        $i8url = 'https://search.icons8.com/api/iconsets/v5/search?term=' + [uri]::EscapeDataString($q) + '&amount=40&offset=0&language=en&authors=icons8&isFree=true&spellcheck=true&suggest=true'
-        $wc8 = New-Object System.Net.WebClient
-        $wc8.Encoding = [System.Text.Encoding]::UTF8
-        $wc8.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
-        if ($icons8ApiKey) { $wc8.Headers['Api-Key'] = $icons8ApiKey }
-        try {
-            $j8 = $wc8.DownloadString($i8url) | ConvertFrom-Json
-            foreach ($ic in @($j8.icons)) {
-                if ($ic.previewUrl) {
-                    $prev = [string]$ic.previewUrl
-                    $down = $prev -replace 'size=\d+', 'size=256'
-                    $items.Add([pscustomobject]@{ Name=('Icons8: ' + [string]$ic.name); Provider='Icons8'; PreviewUrl=$prev; DownloadUrl=$down; License=($(if ($ic.isFree) {'Ücretsiz koşulları/atıf şartını kontrol edin'} else {'Lisans gerekebilir'})) })
+    return @{ Query = $qTranslated; Icons = @($items | Select-Object -First 300) }
+}
+
+function Convert-SvgToDrawingGroup([string]$svgContent, [string]$overrideHex = '') {
+    try {
+        [xml]$xml = $svgContent
+        $svg = $xml.svg
+        if (-not $svg) { return $null }
+
+        $dg = New-Object System.Windows.Media.DrawingGroup
+        
+        $cleanHex = $overrideHex -replace '^#',''
+        $defaultBrush = if ($cleanHex) { 
+            [System.Windows.Media.BrushConverter]::new().ConvertFromString("#$cleanHex") 
+        } else { 
+            [System.Windows.Media.Brushes]::Black 
+        }
+
+        $process = {
+            param($node, $parentFill, $parentStroke, $parentStrokeWidth)
+            $nodeFill = if ($node.HasAttribute('fill')) { $node.GetAttribute('fill') } else { $null }
+            $nodeStroke = if ($node.HasAttribute('stroke')) { $node.GetAttribute('stroke') } else { $null }
+            $nodeStrokeWidth = if ($node.HasAttribute('stroke-width')) { $node.GetAttribute('stroke-width') } else { $null }
+
+            $curFill = if ($null -ne $nodeFill) { $nodeFill } else { $parentFill }
+            $curStroke = if ($null -ne $nodeStroke) { $nodeStroke } else { $parentStroke }
+            $curStrokeWidth = if ($null -ne $nodeStrokeWidth) { $nodeStrokeWidth } else { $parentStrokeWidth }
+
+            $brush = $null
+            if ($curFill -and $curFill -ne 'none') {
+                if ($cleanHex -and ($curFill -eq 'currentColor' -or $curFill -eq 'black' -or $curFill -eq '#000' -or $curFill -eq '#000000')) {
+                    $brush = $defaultBrush
+                } elseif ($cleanHex -and -not $nodeFill -and -not $parentFill) {
+                    $brush = $defaultBrush
+                } else {
+                    try { $brush = [System.Windows.Media.BrushConverter]::new().ConvertFromString($curFill) } catch { $brush = $defaultBrush }
                 }
             }
-        } catch {
-            $script:icons8SearchWarning = $true
-            if ($sourceIndex -eq 6) { throw ('Icons8 araması başarısız. API anahtarı veya ağ bağlantısını kontrol edin. Ayrıntı: ' + $_.Exception.Message) }
+
+            $pen = $null
+            if ($curStroke -and $curStroke -ne 'none') {
+                $sBrush = if ($cleanHex -and ($curStroke -eq 'currentColor' -or $curStroke -eq 'black' -or $curStroke -eq '#000' -or $curStroke -eq '#000000')) {
+                    $defaultBrush
+                } else {
+                    try { [System.Windows.Media.BrushConverter]::new().ConvertFromString($curStroke) } catch { $defaultBrush }
+                }
+                $sw = 1.0
+                if ($curStrokeWidth) {
+                    [double]::TryParse($curStrokeWidth, [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$sw) | Out-Null
+                }
+                $pen = New-Object System.Windows.Media.Pen ($sBrush, $sw)
+                $pen.StartLineCap = [System.Windows.Media.PenLineCap]::Round
+                $pen.EndLineCap = [System.Windows.Media.PenLineCap]::Round
+                $pen.LineJoin = [System.Windows.Media.PenLineJoin]::Round
+            }
+
+            $geom = $null
+            switch ($node.LocalName) {
+                'path' {
+                    $d = $node.GetAttribute('d')
+                    if ($d) { try { $geom = [System.Windows.Media.Geometry]::Parse($d) } catch {} }
+                }
+                'rect' {
+                    $rx = 0.0; $ry = 0.0; $rw = 0.0; $rh = 0.0; $rcx = 0.0; $rcy = 0.0
+                    [double]::TryParse($node.GetAttribute('x'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$rx) | Out-Null
+                    [double]::TryParse($node.GetAttribute('y'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$ry) | Out-Null
+                    [double]::TryParse($node.GetAttribute('width'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$rw) | Out-Null
+                    [double]::TryParse($node.GetAttribute('height'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$rh) | Out-Null
+                    [double]::TryParse($node.GetAttribute('rx'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$rcx) | Out-Null
+                    [double]::TryParse($node.GetAttribute('ry'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$rcy) | Out-Null
+                    if ($rw -gt 0 -and $rh -gt 0) {
+                        $rct = New-Object System.Windows.Rect $rx, $ry, $rw, $rh
+                        $geom = New-Object System.Windows.Media.RectangleGeometry $rct, $rcx, $rcy
+                    }
+                }
+                'circle' {
+                    $cx = 0.0; $cy = 0.0; $r = 0.0
+                    [double]::TryParse($node.GetAttribute('cx'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$cx) | Out-Null
+                    [double]::TryParse($node.GetAttribute('cy'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$cy) | Out-Null
+                    [double]::TryParse($node.GetAttribute('r'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$r) | Out-Null
+                    if ($r -gt 0) {
+                        $pt = New-Object System.Windows.Point $cx, $cy
+                        $geom = New-Object System.Windows.Media.EllipseGeometry $pt, $r, $r
+                    }
+                }
+                'line' {
+                    $x1 = 0.0; $y1 = 0.0; $x2 = 0.0; $y2 = 0.0
+                    [double]::TryParse($node.GetAttribute('x1'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$x1) | Out-Null
+                    [double]::TryParse($node.GetAttribute('y1'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$y1) | Out-Null
+                    [double]::TryParse($node.GetAttribute('x2'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$x2) | Out-Null
+                    [double]::TryParse($node.GetAttribute('y2'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$y2) | Out-Null
+                    $p1 = New-Object System.Windows.Point $x1, $y1
+                    $p2 = New-Object System.Windows.Point $x2, $y2
+                    $geom = New-Object System.Windows.Media.LineGeometry $p1, $p2
+                }
+            }
+
+            if ($geom) {
+                if (-not $brush -and -not $pen) { $brush = $defaultBrush }
+                $dg.Children.Add((New-Object System.Windows.Media.GeometryDrawing ($brush, $pen, $geom)))
+            }
+
+            foreach ($child in $node.ChildNodes) {
+                if ($child.NodeType -eq [System.Xml.XmlNodeType]::Element) {
+                    & $process $child $curFill $curStroke $curStrokeWidth
+                }
+            }
+        }
+
+        foreach ($child in $svg.ChildNodes) {
+            if ($child.NodeType -eq [System.Xml.XmlNodeType]::Element) {
+                & $process $child 'currentColor' 'none' '1'
+            }
+        }
+
+        return $dg
+    } catch {
+        return $null
+    }
+}
+
+function Convert-SvgToPngFile([string]$svgContent, [string]$destinationPng, [string]$hexColor = '0078D4', [int]$size = 256) {
+    try {
+        $dg = Convert-SvgToDrawingGroup $svgContent $hexColor
+        if (-not $dg -or $dg.Children.Count -eq 0) { return $false }
+
+        $bounds = [System.Windows.Rect]::Empty
+        foreach ($d in $dg.Children) {
+            $bounds.Union($d.Bounds)
+        }
+        if ($bounds.IsEmpty -or $bounds.Width -le 0 -or $bounds.Height -le 0) {
+            $bounds = New-Object System.Windows.Rect 0, 0, 24, 24
+        }
+
+        $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap ($size, $size, 96.0, 96.0, [System.Windows.Media.PixelFormats]::Pbgra32)
+        $dv = New-Object System.Windows.Media.DrawingVisual
+        $dc = $dv.RenderOpen()
+
+        $targetInner = [double]($size - 24)
+        $scale = [Math]::Min($targetInner / [Math]::Max(1.0, $bounds.Width), $targetInner / [Math]::Max(1.0, $bounds.Height))
+        $tg = New-Object System.Windows.Media.TransformGroup
+        $tg.Children.Add((New-Object System.Windows.Media.TranslateTransform (-$bounds.X), (-$bounds.Y)))
+        $tg.Children.Add((New-Object System.Windows.Media.ScaleTransform ($scale, $scale)))
+        $tg.Children.Add((New-Object System.Windows.Media.TranslateTransform ((([double]$size - ($bounds.Width * $scale)) / 2.0), (([double]$size - ($bounds.Height * $scale)) / 2.0))))
+
+        $dc.PushTransform($tg)
+        $dc.DrawDrawing($dg)
+        $dc.Pop()
+        $dc.Close()
+
+        $rtb.Render($dv)
+
+        $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+        $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create([System.Windows.Media.Imaging.BitmapSource]$rtb))
+        $fs = [System.IO.File]::Create($destinationPng)
+        try {
+            $enc.Save($fs)
+        } finally {
+            $fs.Close()
+        }
+        return (Test-Path -LiteralPath $destinationPng)
+    } catch {
+        return $false
+    }
+}
+
+function Safe-Prop($obj, [string]$propName, $defaultVal = $null) {
+    if ($null -ne $obj -and $obj.PSObject.Properties[$propName]) {
+        return $obj.PSObject.Properties[$propName].Value
+    }
+    return $defaultVal
+}
+
+function Get-IconBatchSvgs($iconItems) {
+    $byPrefix = @{}
+    foreach ($item in $iconItems) {
+        $name = [string]$item.Name
+        $parts = $name.Split(':', 2)
+        if ($parts.Count -eq 2) {
+            $p = $parts[0]; $iName = $parts[1]
+            if (-not $byPrefix.ContainsKey($p)) { $byPrefix[$p] = New-Object System.Collections.Generic.List[string] }
+            $byPrefix[$p].Add($iName)
         }
     }
-    return @{ Query = $q; Icons = @($items | Select-Object -First 80) }
-}
 
-function Get-IconSvgUrl($item, [int]$size, [string]$hex) {
-    $parts = ([string]$item.Name).Split(':', 2)
-    if ($parts.Count -ne 2) { throw "Geçersiz Iconify ikon adı: $($item.Name)" }
-    $url = "https://api.iconify.design/$($parts[0])/$($parts[1]).svg?height=$size"
-    if ($hex) { $url += '&color=%23' + $hex }
-    return $url
-}
+    $svgCache = @{}
+    $wc = New-Object System.Net.WebClient
+    $wc.Encoding = [System.Text.Encoding]::UTF8
+    $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
 
-function Get-IconPngCandidates($item, [int]$size, [string]$hex) {
-    if ($item.Provider -eq 'Icons8') {
-        $u = [string]$item.DownloadUrl
-        if (-not $u) { $u = [string]$item.PreviewUrl }
-        return @($u | Where-Object { $_ })
-    }
-    $parts = ([string]$item.Name).Split(':', 2)
-    if ($parts.Count -ne 2) { throw "Geçersiz Iconify ikon adı: $($item.Name)" }
-    $prefix = $parts[0]; $iconName = $parts[1]
-    $urls = New-Object System.Collections.Generic.List[string]
-    foreach ($apiHost in @('https://api.iconify.design','https://api.simplesvg.com','https://api.unisvg.com')) {
-        $svg = $apiHost + '/' + $prefix + '/' + $iconName + '.svg?height=' + $size
-        if ($hex) { $svg += '&color=%23' + $hex }
-        $encoded = [uri]::EscapeDataString($svg)
-        # SVG->PNG proxy'leri sırayla denenir; tek sağlayıcıdaki arıza indirmeyi durdurmaz.
-        $urls.Add("https://images.weserv.nl/?url=$encoded&output=png&w=$size&h=$size&fit=contain")
-        $urls.Add("https://wsrv.nl/?url=$encoded&output=png&w=$size&h=$size&fit=contain")
-    }
-    return @($urls.ToArray())
-}
-
-function Get-IconResultPngUrl($item, [int]$size, [string]$hex) {
-    return @((Get-IconPngCandidates $item $size $hex))[0]
-}
-
-function Get-IconResultFallbackPngUrl($item, [int]$size, [string]$hex) {
-    $c = @(Get-IconPngCandidates $item $size $hex)
-    if ($c.Count -gt 1) { return $c[1] }
-    return $c[0]
-}
-
-function Test-ImageFile([string]$path) {
-    try {
-        $fs = [System.IO.File]::OpenRead($path)
-        try { $img = [System.Drawing.Image]::FromStream($fs, $true, $true); $null = $img.Width; $img.Dispose() }
-        finally { $fs.Dispose() }
-        return $true
-    } catch { return $false }
-}
-
-function Save-NormalizedPng([string]$source, [string]$destination) {
-    $fs = [System.IO.File]::OpenRead($source)
-    try {
-        $img = [System.Drawing.Image]::FromStream($fs, $true, $true)
-        try {
-            $bmp = New-Object System.Drawing.Bitmap 256, 256, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    foreach ($p in $byPrefix.Keys) {
+        $list = $byPrefix[$p]
+        for ($i = 0; $i -lt $list.Count; $i += 40) {
+            $chunk = @($list | Select-Object -Skip $i -First 40)
+            $namesStr = $chunk -join ','
+            $url = "https://api.iconify.design/$p.json?icons=$namesStr"
             try {
-                $g = [System.Drawing.Graphics]::FromImage($bmp)
+                $json = $wc.DownloadString($url) | ConvertFrom-Json
+                $pWidth = Safe-Prop $json 'width' 24
+                $pHeight = Safe-Prop $json 'height' 24
+                $iconsProp = Safe-Prop $json 'icons' $null
+                if ($null -ne $iconsProp) {
+                    foreach ($prop in $iconsProp.PSObject.Properties) {
+                        $iName = $prop.Name
+                        $iVal = $prop.Value
+                        $w = Safe-Prop $iVal 'width' $pWidth
+                        $h = Safe-Prop $iVal 'height' $pHeight
+                        $body = Safe-Prop $iVal 'body' ''
+                        if ($body) {
+                            $svgStr = "<svg xmlns=`"http://www.w3.org/2000/svg`" viewBox=`"0 0 $w $h`" width=`"$w`" height=`"$h`">$body</svg>"
+                            $svgCache["${p}:$iName"] = $svgStr
+                        }
+                    }
+                }
+            } catch {}
+        }
+    }
+
+    foreach ($item in $iconItems) {
+        $name = [string]$item.Name
+        if (-not $svgCache.ContainsKey($name)) {
+            $parts = $name.Split(':', 2)
+            if ($parts.Count -eq 2) {
                 try {
-                    $g.Clear([System.Drawing.Color]::Transparent)
-                    $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-                    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
-                    $scale = [Math]::Min(240.0 / $img.Width, 240.0 / $img.Height)
-                    $w = [Math]::Max(1, [int][Math]::Round($img.Width * $scale))
-                    $h = [Math]::Max(1, [int][Math]::Round($img.Height * $scale))
-                    $g.DrawImage($img, [int]((256-$w)/2), [int]((256-$h)/2), $w, $h)
-                } finally { $g.Dispose() }
-                $bmp.Save($destination, [System.Drawing.Imaging.ImageFormat]::Png)
-            } finally { $bmp.Dispose() }
-        } finally { $img.Dispose() }
-    } finally { $fs.Dispose() }
+                    $s = $wc.DownloadString("https://api.iconify.design/$($parts[0])/$($parts[1]).svg")
+                    if ($s -and $s.Contains('<svg')) {
+                        $svgCache[$name] = $s
+                    }
+                } catch {}
+            }
+        }
+    }
+
+    return $svgCache
 }
 
-function Get-ColorHex([System.Drawing.Color]$c) {
-    return ('{0:X2}{1:X2}{2:X2}' -f $c.R, $c.G, $c.B)
+function Get-PreviewBitmapImage([string]$path) {
+    if (-not $path -or -not (Test-Path -LiteralPath $path)) { return $null }
+    try {
+        $fullPath = (Resolve-Path -LiteralPath $path).Path
+        $bytes = [System.IO.File]::ReadAllBytes($fullPath)
+        $ms = New-Object System.IO.MemoryStream (,$bytes)
+        $bi = New-Object System.Windows.Media.Imaging.BitmapImage
+        $bi.BeginInit()
+        $bi.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+        $bi.StreamSource = $ms
+        $bi.EndInit()
+        $bi.Freeze()
+        return $bi
+    } catch {
+        return $null
+    }
 }
 
 # ------------------------------------------------------------------
-#  Ana pencere
+#  XAML Arayüz Tanımı (Dinamik Tema Desteği & 2 Sütunlu Düzen)
 # ------------------------------------------------------------------
-$form = New-Object System.Windows.Forms.Form
-$form.Text = 'PwX Studio v1.5.0'
-$form.Size = New-Object System.Drawing.Size(900, 880)
-$form.StartPosition = 'CenterScreen'
-$form.FormBorderStyle = 'Sizable'
-$form.MinimumSize = New-Object System.Drawing.Size(720, 640)
-$form.MaximizeBox = $true
-$form.Font = New-Object System.Drawing.Font('Segoe UI', 9)
-$form.BackColor = [System.Drawing.Color]::FromArgb(245, 247, 250)
-$form.ForeColor = [System.Drawing.Color]::FromArgb(32, 36, 42)
 
-function Add-Label([string]$text, [int]$x, [int]$y, $parent = $form) {
-    $l = New-Object System.Windows.Forms.Label
-    $l.Text = $text
-    $l.Location = New-Object System.Drawing.Point($x, $y)
-    $l.AutoSize = $true
-    $parent.Controls.Add($l)
-    return $l
-}
-function Add-Text([int]$x, [int]$y, [int]$w, $parent = $form) {
-    $t = New-Object System.Windows.Forms.TextBox
-    $t.Location = New-Object System.Drawing.Point($x, $y)
-    $t.Size = New-Object System.Drawing.Size($w, 24)
-    $parent.Controls.Add($t)
-    return $t
-}
-function Add-Button([string]$text, [int]$x, [int]$y, [int]$w, $parent = $form) {
-    $b = New-Object System.Windows.Forms.Button
-    $b.Text = $text
-    $b.Location = New-Object System.Drawing.Point($x, $y)
-    $b.Size = New-Object System.Drawing.Size($w, 26)
-    $parent.Controls.Add($b)
-    return $b
+[xml]$xaml = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PwX Studio v1.5.0 - PowerShell Executable Builder" 
+        Height="840" Width="980" MinHeight="680" MinWidth="840"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}" Foreground="{DynamicResource TextBrush}" 
+        FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+        AllowDrop="True">
+
+    <Window.Resources>
+        <!-- Tema Renk Fırçaları (Varsayılan Koyu Tema) -->
+        <SolidColorBrush x:Key="BgBrush" Color="#202020"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#262626"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#333333"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="SubTextBrush" Color="#A0A0A0"/>
+        <SolidColorBrush x:Key="InputBgBrush" Color="#1C1C1C"/>
+        <SolidColorBrush x:Key="InputBorderBrush" Color="#383838"/>
+        <SolidColorBrush x:Key="BtnBgBrush" Color="#333333"/>
+        <SolidColorBrush x:Key="BtnBorderBrush" Color="#3D3D3D"/>
+        <SolidColorBrush x:Key="BtnTextBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TerminalBgBrush" Color="#141414"/>
+        <SolidColorBrush x:Key="TerminalBorderBrush" Color="#282828"/>
+        <SolidColorBrush x:Key="TerminalTextBrush" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0078D4"/>
+        <SolidColorBrush x:Key="AccentBorderBrush" Color="#005A9E"/>
+
+        <!-- Standart Buton Stili -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource BtnBgBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource BtnTextBrush}" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BtnBorderBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Primary Buton Stili -->
+        <Style x:Key="PrimaryBtn" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBorderBrush}" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1084D9"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#2B95E0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Giriş Kutusu Stili -->
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource InputBgBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Padding="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- CheckBox & RadioButton Stilleri -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,5,8,5" />
+        </Style>
+
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,4,12,4" />
+        </Style>
+
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="#2D2D2D" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#454545" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <!-- Windows 11 Fluent Tema Anahtarı (Toggle Switch) Stili -->
+        <Style x:Key="ThemeToggleSwitch" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTip" Value="Açık ve Koyu tema arasında geçiş yapar."/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="lblThemeText" Text="🌙 Koyu Tema" FontSize="12" FontWeight="SemiBold" 
+                                       Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Grid Width="56" Height="28">
+                                <!-- Kapsül Gövde (Track) -->
+                                <Border x:Name="track" Background="#181818" BorderBrush="#3D3D3D" BorderThickness="1.5" CornerRadius="14">
+                                    <Grid>
+                                        <TextBlock Text="☀️" FontSize="10" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="7,0,0,0" Opacity="0.6"/>
+                                        <TextBlock Text="🌙" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,7,0" Opacity="0.8"/>
+                                    </Grid>
+                                </Border>
+                                <!-- Kayan Yuvarlak Topuz (Knob) -->
+                                <Border x:Name="knob" Background="#FFFFFF" Width="20" Height="20" CornerRadius="10" 
+                                        HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.35"/>
+                                    </Border.Effect>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <!-- IsChecked = True (Açık Tema Seçildiğinde) -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="lblThemeText" Property="Text" Value="☀️ Açık Tema"/>
+                                <Setter TargetName="track" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="track" Property="BorderBrush" Value="#005A9E"/>
+                                <Setter TargetName="knob" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="knob" Property="Margin" Value="0,0,4,0"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="track" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="170" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header (Marka Başlığı & Sağda Tema Anahtarı) -->
+        <Border Grid.Row="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚡ PwX Studio" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+                        <Border Background="{DynamicResource BorderBrush}" CornerRadius="4" Padding="8,2" Margin="12,2,0,2" VerticalAlignment="Center">
+                            <TextBlock Text="v1.5.0" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="PowerShell betiklerini (.ps1) sıfır bağımlılıkla yerel Windows çalıştırılabilir dosyalarına (.exe) dönüştürün." 
+                               FontSize="13" Foreground="{DynamicResource SubTextBrush}" Margin="0,3,0,0" />
+                </StackPanel>
+
+                <!-- Açık / Koyu Tema Geçiş Anahtarı (Toggle Switch) -->
+                <CheckBox x:Name="BtnThemeToggle" Grid.Column="1" Style="{StaticResource ThemeToggleSwitch}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- 2. Orta Kartlar (ScrollViewer) -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,10" Padding="0,0,6,0">
+            <StackPanel>
+
+                <!-- Kart: Dosya Yapılandırması -->
+                <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="📁 Dosya Yapılandırması" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,12"/>
+                        
+                        <TextBlock Text="Kaynak PowerShell Betiği (.ps1):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtPs1" Grid.Column="0" Height="38" ToolTip="Dönüştürülecek .ps1 betiğini seçin veya dosyayı buraya sürükleyin."/>
+                            <Button x:Name="BtnPs1Browse" Grid.Column="2" Content="📁 Gözat..." Width="100" Height="38"/>
+                        </Grid>
+
+                        <TextBlock Text="Hedef Yürütülebilir Dosya (.exe):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtOut" Grid.Column="0" Height="38" ToolTip="Oluşturulacak .exe dosyasının kaydedileceği konumu belirleyin."/>
+                            <Button x:Name="BtnOutBrowse" Grid.Column="2" Content="💾 Farklı Kaydet..." Width="120" Height="38"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Kart: İkon ve Logo Seçimi -->
+                <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="90" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="🎨 Uygulama Logosu &amp; Simgesi" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <TextBlock Text="Görsel Dosyası (PNG, JPG, BMP, ICO):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="TxtLogo" Grid.Column="0" Height="38" ToolTip="Uygulama simgesi olarak gömülecek görseli seçin."/>
+                                <Button x:Name="BtnLogoBrowse" Grid.Column="2" Content="🖼️ Dosyadan Seç" Height="38" Padding="12,0"/>
+                                <Button x:Name="BtnWebSearch" Grid.Column="4" Content="🌐 Web'den İkon Ara" Height="38" Padding="12,0"/>
+                            </Grid>
+                            <TextBlock Text="Seçilen PNG/JPG görseller derleme anında otomatik olarak 256x256 ICO formatına dönüştürülür." FontSize="11" Foreground="{DynamicResource SubTextBrush}"/>
+                        </StackPanel>
+
+                        <!-- Canlı Önizleme Kutusu -->
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Border Width="76" Height="76" Background="{DynamicResource InputBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
+                                <Grid>
+                                    <TextBlock x:Name="TxtNoIcon" Text="SİMGE YOK" FontSize="10" Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
+                                    <Image x:Name="ImgPreview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="Önizleme" FontSize="10" Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Kart: Meta Veriler -->
+                <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="ℹ️ Uygulama Bilgileri &amp; Meta Veriler" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Uygulama Adı / Başlık:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="TxtTitle" Height="38"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Sürüm (x.x.x.x):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="TxtVer" Height="38" Text="1.0.0.0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Şirket / Yayıncı:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="TxtCompany" Height="38"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Kart: 2 Sütunlu Düzenli Seçenekler Alanı (Sol: Motor & Tür | Sağ: Derleme Seçenekleri) -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sol Sütun: Hedef Çalışma Zamanı & Uygulama Türü -->
+                    <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="⚙️ Hedef Çalışma Zamanı" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <RadioButton x:Name="RbTargetPS51" GroupName="TargetRuntime" Content="PowerShell 5.1 (Dahili csc.exe)" IsChecked="True" 
+                                         ToolTip="Windows ile dahili gelen csc.exe derleyicisini kullanır." Margin="0,2,0,8"/>
+                            <RadioButton x:Name="RbTargetPS7" GroupName="TargetRuntime" Content="PowerShell 7.4+ (.NET 8 SDK)" 
+                                         ToolTip="Modern PowerShell 7 ve .NET 8 SDK altyapısını kullanır." Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkSingleFile" Content="Tek Dosya (Single-File)" IsEnabled="False" Margin="22,0,0,16"/>
+
+                            <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,14"/>
+
+                            <TextBlock Text="🖥️ Uygulama Türü" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <RadioButton x:Name="RbConsole" GroupName="AppMode" Content="Konsol Uygulaması (CLI)" IsChecked="True" Margin="0,2,0,8"/>
+                            <RadioButton x:Name="RbGui" GroupName="AppMode" Content="Pencereli / GUI Uygulama (Konsol Gizli)" Margin="0,0,0,4"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Sağ Sütun: Derleme & Çalışma Bayrakları (2 Alt Sütunlu Tertipli Liste) -->
+                    <Border Grid.Column="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="🛠️ Derleme &amp; Çalışma Seçenekleri" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <CheckBox x:Name="ChkAdmin" Content="Yönetici Yetkisi (UAC)" ToolTip="Windows UAC yönetici onayı ister."/>
+                                    <CheckBox x:Name="ChkUtf8" Content="Konsol UTF-8" IsChecked="True" ToolTip="Türkçe karakterlerin doğru gösterilmesini sağlar."/>
+                                    <CheckBox x:Name="ChkX64" Content="64-bit (x64)" IsChecked="True" ToolTip="64-bit mimari için derler."/>
+                                    <CheckBox x:Name="ChkX86" Content="32-bit (x86)" ToolTip="32-bit mimari uyumluluğu sağlar."/>
+                                    <CheckBox x:Name="ChkUnicode" Content="Unicode Konsol" ToolTip="Genişletilmiş karakter desteği sağlar."/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <CheckBox x:Name="ChkDpi" Content="DPI Farkındalığı" ToolTip="Yüksek çözünürlüklü ekranlarda net görünüm sağlar."/>
+                                    <CheckBox x:Name="ChkConfig" Content="EXE.config Oluştur" ToolTip="DPI ve runtime ayarları için .config dosyası üretir."/>
+                                    <CheckBox x:Name="ChkSupportOS" Content="Windows Sürüm Bilgisi" ToolTip="Modern Windows sürümleriyle uyumluluk bildirir."/>
+                                    <CheckBox x:Name="ChkLongPaths" Content="Uzun Dosya Yolları" ToolTip="260 karakterden uzun dosya yollarına izin verir."/>
+                                    <CheckBox x:Name="ChkNoOutput" Content="Çıktıyı Bastır" ToolTip="Standart konsol çıktısını bastırır."/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Kart: Eylemler & İlerleme -->
+                <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,4">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="BtnBuild" Grid.Column="0" Content="🚀 EXE OLUŞTUR" Style="{StaticResource PrimaryBtn}" Height="44" FontSize="15"/>
+                            <Button x:Name="BtnOpenFolder" Grid.Column="2" Content="📂 Klasörü Aç" Height="44" Width="140" IsEnabled="False"/>
+                        </Grid>
+
+                        <ProgressBar x:Name="PbStatus" Height="6" Background="{DynamicResource TerminalBgBrush}" Foreground="{DynamicResource AccentBrush}" BorderThickness="0" Margin="0,4,0,8"/>
+                        <TextBlock x:Name="TxtStatus" Text="Hazır. Kaynak betiği belirleyip 'EXE OLUŞTUR' butonuna basınız." FontSize="12" Foreground="{DynamicResource SubTextBrush}"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Terminal Log Kutusu -->
+        <Border Grid.Row="2" Background="{DynamicResource TerminalBgBrush}" BorderBrush="{DynamicResource TerminalBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="⚡ Canlı Konsol Günlüğü" FontSize="12" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <Button x:Name="BtnClearLog" Content="Temizle" HorizontalAlignment="Right" Padding="10,3" FontSize="11"/>
+                </Grid>
+                <TextBox x:Name="TxtConsole" Grid.Row="1" Background="{DynamicResource TerminalBgBrush}" Foreground="{DynamicResource TerminalTextBrush}" FontFamily="Cascadia Code, Consolas" FontSize="12" 
+                         IsReadOnly="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" BorderThickness="0" Padding="4"/>
+            </Grid>
+        </Border>
+
+        <!-- 4. Footer (Sade ve Temiz) -->
+        <TextBlock Grid.Row="3" Text="PwX Studio v1.5.0 • PowerShell Executable Builder" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+    </Grid>
+</Window>
+'@
+
+$reader = (New-Object System.Xml.XmlNodeReader $xaml)
+$window = [System.Windows.Markup.XamlReader]::Load($reader)
+
+# Logo ve ikon ata (Varsa)
+$pwxIconCandidate = if ($PSScriptRoot) { Join-Path $PSScriptRoot 'ico\PwX-Studio.ico' } else { '.\ico\PwX-Studio.ico' }
+if (Test-Path -LiteralPath $pwxIconCandidate) {
+    try {
+        $window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([System.Uri]::new((Resolve-Path $pwxIconCandidate).Path))
+    } catch {}
 }
 
-# Modern tema altyapisi (Windows PowerShell 5.1 ile uyumlu)
-$script:currentTheme = 'Açık'
-function Set-Theme($root, [string]$theme) {
-    $dark = ($theme -eq 'Koyu')
-    if ($dark) {
-        $bg = [System.Drawing.Color]::FromArgb(30, 32, 36)
-        $surface = [System.Drawing.Color]::FromArgb(41, 44, 50)
-        $inputBg = [System.Drawing.Color]::FromArgb(24, 26, 30)
-        $fg = [System.Drawing.Color]::FromArgb(238, 240, 244)
-        $muted = [System.Drawing.Color]::FromArgb(180, 186, 196)
-        $border = [System.Drawing.Color]::FromArgb(68, 73, 82)
-        $buttonBg = [System.Drawing.Color]::FromArgb(53, 58, 67)
+# Element Haritası
+$btnThemeToggle = $window.FindName('BtnThemeToggle')
+$txtPs1         = $window.FindName('TxtPs1')
+$btnPs1Browse   = $window.FindName('BtnPs1Browse')
+$txtOut         = $window.FindName('TxtOut')
+$btnOutBrowse   = $window.FindName('BtnOutBrowse')
+$txtLogo        = $window.FindName('TxtLogo')
+$btnLogoBrowse  = $window.FindName('BtnLogoBrowse')
+$btnWebSearch   = $window.FindName('BtnWebSearch')
+$imgPreview     = $window.FindName('ImgPreview')
+$txtNoIcon      = $window.FindName('TxtNoIcon')
+$txtTitle       = $window.FindName('TxtTitle')
+$txtVer         = $window.FindName('TxtVer')
+$txtCompany     = $window.FindName('TxtCompany')
+
+$rbTargetPS51   = $window.FindName('RbTargetPS51')
+$rbTargetPS7    = $window.FindName('RbTargetPS7')
+$chkSingleFile  = $window.FindName('ChkSingleFile')
+
+$null           = $window.FindName('RbConsole')
+$rbGui          = $window.FindName('RbGui')
+
+$chkAdmin       = $window.FindName('ChkAdmin')
+$chkUtf8        = $window.FindName('ChkUtf8')
+$chkX64         = $window.FindName('ChkX64')
+$chkX86         = $window.FindName('ChkX86')
+$chkUnicode     = $window.FindName('ChkUnicode')
+$chkDpi         = $window.FindName('ChkDpi')
+$chkConfig      = $window.FindName('ChkConfig')
+$chkSupportOS   = $window.FindName('ChkSupportOS')
+$chkLongPaths   = $window.FindName('ChkLongPaths')
+$chkNoOutput    = $window.FindName('ChkNoOutput')
+
+$btnBuild       = $window.FindName('BtnBuild')
+$btnOpenFolder  = $window.FindName('BtnOpenFolder')
+$pbStatus       = $window.FindName('PbStatus')
+$txtStatus      = $window.FindName('TxtStatus')
+$txtConsole     = $window.FindName('TxtConsole')
+$btnClearLog    = $window.FindName('BtnClearLog')
+
+$script:LastGeneratedExe = ""
+$script:currentTheme = 'Koyu'
+
+# Tema Değiştirme Fonksiyonu
+function Set-AppTheme([string]$theme) {
+    $script:currentTheme = $theme
+    $isDark = ($theme -eq 'Koyu')
+
+    if ($isDark) {
+        $window.Resources['BgBrush']             = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#202020")
+        $window.Resources['CardBrush']           = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#262626")
+        $window.Resources['BorderBrush']         = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#333333")
+        $window.Resources['TextBrush']           = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
+        $window.Resources['SubTextBrush']        = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#A0A0A0")
+        $window.Resources['InputBgBrush']        = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1C1C1C")
+        $window.Resources['InputBorderBrush']    = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#383838")
+        $window.Resources['BtnBgBrush']          = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#333333")
+        $window.Resources['BtnBorderBrush']      = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#3D3D3D")
+        $window.Resources['BtnTextBrush']        = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
+        $window.Resources['TerminalBgBrush']     = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#141414")
+        $window.Resources['TerminalBorderBrush'] = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#282828")
+        $window.Resources['TerminalTextBrush']   = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#E0E0E0")
+        if ($btnThemeToggle -and $btnThemeToggle.IsChecked) { $btnThemeToggle.IsChecked = $false }
     } else {
-        $bg = [System.Drawing.Color]::FromArgb(245, 247, 250)
-        $surface = [System.Drawing.Color]::FromArgb(255, 255, 255)
-        $inputBg = [System.Drawing.Color]::FromArgb(255, 255, 255)
-        $fg = [System.Drawing.Color]::FromArgb(32, 36, 42)
-        $muted = [System.Drawing.Color]::FromArgb(90, 98, 110)
-        $border = [System.Drawing.Color]::FromArgb(218, 223, 230)
-        $buttonBg = [System.Drawing.Color]::FromArgb(235, 239, 245)
-    }
-    $root.BackColor = $bg
-    $root.ForeColor = $fg
-    foreach ($c in $root.Controls) {
-        $c.ForeColor = $fg
-        if ($c -is [System.Windows.Forms.TextBox]) {
-            $c.BackColor = $inputBg
-            $c.BorderStyle = 'FixedSingle'
-        } elseif ($c -is [System.Windows.Forms.ComboBox]) {
-            $c.BackColor = $inputBg
-        } elseif ($c -is [System.Windows.Forms.Button]) {
-            $c.FlatStyle = 'Flat'
-            $c.FlatAppearance.BorderColor = $border
-            $c.FlatAppearance.BorderSize = 1
-            $c.UseVisualStyleBackColor = $false
-            $c.BackColor = $buttonBg
-            $c.Cursor = [System.Windows.Forms.Cursors]::Hand
-            if ($c.Name -eq 'btnThemeToggle') {
-                $c.FlatAppearance.BorderSize = 0
-                $c.FlatAppearance.MouseDownBackColor = $bg
-                $c.FlatAppearance.MouseOverBackColor = $bg
-                $c.BackColor = $bg
-            }
-            if ($c.Name -eq 'btnBuild' -or $c.Text -eq 'EXE OLUŞTUR') {
-                $c.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 212)
-                $c.ForeColor = [System.Drawing.Color]::White
-                $c.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(0, 100, 190)
-            }
-        } elseif ($c -is [System.Windows.Forms.GroupBox]) {
-            $c.BackColor = $bg
-            $c.ForeColor = $fg
-        } elseif ($c -is [System.Windows.Forms.PictureBox]) {
-            $c.BackColor = $surface
-            $c.BorderStyle = 'FixedSingle'
-        } elseif ($c -is [System.Windows.Forms.Label]) {
-            $c.BackColor = [System.Drawing.Color]::Transparent
-            $c.ForeColor = $muted
-        } else {
-            $c.BackColor = $bg
-        }
-        if ($c.Controls.Count -gt 0) { Set-Theme $c $theme }
+        $window.Resources['BgBrush']             = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F4F4F6")
+        $window.Resources['CardBrush']           = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
+        $window.Resources['BorderBrush']         = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#E2E5E9")
+        $window.Resources['TextBrush']           = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1A1D20")
+        $window.Resources['SubTextBrush']        = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#606873")
+        $window.Resources['InputBgBrush']        = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F8F9FA")
+        $window.Resources['InputBorderBrush']    = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#D0D5DD")
+        $window.Resources['BtnBgBrush']          = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F2F4F7")
+        $window.Resources['BtnBorderBrush']      = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#D0D5DD")
+        $window.Resources['BtnTextBrush']        = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1A1D20")
+        $window.Resources['TerminalBgBrush']     = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
+        $window.Resources['TerminalBorderBrush'] = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#D0D5DD")
+        $window.Resources['TerminalTextBrush']   = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1A1D20")
+        if ($btnThemeToggle -and -not $btnThemeToggle.IsChecked) { $btnThemeToggle.IsChecked = $true }
     }
 }
 
-# Tema anahtarı: Lucide sun/moon çizim dilinden esinlenen, bağımlılıksız switch.
-# Resmî SVG kaynakları:
-# https://lucide.dev/icons/sun
-# https://lucide.dev/icons/moon
-# WinForms GDI+ SVG dosyasını yerel olarak çizmediğinden, aynı 24x24 Lucide çizgi geometrisi
-# çevrimdışı olarak vektörel çizilir; harici DLL, font veya ağ bağlantısı gerekmez.
-function Get-LucideThemeBitmap([string]$name) {
-    # Resmî Lucide SVG şekilleri çevrimdışı PNG kaynaklarına gömülüdür; ağ erişimi gerekmez.
-    $encoded = switch ($name) {
-        'sun' { 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAAGvElEQVR4nO2bT2wUVRzHP29229A/GAkSg4AWykGIFtpuuxCKCQGMIaKYmMZ40MjFA1yM3S60HsYESrqLmihcAQ0JsV4gKB7QcLBitzttqaRBDxQEwUAkmMB2kXbneehAtrPT2ZnZ2S6RfpMe9veb93vf95vfvL73+70Hs5hFyTCiUj6iUl5KDkqpOh6I0ZGu4na6itsDMTpKxUOUolMtThjoM4nXhCIkZppLaSJA8KIj2QygJA4QFv1ayWYCJZsDHhXMOqDUBEqNoNsGQ/uomQhSfek5LrS2kvHSqQTdicwpenoILP2DFcEJ7tbv5rKbtq4iQIvTlQkyKuD8ssv0JrqY74qpAZnhVycyJ0h0MX/ZZXoFnM8EGdXidLlp73gdkIizNAAXTW2GM+NsDHdwy02nAFqc3cBHxs89oQj73NpIdDE/UMaPwKosscxAbTjCJSc2HEeAovAkuQ5bFSjjRy+REIqwryLFvIoU83wcPIAwuDqC4wiQKopWRa+AtRZqz5HgBTaDR8IvoRQtQnU2pziOAKGi6+NsBYYt1KsC5Zzq6SHg1J5X9PQQCJRzCovBA8P6OFudDh5cToLhDm5lxtmIlRMkzcuvsM6NPS9YfoV1SJotVJ6i0PU6wM4JElJu7bnFNH14/gQ9LYQeOEFAMovY0cY2BtzY8ZIPaGxjQMLRB78FJAuZfwraDp9RCVZXEhaQDrUzaPesVFGSc1mj6LwGbEayCMHTk0puILgGnFbgRH2KRL7vWIvRIKHi7hiJDSoTXscwI/mAZJxNAmJAvaMGghF0Pg61801xmRXZAcNxqsbhCPCmRxM9pHgvpDLmI60pKJoD+rpZHFT4Fut/V24wpOi82hDluh+8zCiKA0YOUp0eoxf7wV+TcMUg8SywyObZIVK0FCMSXO8GneDeGEewHvyYEBzQMxxqivJ7tkLbz/NSsl3ATqDC1K5eVnMIeMtvrr5HwECMV6TgewvVucAEb+TbrhqbruNAnVknBS83tXHaJ6qAzwkRqaJIYbmxGb6n85KTvXo4wqV7Oi2Quz0Wkm4p/X1pvjpgqIowsNokHgtMsK0lyh2ndlqi3MnANiBtUtUPfkq4UJ7Z8NUBOrxuIf7CbZYGJiMBOGiWS2nZh2fkTILJbpqVQM5bBEDPcK4pSr+Nvc1mgdQ57JWcIjisS9qm2JNsAnZP18Yt/ynfUzJOp4A9dqSEpLOx3TrtpMW5CSzIEv0ZirDEzl4+aHGuAwuzRDdDEWMJbYIX/g8/gTMqQQGd+QhJQecZNTdyjE3NU1Oehav57DnAFdPvBVYbKK/8fZsD0guRgMyWCT9mbJFjQxp9+YKHDtigMiFhb14+kr1Wu6/Q+4yDaUsqCgt/ACSLTZK/jb6mwCv/nDdUyCSoxdGAxqk9siLUxm/5iFlhcD8rdclItkyC1hShabo2bvnnfMvGA3YzvR1+wOQAKdkOtHsxputsN78igf1K0C1/X9cBCpwwywTsTMRZ6taWFqMWwQ4LVU4fhcBXB9SnSADnTOKKABzv7WauUzt9n/MEguPAHJNqsLHNc3RawlcHCBUdSdRCVTdHoTf5Gcvy2dBi1Ab/5WfgBbNOUWgXwr//AFCkfIAW52ug1UKVlnBA0TncGOVCtmJwPyuNb34HuW8eJMdC7bztN9eiOMBIhf2EfQ7wL8nkHkFADVNXe2YMkmJ9MRIiRUuJDXbzjD6ZEnOWCLUxpehsLVZKrGgHJBqiXC+D9UCPZyOSY6RYX6zBw8ymxbuBBkcNBCNIoqEI3xWXmQ+Fkaq5NAtIN33IkN2zUkUZqKIJwTYp2SQkS4zCiARuCLgqJxdSJxpTJPMVRpKfUC+hInWH/pIURhJdzA+UcyqrUPlVKMK7bmyMqJSnFyKt1vZ20OJ8CbwDgKA/c58tM1oam7Y+L2nMVyIrFFqMBkRODXLmiqN2hxMEVLm15xbT9OH5pIorB9gNHkH/xRrOuiXgFhdrOIuwXA57coJjB0gVRSnjJNOczMjcZ4vXY3Nu0NpKJnOfLUxzUkUp46RUXZx9cvrgQCWr/T4f5PW+gN0hDQFrByqt8wFWcB4BZfwDORsRz4Mv9L6AjROkwdURHDug6QNGmazxTzpB0lfAGcGwFOwFKoFKKdhr3CFwhYdOkA/vHkggZnB1BFeTYCjCrgzUEqButIYWz8fifLwvEO7g1mgNLQSoy0BtKMIuN+1dV4ednsC0gwDF/C0Vcl/AmHzPe2n72J8Wn3VAqQmUGiVxgN/3BQpBaRzg432BQlESBxjFiw5gzPjryFN2/3/iUbg6O4vHHf8B8Nl2l+cs7WwAAAAASUVORK5CYII=' }
-        'moon' { 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAAIOUlEQVR4nO2bb4xU1RXAf+fOLAss7JJUG6yIhNJaICEVk+7sLLQq4OwAxUbdkhR2FmxjawhSW77aGJMmTRpSlYpNk25l2VLplFQaYHeW/4Gd0aQ0FqX/VKJUIKlE3ZXl7757+oG12X3vzcybmTfwwf19PPfcc889O+/ec8+9C2OMMcYYn2HkRg6WTK6vHbADszA63apOAgamyJTD3d2br9xIP0ZS1QDMe6CtbrIhYcUsEXQBymwg4lJ7V41Zkdv70hvV9CUfVQlALNnebFR/ADwETCzeQ0/1T748+2Q6fbUa/hQiGqaxWCK1OCI8rarNpfWUmQ0XJt4L9IbpTxBCCUB86XfuxEafB1ZomTZE9bYwfCkVU6mBeEvbGmz0DWBFcW09hehOwLPoKebvlfpSDmWvAcnk+tp++l9EWVtAzQocRNlha+jO7e4807Q8dbsM8b5L7+1sT+eXyvWlEsr6BBqTq+o/1o93CXJvHpWrKtKBdTZlM11vj2yIODrfuuKuIvvL8SMMSg5AY3JVvbGRXhEa86jsQWRDrnvrO36NVsXzlxbsX0v1IyxKCkAyub62X/tfwX/yF1B5IpvZ+ttCNhSmur87cfTdUvwIk5IC0G/7tyDc59P0HlaXZ3s73yxmQ6DOI4vKQCl+hEngAMQT7WsRfdSn6Z/iRBf17es4G9CU4xEMqTs7vGEECsD1fV6f8zQIpx2cJa/t6ww6eVAZQEZnC8ZEbgncP2QC5QFqazYDk0fJYFDFLH+t+3fuLa2wLdH/uGVW+HIpNsKkaABiidRiQb/p03FdOQcYMfIPj0w1345SdYoGwAjP+Ij39PV0bi1nwAtD9jhwbZRQWTy3tXVcOfYqpWAAYsn2ZqDJJb5iItEnyh3wRO+2QSA7SihMqf9k/IPl2qyEggEYPtKORuk4tqfjVCWDivJHjwz5USU2yyVvAOY90FbH9fP8SCxGNlU6qKVmO3DJJY7Fk6lHKrVdKnkDMElMC65ihsDBbJ4UtxRymd98CHgzRuX5hcm1t1ZqvxTyBkBEl3il+nJYA4sT/anCoEt8m6POy/fc81hNWOMUI28AFBZ4hE5Nd1gD9+3rOIvI0z5N99feenn7jQqCbwCaWlsnAF9xid8pId0NxLRJF38BctSn6ZHaWy9n4g+0fT7M8fzw/wUM1s3CXb0VfT3swdPptBNRZyV4CiQA94mRvzUn2r8d9rgj8T0LGOvcoe5ikZW3/XQr5Wim61xzor1FRQ8BoxZAhamI7oi3pH4sKpvqTf2uAHcIEku2xw3MxXKmwdTvL9THtyTWlGxPieqoTE9Fn8x1b3s26MRKpTnRPldFu4E7CqgNoHIQo6+K6ltqzHmrOMYyBdE7Ue5BWATcOaLPuw48+FpP5wk/g76fgMB4H5l7xQ6VvszWkxG1jcCRAmr1iH4L5WeK7MTqEaN6DNHdwAsIjzJ68gAzIrArX6qdZxewPtVtU/VrtKOZrnO3T760CNWNwIUQTc+Y0l/7Db8G/wBYLrtFot5KTjVIp9NONrNtkzjRu1T4JXAxDLtq5HN+cv9PwMh5jwGxU8NwJCh9+zrO5ro715vI0DRgHXAQCHp15k6zseqdE+TZBayY90XtKJmqzAo4eKgc27P9I2ALsKWptXUC/bV3GyOzFblDoE6FGqxcQPivqvw7auS4g9OBsnyknYhYTyEG8gSg9iJvXR2Pw4hcQNCvhjivssil05e4fpTOFtKLt6Tcvl69/MFE3xOs7ydw+PBLlwHXVZXMbFqeuj2oszeLWMuaGcC00VJ58/jxX1/z089/FhDp8yhfI1mZe9VH1FnmlapnLp+SvyCi6r2qFlaW59aNQ8R4fVTJ5NPPG4BBq73u46rC/U2J1TdlMQzCwuSqOaDuU+zAuCtyIF+fvAE40bttUOBPbn0jZmMlTlYTh8hGXOm9IunhNc2XgjVBtfZFjwzWxpPtXyzbyyoRW9Y2G6XNLTfG/qpQv4IByPV2ZQXcC8g4VJ8vw8dqIsaRzXi39UN9e7f9pVDHovcCKvoTH/HSeEvbmuD+VZfmRNv3gUVuuRV5qljfQAeceEtqF64nMAqDGNN0s563fUossXq+EXMMmDBSrvCHXE9n0V0r0N2gGWI9MOoKW6BO1O6+mcnRgsWp6UbMn3FNHvgoqvaHQWwECsCx/Z2nQTd4GpTpMsSBmxGEBYtT022UA4BnbEXWHc10nQtiJ/ArsWzPtpdQOnya7hKHbGNLal5QW5USS6yeb6NkAb+cZEuuZ+vvg9oq6Zlcf/2lx4FDngZlegRyzS1t3y3FXhlIPNn+2PA37/er673ywfhAP/3/GyzVg8bkqvqIRjJALI9KRrAb+nq6/lWq7ULElrXNNtY8h/pd2ABw7ILVluHL18CUVeYaDsIr4PteCOCaIp0G5+eVBmJhctUch8jG4STH/0WLyL5xly4+dPhwuuQyWtl1vrmtreMaPpnwAvC9Amqq6BGj7NCI053du/29ILZjLWtmGOxSlJUICwv6qbx45fz4DfmOu8WouNAZT7S1IbIZaAgw2mmU1xV9BzFnZXhrFdUGVL6gojOBuylcGr+O8rHCulymc3sl/odS6W1MrpoWwTyLysNh2CuGIGkb1SdzuzvPVG4rROJL27+O1WcA3xJ0CByyIk+92r01b4GjVKpS629KpL4mIo+DPozrdVkZDCDsFNEtxQ425VDVy46m1tYJ5pOJS6zoElEWAnOAYtfe11BOIhxVS2/tVbO/0Hm+Um7oP03NbW0dV99fN1MiOl2t3iJGJgGgdgAxH6ojpwcaBk/djH+dGWOMMcb4TPI/dhLNbqrEG3YAAAAASUVORK5CYII=' }
-        default { throw "Bilinmeyen tema ikonu: $name" }
-    }
-    $bytes = [Convert]::FromBase64String($encoded)
-    $ms = New-Object System.IO.MemoryStream (,$bytes)
-    try {
-        $img = [System.Drawing.Image]::FromStream($ms)
-        try { return New-Object System.Drawing.Bitmap $img } finally { $img.Dispose() }
-    } finally { $ms.Dispose() }
-}
-
-function Update-ThemeSwitch($ctrl, $pArgs) {
-    $g = $pArgs.Graphics
-    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-    # Butonun arka planını temizleme; WinForms'un çizdiği arka plan korunur.
-    $darkNow = ($script:currentTheme -eq 'Koyu')
-    $track = if ($darkNow) { [System.Drawing.Color]::FromArgb(48, 112, 210) } else { [System.Drawing.Color]::FromArgb(215, 222, 232) }
-    $knob = if ($darkNow) { [System.Drawing.Color]::FromArgb(248, 250, 252) } else { [System.Drawing.Color]::White }
-    $w = $ctrl.ClientSize.Width
-    $h = $ctrl.ClientSize.Height
-    $trackH = [single]([Math]::Min(30, $h - 8))
-    $trackW = [single]([Math]::Min(68, $w - 8))
-    $tx = [single](($w - $trackW) / 2)
-    $ty = [single](($h - $trackH) / 2)
-    $trackPath = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $trackPath.AddArc($tx, $ty, $trackH, $trackH, 90, 180)
-    $trackPath.AddArc(($tx + $trackW - $trackH), $ty, $trackH, $trackH, 270, 180)
-    $trackPath.CloseFigure()
-    $brush = New-Object System.Drawing.SolidBrush($track)
-    try { $g.FillPath($brush, $trackPath) } finally { $brush.Dispose(); $trackPath.Dispose() }
-    $knobSize = [single]($trackH - 4)
-    $knobX = if ($darkNow) { $tx + $trackW - $knobSize - 2 } else { $tx + 2 }
-    $knobY = $ty + 2
-    $knobBrush = New-Object System.Drawing.SolidBrush($knob)
-    try { $g.FillEllipse($knobBrush, $knobX, $knobY, $knobSize, $knobSize) } finally { $knobBrush.Dispose() }
-    $iconSize = [single]($knobSize * 0.58)
-    $ix = $knobX + ($knobSize - $iconSize) / 2
-    $iy = $knobY + ($knobSize - $iconSize) / 2
-    $iconImage = if ($darkNow) { $script:moonThemeBitmap } else { $script:sunThemeBitmap }
-    if ($iconImage) { $g.DrawImage($iconImage, [single]$ix, [single]$iy, [single]$iconSize, [single]$iconSize) }
-    if ($ctrl.Focused) {
-        $focusPen = New-Object System.Drawing.Pen([System.Drawing.SystemColors]::Highlight, 1)
-        try { $g.DrawRectangle($focusPen, 1, 1, $w - 3, $h - 3) } finally { $focusPen.Dispose() }
-    }
-}
-$script:sunThemeBitmap = Get-LucideThemeBitmap 'sun'
-$script:moonThemeBitmap = Get-LucideThemeBitmap 'moon'
-$btnThemeToggle = New-Object System.Windows.Forms.Button
-$btnThemeToggle.Name = 'btnThemeToggle'
-$btnThemeToggle.Location = New-Object System.Drawing.Point(730, 8)
-$btnThemeToggle.Size = New-Object System.Drawing.Size(76, 40)
-$btnThemeToggle.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$btnThemeToggle.Text = ''
-$btnThemeToggle.FlatStyle = 'Flat'
-$btnThemeToggle.FlatAppearance.BorderSize = 0
-$btnThemeToggle.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::Transparent
-$btnThemeToggle.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::Transparent
-$btnThemeToggle.BackColor = [System.Drawing.Color]::Transparent
-$btnThemeToggle.UseVisualStyleBackColor = $false
-$btnThemeToggle.TabStop = $true
-$btnThemeToggle.AccessibleRole = [System.Windows.Forms.AccessibleRole]::CheckButton
-$btnThemeToggle.AccessibleName = 'Tema anahtarı'
-$btnThemeToggle.AccessibleDescription = 'Açık ve koyu tema arasında geçiş yapar. Açık tema için güneş, koyu tema için ay simgesi.'
-$btnThemeToggle.Add_Paint({ param($s, $e) Update-ThemeSwitch $s $e })
-$form.Controls.Add($btnThemeToggle)
-
-# PwX Studio marka başlığı: sabit üst şerit, ana form yerleşimini değiştirmez.
-$lblBrand = New-Object System.Windows.Forms.Label
-$lblBrand.Name = 'lblPwXBrand'
-$lblBrand.Text = 'PwX Studio'
-$lblBrand.Location = New-Object System.Drawing.Point(15, 10)
-$lblBrand.AutoSize = $true
-$lblBrand.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 15, [System.Drawing.FontStyle]::Bold)
-$lblBrand.ForeColor = [System.Drawing.Color]::FromArgb(74, 119, 245)
-$lblBrand.BackColor = [System.Drawing.Color]::Transparent
-$form.Controls.Add($lblBrand)
-$lblBrand.BringToFront()
-$btnThemeToggle.BringToFront()
-$script:themeTip = New-Object System.Windows.Forms.ToolTip
-$script:themeTip.SetToolTip($btnThemeToggle, 'Koyu temaya geç')
 $btnThemeToggle.Add_Click({
-    if ($script:currentTheme -eq 'Koyu') { $script:currentTheme = 'Açık' } else { $script:currentTheme = 'Koyu' }
-    Set-Theme $form $script:currentTheme
-    if ($lblBrand) { $lblBrand.ForeColor = [System.Drawing.Color]::FromArgb(74, 119, 245) }
-    $btnThemeToggle.AccessibleDescription = if ($script:currentTheme -eq 'Koyu') { 'Koyu tema etkin. Açık temaya geçmek için anahtara basın.' } else { 'Açık tema etkin. Koyu temaya geçmek için anahtara basın.' }
-    $script:themeTip.SetToolTip($btnThemeToggle, $(if ($script:currentTheme -eq 'Koyu') { 'Açık temaya geç' } else { 'Koyu temaya geç' }))
-    $btnThemeToggle.Invalidate()
-})
-
-# PS1 dosyası
-[void](Add-Label 'PS1 dosyası:' 15 45)
-$txtPs1 = Add-Text 15 65 530
-$btnPs1 = Add-Button 'Gözat...' 555 64 90
-$txtPs1.AllowDrop = $true
-
-# Logo
-[void](Add-Label 'Logo (PNG / JPG / BMP / ICO) - isteğe bağlı:' 15 102)
-$txtLogo = Add-Text 15 122 435
-$btnLogo = Add-Button 'Gözat...' 455 121 90
-$btnWeb  = Add-Button 'Web''den Ara' 555 121 90
-$pic = New-Object System.Windows.Forms.PictureBox
-$pic.Location = New-Object System.Drawing.Point(560, 155)
-$pic.Size = New-Object System.Drawing.Size(80, 80)
-$pic.SizeMode = 'Zoom'
-$pic.BorderStyle = 'FixedSingle'
-$form.Controls.Add($pic)
-
-# Çıktı
-[void](Add-Label 'Çıktı EXE:' 15 159)
-$txtOut = Add-Text 15 179 440
-$btnOut = Add-Button 'Farklı kaydet...' 465 178 90
-
-# Bilgiler
-[void](Add-Label 'Uygulama adı:' 15 220)
-$txtTitle = Add-Text 15 240 250
-[void](Add-Label 'Sürüm:' 285 220)
-$txtVer = Add-Text 285 240 100
-$txtVer.Text = '1.0.0.0'
-[void](Add-Label 'Şirket / Yayıncı:' 15 275)
-$txtCompany = Add-Text 15 295 370
-
-# Hedef Çalışma Zamanı — pwxe Build Engine
-$grpTarget = New-Object System.Windows.Forms.GroupBox
-$grpTarget.Text = 'Hedef Çalışma Zamanı (pwxe)'
-$grpTarget.Location = New-Object System.Drawing.Point(15, 332)
-$grpTarget.Size = New-Object System.Drawing.Size(650, 56)
-$form.Controls.Add($grpTarget)
-
-$rbTargetPS51 = New-Object System.Windows.Forms.RadioButton
-$rbTargetPS51.Text = 'PowerShell 5.1 (Dahili csc.exe)'
-$rbTargetPS51.Location = New-Object System.Drawing.Point(15, 22)
-$rbTargetPS51.Size = New-Object System.Drawing.Size(220, 22)
-$rbTargetPS51.Checked = $true
-$grpTarget.Controls.Add($rbTargetPS51)
-
-$rbTargetPS7 = New-Object System.Windows.Forms.RadioButton
-$rbTargetPS7.Text = 'PowerShell 7.4+ (.NET 8 SDK)'
-$rbTargetPS7.Location = New-Object System.Drawing.Point(245, 22)
-$rbTargetPS7.Size = New-Object System.Drawing.Size(210, 22)
-$grpTarget.Controls.Add($rbTargetPS7)
-
-$chkSingleFile = New-Object System.Windows.Forms.CheckBox
-$chkSingleFile.Text = 'Tek Dosya (Single-File)'
-$chkSingleFile.Location = New-Object System.Drawing.Point(465, 22)
-$chkSingleFile.Size = New-Object System.Drawing.Size(170, 22)
-$chkSingleFile.Checked = $false
-$chkSingleFile.Enabled = $false
-$grpTarget.Controls.Add($chkSingleFile)
-
-$rbTargetPS7.Add_CheckedChanged({
-    $chkSingleFile.Enabled = $rbTargetPS7.Checked
-})
-
-# Seçenekler — sabit iki sütunlu hizalı düzen
-$grp = New-Object System.Windows.Forms.GroupBox
-$grp.Text = 'Seçenekler'
-$grp.Location = New-Object System.Drawing.Point(15, 396)
-$grp.Size = New-Object System.Drawing.Size(650, 246)
-$form.Controls.Add($grp)
-
-# Ana uygulama türü: tam satır, aynı başlangıç ve genişlik
-$rbConsole = New-Object System.Windows.Forms.RadioButton
-$rbConsole.Text = 'Konsol uygulaması (Write-Host / Read-Host kullanan scriptler)'
-$rbConsole.Location = New-Object System.Drawing.Point(15, 22)
-$rbConsole.Size = New-Object System.Drawing.Size(610, 22)
-$rbConsole.AutoSize = $false
-$rbConsole.Checked = $true
-$grp.Controls.Add($rbConsole)
-
-$rbWin = New-Object System.Windows.Forms.RadioButton
-$rbWin.Text = 'Pencereli uygulama (konsol gizli - WinForms / WPF / sessiz scriptler)'
-$rbWin.Location = New-Object System.Drawing.Point(15, 46)
-$rbWin.Size = New-Object System.Drawing.Size(610, 22)
-$rbWin.AutoSize = $false
-$grp.Controls.Add($rbWin)
-
-# Seçenekler iki sütuna ayrıldı. Kontroller aynı genişlik ve satır aralığını kullanır.
-function Add-OptionCheckBox([string]$text, [int]$x, [int]$y, [string]$variableName, [bool]$checked = $false, [bool]$enabled = $true) {
-    $control = New-Object System.Windows.Forms.CheckBox
-    $control.Text = $text
-    $control.Location = New-Object System.Drawing.Point($x, $y)
-    $control.Size = New-Object System.Drawing.Size(300, 22)
-    $control.AutoSize = $false
-    $control.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-    $control.Checked = $checked
-    $control.Enabled = $enabled
-    $grp.Controls.Add($control)
-    Set-Variable -Name $variableName -Value $control -Scope 1
-}
-
-Add-OptionCheckBox 'Yönetici yetkisi (UAC)'                  15  72 'chkAdmin'
-Add-OptionCheckBox '$ScriptRoot / $PSScriptRoot desteği'   320  72 'chkRoot' $true $false
-Add-OptionCheckBox 'Konsol UTF-8 (Türkçe karakterler)'       15  96 'chkUtf8' $true
-Add-OptionCheckBox 'Standart çıktıyı bastır'                320  96 'chkNoOutput'
-Add-OptionCheckBox '32-bit (x86)'                            15 120 'chkX86'
-Add-OptionCheckBox '64-bit (x64)'                           320 120 'chkX64' $true
-Add-OptionCheckBox 'Unicode konsol'                          15 144 'chkUnicode'
-Add-OptionCheckBox 'EXE.config (DPI / uyumluluk)'           320 144 'chkConfig'
-Add-OptionCheckBox 'DPI farkındalığı'                        15 168 'chkDpi'
-Add-OptionCheckBox 'WinForms DPI (config gerekli)'          320 168 'chkWinFormsDpi'
-Add-OptionCheckBox 'Yeni Windows sürüm bilgisi'              15 192 'chkSupportOS'
-Add-OptionCheckBox 'Uzun dosya yolları'                    320 192 'chkLongPaths'
-Add-OptionCheckBox 'Hata ayıklama hazırlığı'                 15 216 'chkPrepareDebug'
-
-# Secenekler icin aciklama balonlari (fareyle uzerine gelince)
-$optionTips = New-Object System.Windows.Forms.ToolTip
-$optionTips.AutoPopDelay = 15000
-$optionTips.InitialDelay = 350
-$optionTips.ReshowDelay = 150
-$optionTips.ShowAlways = $true
-$optionTips.IsBalloon = $true
-$optionTips.ToolTipTitle = 'Bu seçenek ne işe yarar?'
-$optionTipMap = @{
-    $rbConsole = 'Konsol kullanan scriptler için seçin. Write-Host, Read-Host ve konsol mesajları görünür kalır.'
-    $rbWin = 'Konsol penceresini gizler. WinForms/WPF arayüzleri veya arka planda sessiz çalışan scriptler için uygundur.'
-    $chkAdmin = 'EXE açılırken Windows UAC yönetici izni ister. Yalnızca yönetici yetkisi gerektiren işlemler için etkinleştirin.'
-    $rbTargetPS51 = 'PowerShell 5.1: Windows dahili csc.exe derleyicisiyle derler. Hedef makinede PowerShell 5.1 gerektirir; harici SDK gerektirmez.'
-    $rbTargetPS7 = 'PowerShell 7.4+: Microsoft.PowerShell.SDK ve .NET 8 kullanarak modern PowerShell 7 ortamı için bağımsız EXE üretir.'
-    $chkSingleFile = 'Tüm PS7 ve .NET bağımlılıklarını tek bir bağımsız .exe dosyasında paketler.'
-    $chkRoot = 'ScriptRoot ve PSScriptRoot değişkenlerinin EXE içindeki script klasörünü göstermesini sağlar. Sabit olarak etkin.'
-    $chkUtf8 = 'Konsol metinlerinin UTF-8 kodlamasıyla gösterilmesini sağlar; Türkçe karakterlerin bozulma riskini azaltır.'
-    $chkX86 = '32-bit Windows/uyumluluk hedefi için 32-bit EXE üretir. x64 ile aynı anda seçmeyin.'
-    $chkX64 = '64-bit Windows için 64-bit EXE üretir. Modern Windows sistemlerinde genellikle önerilen seçenektir.'
-    $chkUnicode = 'Konsolun Unicode karakterleri göstermesine yardımcı olur. Özellikle farklı diller ve özel karakterler içeren konsol uygulamalarında kullanılır.'
-    $chkConfig = 'EXE yanında .config dosyası oluşturur. DPI ve bazı Windows uyumluluk ayarlarını yapılandırmak için kullanılır.'
-    $chkDpi = 'Uygulamanın yüksek DPI/ölçeklendirme farkındalığını belirtir; farklı ekran ölçeklerinde arayüzün daha doğru boyutlanmasına yardımcı olabilir.'
-    $chkWinFormsDpi = 'WinForms arayüzü için DPI davranışını yapılandırır. Bu seçeneğin etkili olması için EXE.config oluşturma seçeneği de gerekir.'
-    $chkSupportOS = 'Derlenen uygulamanın Windows sürüm bilgisini modern sürümlerde doğru algılamasına yönelik uyumluluk ayarını ekler.'
-    $chkLongPaths = 'Uzun dosya yollarıyla çalışmaya yönelik derleyici/uyumluluk seçeneğini etkinleştirir. Her uygulama veya Windows bileşeninde tek başına uzun yol desteği garantilemez.'
-    $chkPrepareDebug = 'Hata ayıklamayı kolaylaştıracak hazırlık seçeneklerini etkinleştirir. Son kullanıcıya dağıtılan sürümde genellikle gerekmez.'
-    $chkNoOutput = 'Standart konsol çıktısını bastırır. Çıktı mesajlarını görmek istediğiniz veya konsol kullanan scriptlerde etkinleştirmeyin.'
-}
-foreach ($control in $optionTipMap.Keys) {
-    $optionTips.SetToolTip($control, $optionTipMap[$control])
-}
-
-# Derle
-$btnBuild = Add-Button 'EXE OLUŞTUR' 15 565 650
-$btnBuild.Height = 36
-$btnBuild.Font = New-Object System.Drawing.Font('Segoe UI', 10, [System.Drawing.FontStyle]::Bold)
-
-# Log
-$log = New-Object System.Windows.Forms.TextBox
-$log.Location = New-Object System.Drawing.Point(15, 609)
-$log.Size = New-Object System.Drawing.Size(650, 150)
-$log.Multiline = $true
-$log.ScrollBars = 'Vertical'
-$log.ReadOnly = $true
-$log.Font = New-Object System.Drawing.Font('Consolas', 9)
-$form.Controls.Add($log)
-
-# PwX Studio: 870x825 sabit pencere yerleşimi; ana formda kaydırma kapalı
-$txtPs1.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$btnPs1.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$txtLogo.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$btnLogo.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$btnWeb.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$pic.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$txtOut.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$btnOut.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$txtCompany.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$grpTarget.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$grp.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$btnBuild.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
-$log.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right -bor [System.Windows.Forms.AnchorStyles]::Bottom
-
-# İlk açılış ve son yerleşim için tek, idempotent düzen fonksiyonu.
-# Form gösterildikten sonra çağrılarak WinForms'un ilk ölçüm/yerleşim işlemlerinin
-# kontrollerin konumlarını ezmesi engellenir.
-function Set-MainLayout {
-    if ($form.IsDisposed -or -not $form.IsHandleCreated) { return }
-    $form.SuspendLayout()
-    try {
-        $clientW = $form.ClientSize.Width
-        $clientH = $form.ClientSize.Height
-        $left = 15
-        $right = $clientW - 15
-        $usableW = [Math]::Max(650, $right - $left)
-
-        $btnThemeToggle.Left = [Math]::Max($left, $right - $btnThemeToggle.Width)
-        $btnPs1.Left = [Math]::Max($left, $right - $btnPs1.Width)
-        $txtPs1.Width = [Math]::Max(160, $btnPs1.Left - $txtPs1.Left - 10)
-
-        $btnWeb.Left = [Math]::Max($left, $right - $btnWeb.Width)
-        $btnLogo.Left = [Math]::Max($left, $btnWeb.Left - $btnLogo.Width - 8)
-        $txtLogo.Width = [Math]::Max(160, $btnLogo.Left - $txtLogo.Left - 10)
-
-        $pic.Left = [Math]::Max($left, $right - $pic.Width)
-        $btnOut.Left = [Math]::Max($left, $right - $btnOut.Width - 95)
-        $txtOut.Width = [Math]::Max(160, $btnOut.Left - $txtOut.Left - 10)
-        $txtCompany.Width = [Math]::Max(160, $right - $txtCompany.Left)
-
-        $grpTarget.Top = 332
-        $grpTarget.Width = $usableW
-        $grp.Top = $grpTarget.Bottom + 8
-        $grp.Height = 246
-        $grp.Width = $usableW
-        $btnBuild.Top = $grp.Bottom + 12
-        $btnBuild.Width = $usableW
-        $log.Top = $btnBuild.Bottom + 8
-        $log.Width = $usableW
-        $log.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-        if ($clientH -lt 720) {
-            $form.AutoScroll = $true
-            $form.AutoScrollMinSize = New-Object System.Drawing.Size(680, 730)
-            $log.Height = 120
-        } else {
-            $form.AutoScroll = $false
-            $form.AutoScrollMinSize = [System.Drawing.Size]::Empty
-            $log.Height = [Math]::Max(90, $clientH - $log.Top - 15)
-        }
-        if ($btnThemeToggle -and -not $btnThemeToggle.IsDisposed) { $btnThemeToggle.Invalidate() }
-    } finally {
-        $form.ResumeLayout($true)
-    }
-}
-
-$form.Add_Resize({ Set-MainLayout; if ($lblBrand) { $lblBrand.ForeColor = [System.Drawing.Color]::FromArgb(74, 119, 245) } })
-$form.Add_Shown({
-    # Shown olayı, ilk DPI/font/layout ölçümleri bittikten sonra çalışır.
-    Set-MainLayout
-    $form.BeginInvoke([Action]{ Set-MainLayout }) | Out-Null
-})
-
-$form.Add_FormClosed({
-    if ($script:sunThemeBitmap) { $script:sunThemeBitmap.Dispose(); $script:sunThemeBitmap = $null }
-    if ($script:moonThemeBitmap) { $script:moonThemeBitmap.Dispose(); $script:moonThemeBitmap = $null }
-})
-
-function Write-Log([string]$m) {
-    $log.AppendText($m + [Environment]::NewLine)
-    [System.Windows.Forms.Application]::DoEvents()
-}
-
-# ------------------------------------------------------------------
-#  Web ikon arama penceresi
-# ------------------------------------------------------------------
-$script:iconColor = [System.Drawing.Color]::FromArgb(0x1F, 0x6F, 0xEB)
-$script:selName   = $null
-$script:selBox    = $null
-$script:pickedFile = $null
-
-function Open-IconSiteSearch([string]$site, [string]$query) {
-    if ([string]::IsNullOrWhiteSpace($query)) {
-        [void][System.Windows.Forms.MessageBox]::Show('Önce aranacak ikon kelimesini yazın.', 'İkon arama')
-        return
-    }
-    $q = [uri]::EscapeDataString((Convert-TrQuery $query))
-    switch ($site) {
-        'Flaticon' { $url = 'https://www.flaticon.com/search?word=' + $q }
-        'Magnific' { $url = 'https://www.magnific.com/icons?query=' + $q }
-        default { return }
-    }
-    try { Start-Process $url; $lblStatus.Text = $site + ' araması tarayıcıda açıldı. İndirme ve lisans koşulları site üzerinden tamamlanır.' }
-    catch { [void][System.Windows.Forms.MessageBox]::Show('Tarayıcı açılamadı: ' + $_.Exception.Message, 'Hata') }
-}
-
-$dlg = New-Object System.Windows.Forms.Form
-$dlg.Text = 'Web''den İkon Ara (Çoklu Kaynak)'
-$dlg.Size = New-Object System.Drawing.Size(760, 610)
-$dlg.StartPosition = 'CenterParent'
-$dlg.FormBorderStyle = 'FixedDialog'
-$dlg.MaximizeBox = $false
-$dlg.MinimizeBox = $false
-$dlg.Font = $form.Font
-
-[void](Add-Label 'Ara (Türkçe veya İngilizce):' 15 12 $dlg)
-$txtQ = Add-Text 15 32 215 $dlg
-
-[void](Add-Label 'İkon seti:' 240 12 $dlg)
-$cmbSet = New-Object System.Windows.Forms.ComboBox
-$cmbSet.DropDownStyle = 'DropDownList'
-$cmbSet.Location = New-Object System.Drawing.Point(240, 32)
-$cmbSet.Size = New-Object System.Drawing.Size(210, 24)
-[void]$cmbSet.Items.Add('Tüm kaynaklar (Iconify + Icons8)')
-[void]$cmbSet.Items.Add('Iconify - tüm setler')
-[void]$cmbSet.Items.Add('Renkli ikonlar')
-[void]$cmbSet.Items.Add('Tek renkli ikonlar')
-[void]$cmbSet.Items.Add('Font Awesome')
-[void]$cmbSet.Items.Add('Google Material')
-[void]$cmbSet.Items.Add('Icons8')
-[void]$cmbSet.Items.Add('Flaticon (web araması)')
-[void]$cmbSet.Items.Add('Magnific Icons (web araması)')
-$cmbSet.SelectedIndex = 0
-$dlg.Controls.Add($cmbSet)
-
-# Tek arama düğmesi: tüm sağlayıcılar mevcut arama akışından seçilir.
-$btnSearch = Add-Button 'Ara' 455 31 85 $dlg
-$dlg.AcceptButton = $btnSearch
-
-$chkColor = New-Object System.Windows.Forms.CheckBox
-$chkColor.Text = 'Renk uygula (tek renkli ikonlar için):'
-$chkColor.Location = New-Object System.Drawing.Point(15, 66)
-$chkColor.AutoSize = $true
-$dlg.Controls.Add($chkColor)
-
-$btnColor = Add-Button '' 285 62 50 $dlg
-$btnColor.BackColor = $script:iconColor
-[void](Add-Label 'Icons8 API anahtarı (gerekiyorsa):' 350 66 $dlg)
-$txtIcons8Key = Add-Text 535 62 190 $dlg
-$txtIcons8Key.UseSystemPasswordChar = $true
-$txtIcons8Key.TabIndex = 4
-$tipKey = New-Object System.Windows.Forms.ToolTip
-$tipKey.SetToolTip($txtIcons8Key, 'Icons8 geliştirici panelinden aldığınız API anahtarını bu oturum için girin. Kaydedilmez.')
-
-$lblStatus = Add-Label 'Kaynağı seçip Ara düğmesini kullanın. Flaticon ve Magnific, aynı arama akışından ilgili web aramasını açar; indirme/lisans koşulları kendi sitelerinde tamamlanır.' 15 97 $dlg
-
-$flow = New-Object System.Windows.Forms.FlowLayoutPanel
-$flow.Location = New-Object System.Drawing.Point(15, 122)
-$flow.Size = New-Object System.Drawing.Size(715, 390)
-$flow.AutoScroll = $true
-$flow.BorderStyle = 'FixedSingle'
-$flow.BackColor = [System.Drawing.Color]::White
-$dlg.Controls.Add($flow)
-
-$tip = New-Object System.Windows.Forms.ToolTip
-
-$btnUse = Add-Button 'Seç ve İndir' 515 524 120 $dlg
-$btnCancel = Add-Button 'İptal' 645 524 85 $dlg
-$btnCancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-$dlg.CancelButton = $btnCancel
-$lblSel = Add-Label 'Seçili ikon: -' 15 529 $dlg
-
-function Get-CurrentHex {
-    if ($chkColor.Checked) { return (Get-ColorHex $script:iconColor) }
-    return ''
-}
-
-function Select-IconBox($box) {
-    if ($script:selBox -and -not $script:selBox.IsDisposed) { $script:selBox.BackColor = [System.Drawing.Color]::White }
-    $script:selBox = $box
-    $script:selName = $box.Tag
-    $box.BackColor = [System.Drawing.Color]::LightSkyBlue
-    $lblSel.Text = 'Seçili ikon: ' + $script:selName.Name + ' [' + $script:selName.Provider + ']'
-}
-
-function Invoke-IconDownload {
-    if (-not $script:selName) {
-        [void][System.Windows.Forms.MessageBox]::Show('Önce bir ikon seçin.', 'Bilgi')
-        return
-    }
-    $btnUse.Enabled = $false
-    $lblStatus.Text = 'İkon indiriliyor...'
-    [System.Windows.Forms.Application]::DoEvents()
-    try {
-        $dir = Join-Path $env:TEMP 'ps1exe_icons'
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
-        $safeName = ([string]$script:selName.Name -replace '[^\w\-]', '_')
-        $file = Join-Path $dir ($safeName + '.png')
-        $wc = New-Object System.Net.WebClient
-        $wc.Headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) PwX-Studio/1.5.0'
-        $rawFile = Join-Path $dir ($safeName + '.download')
-        $errors = New-Object System.Collections.Generic.List[string]
-        $candidates = @(Get-IconPngCandidates $script:selName 256 (Get-CurrentHex))
-        foreach ($url in $candidates) {
-            try {
-                if (Test-Path $rawFile) { Remove-Item -LiteralPath $rawFile -Force }
-                $wc.DownloadFile([uri]$url, $rawFile)
-                if (Test-ImageFile $rawFile) {
-                    Save-NormalizedPng $rawFile $file
-                    break
-                }
-                $errors.Add('Sunucu görsel yerine geçersiz içerik döndürdü: ' + ([uri]$url).Host)
-            } catch { $errors.Add(([uri]$url).Host + ': ' + $_.Exception.Message) }
-        }
-        if (-not (Test-Path $file) -or -not (Test-ImageFile $file)) {
-            throw ('İkon indirilemedi. Denenen kaynaklar: ' + ($errors -join ' | '))
-        }
-        Remove-Item -LiteralPath $rawFile -Force -ErrorAction SilentlyContinue
-        $script:pickedFile = $file
-        $dlg.DialogResult = [System.Windows.Forms.DialogResult]::OK
-    }
-    catch {
-        [void][System.Windows.Forms.MessageBox]::Show('İkon indirilemedi: ' + $_.Exception.Message, 'Hata')
-    }
-    finally {
-        $btnUse.Enabled = $true
-        $lblStatus.Text = ''
-    }
-}
-
-$btnColor.Add_Click({
-    $cd = New-Object System.Windows.Forms.ColorDialog
-    $cd.Color = $script:iconColor
-    $cd.FullOpen = $true
-    if ($cd.ShowDialog() -eq 'OK') {
-        $script:iconColor = $cd.Color
-        $btnColor.BackColor = $cd.Color
-        $chkColor.Checked = $true
+    if ($btnThemeToggle.IsChecked) {
+        Set-AppTheme 'Açık'
+    } else {
+        Set-AppTheme 'Koyu'
     }
 })
 
-$btnSearch.Add_Click({
-    if (-not $txtQ.Text.Trim()) { return }
-    # Flaticon ve Magnific, herkese açık/kararlı ikon indirme API'si sunmadığından
-    # kaynak seçimi ve arama tek düğme altında tutulur; site sonuçları tarayıcıda açılır.
-    if ($cmbSet.SelectedIndex -eq 7) { Open-IconSiteSearch 'Flaticon' $txtQ.Text; return }
-    if ($cmbSet.SelectedIndex -eq 8) { Open-IconSiteSearch 'Magnific' $txtQ.Text; return }
-    $btnSearch.Enabled = $false
-    $script:selName = $null
-    $script:selBox = $null
-    $lblSel.Text = 'Seçili ikon: -'
-    foreach ($c in @($flow.Controls)) { $c.Dispose() }
-    $flow.Controls.Clear()
-    $lblStatus.Text = 'Aranıyor...'
-    [System.Windows.Forms.Application]::DoEvents()
-    try {
-        $r = Search-Icons $txtQ.Text $cmbSet.SelectedIndex $txtIcons8Key.Text.Trim()
-        if ($r.Icons.Count -eq 0) {
-            if ($script:iconifySearchWarning -or $script:icons8SearchWarning) { $lblStatus.Text = 'İkon kaynaklarına erişilemedi. İnternet bağlantısını, proxy ayarlarını ve Icons8 API anahtarını kontrol edin.' }
-            else { $lblStatus.Text = "Sonuç bulunamadı ('$($r.Query)'). Başka bir kelime deneyin." }
-        }
-        else {
-            $lblStatus.Text = "$($r.Icons.Count) ikon bulundu ('$($r.Query)'). İkon önizlemesi gelmezse de seçip indirmeyi deneyebilirsiniz."
-            if ($script:icons8SearchWarning -and $cmbSet.SelectedIndex -eq 0) { $lblStatus.Text += ' (Icons8 erişilemedi; Iconify sonuçları gösteriliyor.)' }
-            if ($script:iconifySearchWarning -and $cmbSet.SelectedIndex -eq 0) { $lblStatus.Text += ' (Iconify erişilemedi; Icons8 sonuçları gösteriliyor.)' }
-            $hex = Get-CurrentHex
-            foreach ($iconItem in $r.Icons) {
-                $pb = New-Object System.Windows.Forms.PictureBox
-                $pb.Size = New-Object System.Drawing.Size(76, 76)
-                $pb.Margin = New-Object System.Windows.Forms.Padding(4)
-                $pb.SizeMode = 'Zoom'
-                $pb.BorderStyle = 'FixedSingle'
-                $pb.BackColor = [System.Drawing.Color]::White
-                $pb.Cursor = [System.Windows.Forms.Cursors]::Hand
-                $pb.Tag = $iconItem
-                $tip.SetToolTip($pb, ($iconItem.Name + ' | ' + $iconItem.Provider + ' | ' + $iconItem.License))
-                $pb.Add_Click({ param($s, $e) Select-IconBox $s })
-                $pb.Add_DoubleClick({ param($s, $e) Select-IconBox $s; Invoke-IconDownload })
-                $flow.Controls.Add($pb)
+function Add-Log([string]$msg, [string]$level = 'Info') {
+    $time = (Get-Date).ToString("HH:mm:ss")
+    $prefix = switch ($level) {
+        'Error'   { "[$time] [HATA] " }
+        'Success' { "[$time] [BAŞARILI] " }
+        'Warning' { "[$time] [UYARI] " }
+        default   { "[$time] " }
+    }
+    if ($window.Dispatcher.CheckAccess()) {
+        $txtConsole.AppendText("$prefix$msg`r`n")
+        $txtConsole.ScrollToEnd()
+    } else {
+        $window.Dispatcher.Invoke([Action]{
+            $txtConsole.AppendText("$prefix$msg`r`n")
+            $txtConsole.ScrollToEnd()
+        })
+    }
+}
+Set-Alias Append-Log Add-Log -Scope Script
 
-                $wc = New-Object System.Net.WebClient
-                $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
-                $state = [pscustomobject]@{ Box=$pb; FallbackUrl=(Get-IconResultFallbackPngUrl $iconItem 96 $hex); IsFallback=$false; Provider=$iconItem.Provider }
-                $wc.Add_DownloadDataCompleted({
-                    param($sourceWc, $e)
-                    $st = $e.UserState
-                    $box = $st.Box
-                    if ($e.Error -or $e.Cancelled) {
-                        if (-not $st.IsFallback -and $st.Provider -ne 'Icons8' -and $box -and -not $box.IsDisposed) {
-                            try {
-                                $st.IsFallback = $true
-                                $sourceWc.DownloadDataAsync([uri]$st.FallbackUrl, $st)
-                                return
-                            } catch {}
-                        }
-                        if ($box -and -not $box.IsDisposed) {
-                            $box.BackColor = [System.Drawing.Color]::MistyRose
-                            $tip.SetToolTip($box, 'Önizleme yüklenemedi. İkonu seçip indirmeyi yine de deneyebilirsiniz.')
-                        }
-                        return
-                    }
-                    if ($box -and -not $box.IsDisposed) {
-                        try {
-                            $ms = New-Object System.IO.MemoryStream (,$e.Result)
-                            $img = [System.Drawing.Image]::FromStream($ms)
-                            $box.Image = New-Object System.Drawing.Bitmap $img
-                            $img.Dispose(); $ms.Dispose()
-                        } catch {
-                            $box.BackColor = [System.Drawing.Color]::MistyRose
-                        }
-                    }
-                })
-                $wc.DownloadDataAsync([uri](Get-IconResultPngUrl $iconItem 96 $hex), $state)
-            }
+function Update-PreviewImage([string]$path) {
+    if ($path -and (Test-Path -LiteralPath $path)) {
+        $bmp = Get-PreviewBitmapImage $path
+        if ($bmp) {
+            $imgPreview.Source = $bmp
+            $txtNoIcon.Visibility = [System.Windows.Visibility]::Collapsed
+            return
         }
     }
-    catch {
-        $lblStatus.Text = 'Arama başarısız: ' + $_.Exception.Message
-    }
-    finally { $btnSearch.Enabled = $true }
-})
+    $imgPreview.Source = $null
+    $txtNoIcon.Visibility = [System.Windows.Visibility]::Visible
+}
 
-$btnUse.Add_Click({ Invoke-IconDownload })
+$script:outExeManuallyChanged = $false
 
-# ------------------------------------------------------------------
-#  Ana pencere olayları
-# ------------------------------------------------------------------
-function Set-Ps1([string]$path) {
+function Set-Ps1File([string]$path) {
     $txtPs1.Text = $path
     $base = [System.IO.Path]::GetFileNameWithoutExtension($path)
-    if (-not $txtTitle.Text) { $txtTitle.Text = $base }
-    $txtOut.Text = Join-Path ([System.IO.Path]::GetDirectoryName($path)) ($base + '.exe')
+    $dir = [System.IO.Path]::GetDirectoryName($path)
+    if (-not $dir) { $dir = (Get-Location).Path }
+
+    # Yeni dosya seçildiğinde / değiştirildiğinde Uygulama Adı başlığını otomatik güncelle
+    $txtTitle.Text = $base
+
+    # Hedef EXE adını Uygulama Adı'na göre eşitle
+    $safeTitle = $base -replace '[\/\\:\*\?"<>\|]', '_'
+    $txtOut.Text = Join-Path $dir ($safeTitle + '.exe')
+    $script:outExeManuallyChanged = $false
+
+    Add-Log "Kaynak betik yüklendi: $path"
 }
 
-$btnPs1.Add_Click({
-    $d = New-Object System.Windows.Forms.OpenFileDialog
-    $d.Filter = 'PowerShell script (*.ps1)|*.ps1'
-    if ($d.ShowDialog() -eq 'OK') { Set-Ps1 $d.FileName }
-})
-
-$txtPs1.Add_DragEnter({
-    if ($_.Data.GetDataPresent([System.Windows.Forms.DataFormats]::FileDrop)) { $_.Effect = 'Copy' }
-})
-$txtPs1.Add_DragDrop({
-    $f = $_.Data.GetData([System.Windows.Forms.DataFormats]::FileDrop)
-    if ($f -and $f[0].ToLower().EndsWith('.ps1')) { Set-Ps1 $f[0] }
-})
-
-$btnLogo.Add_Click({
-    $d = New-Object System.Windows.Forms.OpenFileDialog
-    $d.Filter = 'Görsel (*.png;*.jpg;*.jpeg;*.bmp;*.ico)|*.png;*.jpg;*.jpeg;*.bmp;*.ico'
-    if ($d.ShowDialog() -eq 'OK') {
-        $txtLogo.Text = $d.FileName
-        $pic.Image = Load-PreviewImage $d.FileName
+# Uygulama Adı / Başlık alanına yazıldığında hedef EXE adını eşzamanlı olarak güncelle
+$txtTitle.Add_TextChanged({
+    $title = $txtTitle.Text.Trim()
+    if ($title -and -not $script:outExeManuallyChanged) {
+        $safeTitle = $title -replace '[\/\\:\*\?"<>\|]', '_'
+        $currentOut = $txtOut.Text.Trim()
+        $targetDir = $null
+        if ($currentOut) {
+            try { $targetDir = [System.IO.Path]::GetDirectoryName($currentOut) } catch {}
+        }
+        if (-not $targetDir -and $txtPs1.Text.Trim()) {
+            try { $targetDir = [System.IO.Path]::GetDirectoryName($txtPs1.Text.Trim()) } catch {}
+        }
+        if (-not $targetDir) {
+            $targetDir = (Get-Location).Path
+        }
+        $txtOut.Text = Join-Path $targetDir ($safeTitle + '.exe')
     }
 })
 
-$btnWeb.Add_Click({
-    $script:pickedFile = $null
-    if ($dlg.ShowDialog($form) -eq 'OK' -and $script:pickedFile) {
-        $txtLogo.Text = $script:pickedFile
-        $pic.Image = Load-PreviewImage $script:pickedFile
+# PS7 seçildiğinde Tek Dosya onay kutusunu etkinleştir
+$rbTargetPS7.Add_Checked({
+    $chkSingleFile.IsEnabled = $true
+})
+$rbTargetPS51.Add_Checked({
+    $chkSingleFile.IsEnabled = $false
+    $chkSingleFile.IsChecked = $false
+})
+
+# Günlük Temizleme
+$btnClearLog.Add_Click({
+    $txtConsole.Text = ""
+})
+
+# PS1 Gözat
+$btnPs1Browse.Add_Click({
+    $ofd = New-Object System.Windows.Forms.OpenFileDialog
+    $ofd.Filter = "PowerShell Scriptleri (*.ps1)|*.ps1|Tüm Dosyalar (*.*)|*.*"
+    $ofd.Title = "Kaynak PowerShell Betiğini Seçin"
+    if ($ofd.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        Set-Ps1File $ofd.FileName
     }
 })
 
-$btnOut.Add_Click({
-    $d = New-Object System.Windows.Forms.SaveFileDialog
-    $d.Filter = 'Uygulama (*.exe)|*.exe'
-    if ($txtOut.Text) { $d.FileName = $txtOut.Text }
-    if ($d.ShowDialog() -eq 'OK') { $txtOut.Text = $d.FileName }
+# Çıktı EXE Farklı Kaydet
+$btnOutBrowse.Add_Click({
+    $sfd = New-Object System.Windows.Forms.SaveFileDialog
+    $sfd.Filter = "Yürütülebilir Uygulama (*.exe)|*.exe|Tüm Dosyalar (*.*)|*.*"
+    $sfd.Title = "Hedef EXE Dosyasının Kaydedileceği Konumu Belirleyin"
+    if ($txtOut.Text.Trim()) {
+        $sfd.FileName = [System.IO.Path]::GetFileName($txtOut.Text.Trim())
+        $parent = [System.IO.Path]::GetDirectoryName($txtOut.Text.Trim())
+        if ($parent -and (Test-Path -LiteralPath $parent)) { $sfd.InitialDirectory = $parent }
+    }
+    if ($sfd.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $txtOut.Text = $sfd.FileName
+        $script:outExeManuallyChanged = $true
+    }
 })
+
+# Logo Gözat
+$btnLogoBrowse.Add_Click({
+    $ofd = New-Object System.Windows.Forms.OpenFileDialog
+    $ofd.Filter = "Görsel Dosyaları (*.png;*.jpg;*.jpeg;*.bmp;*.ico)|*.png;*.jpg;*.jpeg;*.bmp;*.ico|Tüm Dosyalar (*.*)|*.*"
+    $ofd.Title = "Uygulama İkonunu veya Görselini Seçin"
+    if ($ofd.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        $txtLogo.Text = $ofd.FileName
+        Update-PreviewImage $ofd.FileName
+    }
+})
+
+$txtLogo.Add_TextChanged({
+    Update-PreviewImage $txtLogo.Text.Trim()
+})
+
+# Sürükle ve Bırak Desteği
+$dragHandler = {
+    param($s, $e)
+    if ($e.Data.GetDataPresent([System.Windows.DataFormats]::FileDrop)) {
+        $e.Effects = [System.Windows.DragDropEffects]::Copy
+        $e.Handled = $true
+    }
+}
+$dropHandler = {
+    param($s, $e)
+    if ($e.Data.GetDataPresent([System.Windows.DataFormats]::FileDrop)) {
+        $files = $e.Data.GetData([System.Windows.DataFormats]::FileDrop)
+        if ($files -and $files.Count -gt 0) {
+            $file = $files[0]
+            $ext = [System.IO.Path]::GetExtension($file).ToLower()
+            if ($ext -eq '.ps1') {
+                Set-Ps1File $file
+            } elseif ($ext -in @('.png','.jpg','.jpeg','.bmp','.ico')) {
+                $txtLogo.Text = $file
+                Update-PreviewImage $file
+                Append-Log "Görsel bırakıldı ve simge olarak atandı: $file"
+            }
+        }
+    }
+}
+$window.Add_PreviewDragOver($dragHandler)
+$window.Add_Drop($dropHandler)
+$txtPs1.Add_PreviewDragOver($dragHandler)
+$txtPs1.Add_Drop($dropHandler)
+
+# Klasörü Aç Butonu
+$btnOpenFolder.Add_Click({
+    if ($script:LastGeneratedExe -and (Test-Path -LiteralPath $script:LastGeneratedExe)) {
+        [System.Diagnostics.Process]::Start('explorer.exe', "/select,`"$script:LastGeneratedExe`"") | Out-Null
+    } elseif ($txtOut.Text.Trim()) {
+        $dir = [System.IO.Path]::GetDirectoryName($txtOut.Text.Trim())
+        if ($dir -and (Test-Path -LiteralPath $dir)) {
+            [System.Diagnostics.Process]::Start('explorer.exe', $dir) | Out-Null
+        }
+    }
+})
+
+# ------------------------------------------------------------------
+#  Web İkon Arama Modülü (WPF Modal Dialog & Renk Kartelası)
+# ------------------------------------------------------------------
+
+function Open-FluentIconDialog {
+    $isDark = ($script:currentTheme -eq 'Koyu')
+    $dlgBg = if ($isDark) { "#202020" } else { "#F4F4F6" }
+    $dlgCard = if ($isDark) { "#262626" } else { "#FFFFFF" }
+    $dlgBorder = if ($isDark) { "#333333" } else { "#E2E5E9" }
+    $dlgText = if ($isDark) { "#FFFFFF" } else { "#1A1D20" }
+    $dlgSubText = if ($isDark) { "#CCCCCC" } else { "#606873" }
+    $dlgInputBg = if ($isDark) { "#1C1C1C" } else { "#F8F9FA" }
+    $dlgInputBorder = if ($isDark) { "#383838" } else { "#D0D5DD" }
+    $dlgBtnBg = if ($isDark) { "#333333" } else { "#F2F4F7" }
+    $dlgBtnBorder = if ($isDark) { "#3D3D3D" } else { "#D0D5DD" }
+    $dlgBtnText = if ($isDark) { "#FFFFFF" } else { "#1A1D20" }
+    $dlgStatusBg = if ($isDark) { "#1A1A1A" } else { "#EBF5FB" }
+    $dlgStatusText = if ($isDark) { "#38BDF8" } else { "#0078D4" }
+
+    [xml]$dlgXaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Web'den İkon Ara - PwX Studio"
+        Height="720" Width="960" MinHeight="620" MinWidth="860"
+        WindowStartupLocation="CenterOwner"
+        Background="$dlgBg" Foreground="$dlgText" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="$dlgBtnBg" />
+            <Setter Property="Foreground" Value="$dlgBtnText" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="$dlgBtnBorder" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryBtn" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#0078D4" />
+            <Setter Property="BorderBrush" Value="#005A9E" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="$dlgInputBg" />
+            <Setter Property="Foreground" Value="$dlgText" />
+            <Setter Property="BorderBrush" Value="$dlgInputBorder" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="CaretBrush" Value="#0078D4" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="28" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="6" Background="$dlgInputBg" BorderBrush="$dlgInputBorder" BorderThickness="1" />
+                <Path x:Name="Arrow" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z" Fill="$dlgText" />
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Border" Property="BorderBrush" Value="#0078D4"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="$dlgText"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}" Margin="2,1">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#0078D4"/>
+                                <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#005A9E"/>
+                                <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="$dlgText"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton" 
+                                          Template="{StaticResource ComboBoxToggleButton}" 
+                                          Grid.Column="2" 
+                                          Focusable="false"
+                                          IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press">
+                            </ToggleButton>
+                            <ContentPresenter Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="10,3,28,3"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left" />
+                            <Popup Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" 
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="$dlgCard"
+                                            BorderThickness="1"
+                                            BorderBrush="$dlgBorder"
+                                            CornerRadius="6"
+                                            Margin="0,2,0,0"
+                                            Padding="3">
+                                        <ScrollViewer SnapsToDevicePixels="True">
+                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Üst Başlık & Arama Çubuğu -->
+        <Border Grid.Row="0" Background="$dlgCard" BorderBrush="$dlgBorder" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Arama Girişi & Sağlayıcı Seçimi -->
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBox x:Name="TxtQ" Grid.Column="0" Height="38" ToolTip="Aranacak ikon adını yazın (Türkçe veya İngilizce, örn: kilit, lock, roket, roketler, ara, klasör)"/>
+                    <ComboBox x:Name="CmbSet" Grid.Column="2" Height="38" VerticalContentAlignment="Center" MaxDropDownHeight="280" />
+                    <Button x:Name="BtnSearch" Grid.Column="4" Content="🔍 Ara" Style="{StaticResource PrimaryBtn}" Width="90" Height="38"/>
+                </Grid>
+
+                <!-- Renk Kartelası Çubuğu (Tıklanabilir Renk Butonu + Hızlı Kartela) -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <CheckBox x:Name="ChkColor" Grid.Column="0" Content="Renk Uygula:" IsChecked="True" VerticalAlignment="Center" Foreground="$dlgSubText"/>
+                    
+                    <!-- Özel Renk Seçici Kutusu (ColorDialog Açar) -->
+                    <Button x:Name="BtnColorPicker" Grid.Column="2" Height="30" Width="105" Padding="4,2" ToolTip="Tıklayarak özel renk paletinden dilediğiniz rengi seçin">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border x:Name="BrdCurrentColor" Background="#0078D4" Width="18" Height="18" CornerRadius="3" BorderThickness="1" BorderBrush="#555555" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="TxtColorHexLabel" Text="Özel Renk" FontSize="11" VerticalAlignment="Center" Foreground="$dlgBtnText"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Hızlı Renk Kartelası -->
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Kartela:" VerticalAlignment="Center" FontSize="11" Foreground="$dlgSubText" Margin="0,0,6,0"/>
+                        <Border x:Name="PalBlue" Background="#0078D4" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Mavi"/>
+                        <Border x:Name="PalCyan" Background="#00B7C3" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Camgöbeği"/>
+                        <Border x:Name="PalGreen" Background="#107C41" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Yeşil"/>
+                        <Border x:Name="PalOrange" Background="#FF8C00" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Turuncu"/>
+                        <Border x:Name="PalRed" Background="#E81123" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Kırmızı"/>
+                        <Border x:Name="PalPurple" Background="#8764B8" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Mor"/>
+                        <Border x:Name="PalWhite" Background="#FFFFFF" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Beyaz"/>
+                        <Border x:Name="PalGray" Background="#8A8886" Width="20" Height="20" CornerRadius="4" Margin="3,0" Cursor="Hand" ToolTip="Gri"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Durum Bildirimi -->
+        <Border Grid.Row="1" Background="$dlgStatusBg" BorderBrush="$dlgBorder" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
+            <TextBlock x:Name="TxtDlgStatus" Text="Aramak istediğiniz anahtar kelimeyi (Türkçe veya İngilizce) yazıp 'Ara' butonuna basınız." FontSize="12" Foreground="$dlgStatusText"/>
+        </Border>
+
+        <!-- İkon Sonuç Izgarası -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#D0D5DD" BorderThickness="1" CornerRadius="10" Padding="2" ClipToBounds="True">
+            <ScrollViewer x:Name="SvIcons" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8">
+                <WrapPanel x:Name="WpIcons" Margin="2"/>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Sayfalama Çubuğu (Pagination) -->
+        <Border Grid.Row="3" Background="$dlgCard" BorderBrush="$dlgBorder" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="BtnPrevPage" Grid.Column="0" Content="◀ Önceki Sayfa" Width="110" Height="30" FontSize="11" IsEnabled="False"/>
+                <TextBlock x:Name="TxtPageInfo" Grid.Column="1" Text="Sayfa 1 / 1 (0 İkon)" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="$dlgText"/>
+                <Button x:Name="BtnNextPage" Grid.Column="2" Content="Sonraki Sayfa ▶" Width="110" Height="30" FontSize="11" IsEnabled="False"/>
+            </Grid>
+        </Border>
+
+        <!-- Alt Kontrol Çubuğu -->
+        <Border Grid.Row="4" Background="$dlgCard" BorderBrush="$dlgBorder" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TxtSelectedIcon" Grid.Column="0" Text="Seçili ikon: -" VerticalAlignment="Center" FontSize="13" Foreground="$dlgText" TextTrimming="CharacterEllipsis"/>
+                <Button x:Name="BtnApply" Grid.Column="1" Content="✨ Seç ve İndir" Style="{StaticResource PrimaryBtn}" Height="36" Width="130" IsEnabled="False"/>
+                <Button x:Name="BtnCancel" Grid.Column="3" Content="İptal" Height="36" Width="80"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+"@
+
+    $dlgReader = (New-Object System.Xml.XmlNodeReader $dlgXaml)
+    $dlgWindow = [System.Windows.Markup.XamlReader]::Load($dlgReader)
+    $dlgWindow.Owner = $window
+
+    $txtQ         = $dlgWindow.FindName('TxtQ')
+    $cmbSet       = $dlgWindow.FindName('CmbSet')
+    $btnSearch    = $dlgWindow.FindName('BtnSearch')
+    $chkColor     = $dlgWindow.FindName('ChkColor')
+    $btnColorPicker = $dlgWindow.FindName('BtnColorPicker')
+    $brdCurrentColor = $dlgWindow.FindName('BrdCurrentColor')
+    $txtColorHexLabel = $dlgWindow.FindName('TxtColorHexLabel')
+    $txtDlgStatus = $dlgWindow.FindName('TxtDlgStatus')
+    $svIcons      = $dlgWindow.FindName('SvIcons')
+    $wpIcons      = $dlgWindow.FindName('WpIcons')
+    $btnPrevPage  = $dlgWindow.FindName('BtnPrevPage')
+    $txtPageInfo  = $dlgWindow.FindName('TxtPageInfo')
+    $btnNextPage  = $dlgWindow.FindName('BtnNextPage')
+    $txtSelectedIcon = $dlgWindow.FindName('TxtSelectedIcon')
+    $btnApply     = $dlgWindow.FindName('BtnApply')
+    $btnCancel    = $dlgWindow.FindName('BtnCancel')
+
+    # Sayfalama Değişkenleri (10 sütun x 5 satır = 50 ikon)
+    $script:allFoundIcons = New-Object System.Collections.Generic.List[object]
+    $script:currentPage = 1
+    $script:pageSize = 50
+    $script:totalPages = 1
+
+    # Kartela renk kutucukları
+    $script:selectedColorHex = "0078D4"
+    $script:dlgPickedIconPath = $null
+    $script:dlgPickedIconName = $null
+
+    # İkon Izgarasındaki Tüm Görselleri Anında Yeni Renkle Güncelle (Live Vector Update)
+    function script:Update-LiveIconsColor {
+        $hex = if ($chkColor.IsChecked) { $script:selectedColorHex } else { '' }
+        foreach ($b in $wpIcons.Children) {
+            if ($b.Tag -and $b.Tag.Svg -and $b.Tag.Image) {
+                try {
+                    $dg = Convert-SvgToDrawingGroup $b.Tag.Svg $hex
+                    if ($dg) {
+                        $b.Tag.Image.Source = New-Object System.Windows.Media.DrawingImage $dg
+                    }
+                } catch {}
+            }
+        }
+    }
+
+    $palettes = [ordered]@{
+        'PalBlue'   = '0078D4'
+        'PalCyan'   = '00B7C3'
+        'PalGreen'  = '107C41'
+        'PalOrange' = 'FF8C00'
+        'PalRed'    = 'E81123'
+        'PalPurple' = '8764B8'
+        'PalWhite'  = 'FFFFFF'
+        'PalGray'   = '8A8886'
+    }
+
+    function script:Set-DialogSelectedColor([string]$hex, [string]$label = '') {
+        $cleanHex = $hex -replace '^#',''
+        $script:selectedColorHex = $cleanHex
+        $chkColor.IsChecked = $true
+        try {
+            $brush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#" + $cleanHex)
+            $brdCurrentColor.Background = $brush
+        } catch {}
+        if (-not $label) { $label = "#" + $cleanHex }
+        $txtColorHexLabel.Text = $label
+
+        # Kartela kutucuklarında seçili olanı vurgula
+        foreach ($pName in $palettes.Keys) {
+            $pCtrl = $dlgWindow.FindName($pName)
+            if ($pCtrl) {
+                if ($palettes[$pName] -eq $cleanHex) {
+                    $pCtrl.BorderThickness = [System.Windows.Thickness]::new(2)
+                    $pCtrl.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0078D4")
+                } else {
+                    $pCtrl.BorderThickness = [System.Windows.Thickness]::new(1)
+                    $defaultBorderColor = if ($palettes[$pName] -eq 'FFFFFF') { '#888888' } else { 'Transparent' }
+                    $pCtrl.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString($defaultBorderColor)
+                }
+            }
+        }
+
+        # İkonları canlı güncelle
+        Update-LiveIconsColor
+    }
+
+    # Renk onayı değiştiğinde ikon renklerini de canlı güncelle
+    $chkColor.Add_Checked({ Update-LiveIconsColor })
+    $chkColor.Add_Unchecked({ Update-LiveIconsColor })
+
+    # Hızlı Kartela Olayları (Her kutucuğun Tag özelliğinden rengi oku)
+    foreach ($pName in $palettes.Keys) {
+        $pCtrl = $dlgWindow.FindName($pName)
+        if ($pCtrl) {
+            $pCtrl.Tag = $palettes[$pName]
+            $pCtrl.Add_MouseDown({
+                param($s, $e)
+                Set-DialogSelectedColor $s.Tag
+            })
+        }
+    }
+
+    # Özel Renk Seçici Butonu (Windows ColorDialog)
+    $btnColorPicker.Add_Click({
+        $cd = New-Object System.Windows.Forms.ColorDialog
+        $cd.FullOpen = $true
+        try {
+            $r = [Convert]::ToInt32($script:selectedColorHex.Substring(0,2), 16)
+            $g = [Convert]::ToInt32($script:selectedColorHex.Substring(2,2), 16)
+            $b = [Convert]::ToInt32($script:selectedColorHex.Substring(4,2), 16)
+            $cd.Color = [System.Drawing.Color]::FromArgb($r, $g, $b)
+        } catch {}
+
+        if ($cd.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $hexStr = ('{0:X2}{1:X2}{2:X2}' -f $cd.Color.R, $cd.Color.G, $cd.Color.B)
+            Set-DialogSelectedColor $hexStr
+        }
+    })
+
+    # Kaynak listesi (Popüler & Ücretsiz Açık Kaynak Veritabanları)
+    $sets = @(
+        'Tüm Kaynaklar',
+        'Google Material Symbols',
+        'Font Awesome',
+        'Lucide & Feather',
+        'Tabler Icons',
+        'Remix Icon',
+        'Bootstrap Icons',
+        'Microsoft Fluent UI',
+        'Boxicons',
+        'Carbon Icons (IBM)',
+        'Phosphor Icons',
+        'Renkli İkonlar (Flat & Emoji)',
+        'Flaticon',
+        'Magnific Icons'
+    )
+    foreach ($s in $sets) { [void]$cmbSet.Items.Add($s) }
+    $cmbSet.SelectedIndex = 0
+
+    $script:dlgSelectedItem = $null
+    $script:dlgSelectedBorder = $null
+
+    $btnCancel.Add_Click({ $dlgWindow.Close() })
+
+    function script:Select-DlgIconItem($item, $borderCtrl) {
+        if ($null -ne $script:dlgSelectedBorder) {
+            $script:dlgSelectedBorder.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#D0D5DD")
+            $script:dlgSelectedBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F8F9FA")
+        }
+        $script:dlgSelectedItem = $item
+        $script:dlgSelectedBorder = $borderCtrl
+        $borderCtrl.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0078D4")
+        $borderCtrl.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#E1F0FA")
+        $txtSelectedIcon.Text = "Seçili ikon: $($item.Name) [$($item.Provider)]"
+        $btnApply.IsEnabled = $true
+    }
+
+    function script:Save-And-Use-Icon {
+        if (-not $script:dlgSelectedItem) { return }
+        $item = $script:dlgSelectedItem
+        $btnApply.IsEnabled = $false
+        $txtDlgStatus.Text = "İkon indiriliyor ve işleniyor..."
+
+        try {
+            $dir = Join-Path $env:TEMP 'pwx_icons'
+            if (-not (Test-Path $dir)) { [void](New-Item -ItemType Directory -Path $dir -Force) }
+            $safeName = ([string]$item.Name -replace '[^\w\-]', '_')
+            $uid = (Get-Date -Format 'yyyyMMdd_HHmmss') + '_' + (Get-Random -Minimum 100 -Maximum 999)
+            $file = Join-Path $dir ("icon_${safeName}_${uid}.png")
+            $rawFile = Join-Path $dir ("icon_${safeName}_${uid}.download")
+
+            $hex = if ($chkColor.IsChecked) { $script:selectedColorHex } else { '' }
+            $downloadSuccess = $false
+
+            # 1. Öncelikle seçili öğenin hafızadaki vektörünü kullanarak doğrudan dönüştür
+            if ($script:dlgSelectedBorder -and $script:dlgSelectedBorder.Tag -and $script:dlgSelectedBorder.Tag.Svg) {
+                $convOk = Convert-SvgToPngFile $script:dlgSelectedBorder.Tag.Svg $file $hex 256
+                if ($convOk -and (Test-Path -LiteralPath $file)) {
+                    $downloadSuccess = $true
+                }
+            }
+
+            # 2. Hafızada yoksa Iconify SVG vektörünü indir ve dönüştür
+            if (-not $downloadSuccess -and $item.Provider -eq 'Iconify') {
+                $parts = ([string]$item.Name).Split(':', 2)
+                if ($parts.Count -eq 2) {
+                    $prefix = $parts[0]; $iconName = $parts[1]
+                    $svgUrls = @(
+                        "https://api.iconify.design/$prefix/$iconName.svg",
+                        "https://api.simplesvg.com/$prefix/$iconName.svg",
+                        "https://api.unisvg.com/$prefix/$iconName.svg"
+                    )
+                    $wcSvg = New-Object System.Net.WebClient
+                    $wcSvg.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
+                    $wcSvg.Encoding = [System.Text.Encoding]::UTF8
+
+                    foreach ($sUrl in $svgUrls) {
+                        try {
+                            $svgContent = $wcSvg.DownloadString($sUrl)
+                            if ($svgContent -and $svgContent.Contains('<svg')) {
+                                $convOk = Convert-SvgToPngFile $svgContent $file $hex 256
+                                if ($convOk -and (Test-Path -LiteralPath $file)) {
+                                    $downloadSuccess = $true
+                                    break
+                                }
+                            }
+                        } catch {}
+                    }
+                }
+            }
+
+            # 2. Eğer SVG dönüştürülemediyse aday PNG URL'lerini dene
+            if (-not $downloadSuccess) {
+                $candidates = @(Get-IconPngCandidates $item 256 $hex)
+                $wc = New-Object System.Net.WebClient
+                $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
+
+                foreach ($u in $candidates) {
+                    try {
+                        if (Test-Path -LiteralPath $rawFile) { Remove-Item -LiteralPath $rawFile -Force -ErrorAction SilentlyContinue }
+                        $wc.DownloadFile([uri]$u, $rawFile)
+                        if (Test-ImageFile $rawFile) {
+                            Save-NormalizedPng $rawFile $file
+                            $downloadSuccess = $true
+                            break
+                        }
+                    } catch { }
+                }
+            }
+
+            if (-not $downloadSuccess -or -not (Test-Path -LiteralPath $file)) {
+                throw "İkon indirilemedi. İnternet bağlantınızı veya ikon kaynağını kontrol edin."
+            }
+
+            Remove-Item -LiteralPath $rawFile -Force -ErrorAction SilentlyContinue
+
+            # İndirilen ikonu aktarım değişkenine kaydet ve modal pencereyi kapat
+            $script:dlgPickedIconPath = $file
+            $script:dlgPickedIconName = $item.Name
+            $dlgWindow.Close()
+        }
+        catch {
+            $errMsg = $_.Exception.Message
+            $txtDlgStatus.Text = "Hata: $errMsg"
+            $btnApply.IsEnabled = $true
+            try {
+                [System.Windows.MessageBox]::Show($dlgWindow, $errMsg, "İndirme Hatası", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+            } catch {}
+        }
+    }
+
+    function script:Render-CurrentPage {
+        $wpIcons.Children.Clear()
+        $script:dlgSelectedItem = $null
+        $script:dlgSelectedBorder = $null
+        $btnApply.IsEnabled = $false
+        $txtSelectedIcon.Text = "Seçili ikon: -"
+
+        if ($script:allFoundIcons.Count -eq 0) {
+            $txtPageInfo.Text = "Hiç ikon bulunamadı"
+            $btnPrevPage.IsEnabled = $false
+            $btnNextPage.IsEnabled = $false
+            return
+        }
+
+        $script:totalPages = [Math]::Max(1, [int][Math]::Ceiling($script:allFoundIcons.Count / $script:pageSize))
+        if ($script:currentPage -gt $script:totalPages) { $script:currentPage = $script:totalPages }
+        if ($script:currentPage -lt 1) { $script:currentPage = 1 }
+
+        $skipCount = ($script:currentPage - 1) * $script:pageSize
+        $pageIcons = @($script:allFoundIcons | Select-Object -Skip $skipCount -First $script:pageSize)
+
+        $btnPrevPage.IsEnabled = ($script:currentPage -gt 1)
+        $btnNextPage.IsEnabled = ($script:currentPage -lt $script:totalPages)
+        $txtPageInfo.Text = "Sayfa $($script:currentPage) / $($script:totalPages) (Toplam $($script:allFoundIcons.Count) İkon)"
+        $txtDlgStatus.Text = "$($script:allFoundIcons.Count) adet ikon bulundu. Sayfa $($script:currentPage) / $($script:totalPages) yükleniyor..."
+
+        $svgMap = Get-IconBatchSvgs $pageIcons
+        $txtDlgStatus.Text = "$($script:allFoundIcons.Count) adet ikon hazır. Sayfa: $($script:currentPage) / $($script:totalPages). İstediğiniz ikona tıklayın."
+
+        $hex = if ($chkColor.IsChecked) { $script:selectedColorHex } else { '' }
+
+        foreach ($iconItem in $pageIcons) {
+            $b = New-Object System.Windows.Controls.Border
+            $b.Width = 72; $b.Height = 72
+            $b.Margin = [System.Windows.Thickness]::new(3)
+            $b.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F8F9FA")
+            $b.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#D0D5DD")
+            $b.BorderThickness = [System.Windows.Thickness]::new(1)
+            $b.CornerRadius = [System.Windows.CornerRadius]::new(6)
+            $b.Cursor = [System.Windows.Input.Cursors]::Hand
+            $b.ToolTip = "$($iconItem.Name)`nSağlayıcı: $($iconItem.Provider)`nLisans: $($iconItem.License)"
+
+            $sp = New-Object System.Windows.Controls.StackPanel
+            $sp.VerticalAlignment = [System.Windows.VerticalAlignment]::Center
+            $sp.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Center
+
+            $img = New-Object System.Windows.Controls.Image
+            $img.Width = 36; $img.Height = 36
+            $img.Stretch = [System.Windows.Media.Stretch]::Uniform
+            [System.Windows.Media.RenderOptions]::SetBitmapScalingMode($img, [System.Windows.Media.BitmapScalingMode]::HighQuality)
+
+            $caption = New-Object System.Windows.Controls.TextBlock
+            $shortCaption = ([string]$iconItem.Name -split ':')[-1]
+            if ($shortCaption.Length -gt 9) { $shortCaption = $shortCaption.Substring(0, 7) + '..' }
+            $caption.Text = $shortCaption
+            $caption.FontSize = 9
+            $caption.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2D3748")
+            $caption.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Center
+            $caption.Margin = [System.Windows.Thickness]::new(0,2,0,0)
+
+            [void]$sp.Children.Add($img)
+            [void]$sp.Children.Add($caption)
+            $b.Child = $sp
+
+            # İkon SVG verisini al ve vektör olarak çiz
+            $svgStr = if ($svgMap.ContainsKey($iconItem.Name)) { $svgMap[$iconItem.Name] } else { $null }
+
+            # Tag içerisinde Item, Image, Border ve Svg referanslarını sakla (Canlı renk güncellemesi için)
+            $b.Tag = [pscustomobject]@{ Item = $iconItem; Image = $img; Border = $b; Svg = $svgStr }
+
+            if ($svgStr) {
+                try {
+                    $dg = Convert-SvgToDrawingGroup $svgStr $hex
+                    if ($dg) {
+                        $img.Source = New-Object System.Windows.Media.DrawingImage $dg
+                    }
+                } catch {}
+            }
+
+            $b.Add_MouseDown({
+                param($src, $ev)
+                $t = $src
+                while ($t -and -not ($t.Tag -and $t.Tag.Item)) {
+                    $t = [System.Windows.Media.VisualTreeHelper]::GetParent($t)
+                }
+                if ($t -and $t.Tag -and $t.Tag.Item) {
+                    Select-DlgIconItem $t.Tag.Item $t.Tag.Border
+                    if ($ev.ClickCount -ge 2) {
+                        Save-And-Use-Icon
+                    }
+                }
+            })
+
+            [void]$wpIcons.Children.Add($b)
+        }
+
+        try { $svIcons.ScrollToTop() } catch {}
+    }
+
+    $btnPrevPage.Add_Click({
+        if ($script:currentPage -gt 1) {
+            $script:currentPage--
+            Render-CurrentPage
+        }
+    })
+
+    $btnNextPage.Add_Click({
+        if ($script:currentPage -lt $script:totalPages) {
+            $script:currentPage++
+            Render-CurrentPage
+        }
+    })
+
+    $btnApply.Add_Click({ Save-And-Use-Icon })
+
+    $btnSearch.Add_Click({
+        $q = $txtQ.Text.Trim()
+        if (-not $q) {
+            $txtDlgStatus.Text = "Lütfen aranacak bir kelime girin."
+            return
+        }
+
+        $wpIcons.Children.Clear()
+        $btnApply.IsEnabled = $false
+        $script:dlgSelectedItem = $null
+        $txtSelectedIcon.Text = "Seçili ikon: -"
+        $txtDlgStatus.Text = "'$q' için ikonlar aranıyor..."
+        $btnSearch.IsEnabled = $false
+
+        try {
+            $r = Search-Icons $q $cmbSet.SelectedIndex
+            $script:allFoundIcons = $r.Icons
+            $script:currentPage = 1
+
+            if ($r.Icons.Count -eq 0) {
+                $txtDlgStatus.Text = "Hiç ikon bulunamadı ('$($r.Query)'). Farklı bir kelime deneyin."
+                $txtPageInfo.Text = "0 İkon"
+                $btnPrevPage.IsEnabled = $false
+                $btnNextPage.IsEnabled = $false
+            } else {
+                Render-CurrentPage
+            }
+        }
+        catch {
+            $txtDlgStatus.Text = "Hata oluştu: $($_.Exception.Message)"
+        }
+        finally {
+            $btnSearch.IsEnabled = $true
+        }
+    })
+
+    [void]$dlgWindow.ShowDialog()
+}
+
+$btnWebSearch.Add_Click({
+    $script:dlgPickedIconPath = $null
+    $script:dlgPickedIconName = $null
+    Open-FluentIconDialog
+    if ($script:dlgPickedIconPath -and (Test-Path -LiteralPath $script:dlgPickedIconPath)) {
+        try {
+            $txtLogo.Text = $script:dlgPickedIconPath
+            Update-PreviewImage $script:dlgPickedIconPath
+            Add-Log "Web ikon indirildi ve atandı: $script:dlgPickedIconName" 'Success'
+        } catch {
+            Add-Log "İkon atanırken hata oluştu: $($_.Exception.Message)" 'Error'
+        }
+    }
+})
+
+# ------------------------------------------------------------------
+#  Derleme Motoru Tetikleyicisi (Invoke-Build)
+# ------------------------------------------------------------------
 
 $btnBuild.Add_Click({
-    $btnBuild.Enabled = $false
-    $log.Clear()
-    $tempPatchedSource = $null
-    $tempConvertedIcon = $null
+    $btnBuild.IsEnabled = $false
+    $txtConsole.Text = ""
+    $pbStatus.IsIndeterminate = $true
+    $txtStatus.Text = "Derleme başlatılıyor..."
+    $script:LastGeneratedExe = ""
+    $btnOpenFolder.IsEnabled = $false
+
+    $ps1 = $txtPs1.Text.Trim()
+    $outExe = $txtOut.Text.Trim()
+    $logoPath = $txtLogo.Text.Trim()
+
+    # Kullanıcının Uygulama Adı alanına yazdığı ismi esas al
+    $appTitle = $txtTitle.Text.Trim()
+    if ($appTitle -and -not $script:outExeManuallyChanged) {
+        $safeTitle = $appTitle -replace '[\/\\:\*\?"<>\|]', '_'
+        $outDir = $null
+        if ($outExe) {
+            try { $outDir = [System.IO.Path]::GetDirectoryName($outExe) } catch {}
+        }
+        if (-not $outDir -and $ps1) {
+            try { $outDir = [System.IO.Path]::GetDirectoryName($ps1) } catch {}
+        }
+        if (-not $outDir) {
+            $outDir = (Get-Location).Path
+        }
+        $outExe = Join-Path $outDir ($safeTitle + '.exe')
+        $txtOut.Text = $outExe
+    }
+
     try {
-        $ps1 = $txtPs1.Text.Trim()
-        $outExe = $txtOut.Text.Trim()
-        if (-not (Test-Path -LiteralPath $ps1 -PathType Leaf)) { throw 'Geçerli bir .ps1 dosyası seçin.' }
-        if ([IO.Path]::GetExtension($ps1) -ine '.ps1') { throw 'Kaynak dosya .ps1 uzantılı olmalıdır.' }
-        if (-not $outExe) { throw 'Çıktı EXE yolunu belirtin.' }
-        if ([IO.Path]::GetExtension($outExe) -ine '.exe') { throw 'Çıktı dosyası .exe uzantılı olmalıdır.' }
-        if ($txtLogo.Text.Trim() -and -not (Test-Path -LiteralPath $txtLogo.Text.Trim() -PathType Leaf)) { throw 'İkon dosyası bulunamadı.' }
-        if ($chkX86.Checked -and $chkX64.Checked) { throw 'x86 ve x64 aynı anda seçilemez. Yalnızca birini seçin.' }
+        if (-not $ps1 -or -not (Test-Path -LiteralPath $ps1 -PathType Leaf)) {
+            throw 'Lütfen geçerli bir kaynak PowerShell (.ps1) dosyası seçin.'
+        }
+        if ([System.IO.Path]::GetExtension($ps1).ToLower() -ne '.ps1') {
+            throw 'Kaynak dosya uzantısı .ps1 olmalıdır.'
+        }
+        if (-not $outExe) {
+            throw 'Lütfen oluşturulacak hedef EXE dosya yolunu belirtin.'
+        }
+        if ([System.IO.Path]::GetExtension($outExe).ToLower() -ne '.exe') {
+            throw 'Çıktı dosya uzantısı .exe olmalıdır.'
+        }
+        if ($chkX86.IsChecked -and $chkX64.IsChecked) {
+            throw 'x86 ve x64 mimarileri aynı anda seçilemez. Yalnızca birini seçin.'
+        }
+        if ($logoPath -and -not (Test-Path -LiteralPath $logoPath -PathType Leaf)) {
+            throw 'Seçilen simge/logo dosyası mevcut değil.'
+        }
+    }
+    catch {
+        Add-Log $_.Exception.Message 'Error'
+        $txtStatus.Text = "Hata: $($_.Exception.Message)"
+        $pbStatus.IsIndeterminate = $false
+        $btnBuild.IsEnabled = $true
+        [System.Windows.MessageBox]::Show($_.Exception.Message, "Doğrulama Uyarısı", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+        return
+    }
 
-        $outDir = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($outExe))
-        if ($outDir -and -not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+    $buildParams = @{
+        Ps1             = $ps1
+        OutExe          = $outExe
+        LogoPath        = $logoPath
+        Target          = if ($rbTargetPS7.IsChecked) { 'PS7' } else { 'PS51' }
+        Mode            = if ($rbGui.IsChecked) { 'Gui' } else { 'Console' }
+        Title           = if ($txtTitle.Text.Trim()) { $txtTitle.Text.Trim() } else { [System.IO.Path]::GetFileNameWithoutExtension($ps1) }
+        Ver             = if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' }
+        Company         = $txtCompany.Text.Trim()
+        SingleFile      = [bool]$chkSingleFile.IsChecked
+        IsX86           = [bool]$chkX86.IsChecked
+        IsAdmin         = [bool]$chkAdmin.IsChecked
+        IsUtf8          = [bool]$chkUtf8.IsChecked
+        IsUnicode       = [bool]$chkUnicode.IsChecked
+        IsDpi           = [bool]$chkDpi.IsChecked
+        IsConfig        = [bool]$chkConfig.IsChecked
+        IsSupportOS     = [bool]$chkSupportOS.IsChecked
+        IsLongPaths     = [bool]$chkLongPaths.IsChecked
+        IsNoOutput      = [bool]$chkNoOutput.IsChecked
+    }
 
+    Add-Log "PwX Studio derleme işlemi başlatıldı..."
+    Add-Log "Hedef: $($buildParams.Target) | Mod: $($buildParams.Mode) | Uygulama: $($buildParams.Title) (v$($buildParams.Ver))"
+
+    $tempConvertedIcon = $null
+    $tempPatchedSource = $null
+
+    try {
         $iconForBuild = $null
-        if ($txtLogo.Text.Trim()) {
-            $selectedIconPath = (Resolve-Path -LiteralPath $txtLogo.Text.Trim()).Path
-            if ([IO.Path]::GetExtension($selectedIconPath) -ieq '.ico') { 
-                $iconForBuild = $selectedIconPath 
+        if ($buildParams.LogoPath) {
+            $rawIcon = (Resolve-Path -LiteralPath $buildParams.LogoPath).Path
+            if ([System.IO.Path]::GetExtension($rawIcon).ToLower() -eq '.ico') {
+                $iconForBuild = $rawIcon
             } else {
                 $iconForBuild = Join-Path $env:TEMP ('pwx_icon_' + [guid]::NewGuid().ToString('N') + '.ico')
                 $tempConvertedIcon = $iconForBuild
-                Convert-ToIco $selectedIconPath $iconForBuild
-                Write-Log 'Seçilen görsel EXE uyumlu çok boyutlu ICO formatına dönüştürüldü.'
+                Convert-ToIco $rawIcon $iconForBuild
+                Add-Log "Görsel, derleyici için çok boyutlu 256x256 ICO formatına dönüştürüldü."
             }
         }
 
-        $compileInput = (Resolve-Path -LiteralPath $ps1).Path
+        # Formlara Pencere Simgesi Atama Enjeksiyonu
+        $compileInput = (Resolve-Path -LiteralPath $buildParams.Ps1).Path
         if ($iconForBuild) {
-            # Simge yolu önce çözülür; seçilen ICO kaynak PowerShell'e gömülür ve desteklenen WinForms formlarına atanır.
             $iconBytes = [System.IO.File]::ReadAllBytes($iconForBuild)
             $iconBase64 = [Convert]::ToBase64String($iconBytes)
             $sourceText = [System.IO.File]::ReadAllText($compileInput)
@@ -1015,6 +2004,7 @@ $btnBuild.Add_Click({
 # PwX Studio embedded window icon bootstrap
 Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
 Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+Add-Type -AssemblyName PresentationFramework -ErrorAction SilentlyContinue
 try {
     if (-not $script:PwXEmbeddedIcon) {
         $script:PwXIconBytes = [Convert]::FromBase64String('__PWX_ICON_BASE64__')
@@ -1045,20 +2035,17 @@ try {
                 $tempPatchedSource = Join-Path $env:TEMP ('PwX_IconPatched_' + [guid]::NewGuid().ToString('N') + '.ps1')
                 [System.IO.File]::WriteAllText($tempPatchedSource, $patchedText, (New-Object System.Text.UTF8Encoding($true)))
                 $compileInput = $tempPatchedSource
-                Write-Log ("Pencere simgesi kaynak koda uygulandı: {0} WinForms form kurucusu bulundu." -f $formMatches.Count)
+                Add-Log "Pencere simgesi kaynak koda uygulandı ($($formMatches.Count) form yakalandı)."
             }
         }
 
-        # -------------------------------------------------------------
-        #  pwxe / PwX Build Engine (Hibrit Motor Tespiti)
-        # -------------------------------------------------------------
+        # pwxe Derleme Motorunu Bulma
         $engineScript = $null
         $possiblePaths = @(
-            (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
             (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
-            (Join-Path (Get-Location) 'pwxengine\scripts\PwX-Build.ps1'),
-            (Join-Path (Get-Location) '..\pwxe\scripts\PwX-Build.ps1'),
-            (Join-Path $PSScriptRoot '..\pwxe\scripts\PwX-Build.ps1')
+            (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
+            (Join-Path (Get-Location) 'pwxe\scripts\PwX-Build.ps1'),
+            (Join-Path (Get-Location) '..\pwxe\scripts\PwX-Build.ps1')
         )
         foreach ($p in $possiblePaths) {
             if ($p -and (Test-Path -LiteralPath $p)) { $engineScript = $p; break }
@@ -1073,60 +2060,76 @@ try {
         }
 
         if (-not $engineScript) {
-            throw "pwxe (PwX Build Engine) bulunamadı. Lütfen 'pwxe' modülünü kurun (Install-Module pwxe) veya motor klasörünün mevcut olduğunu doğrulayın."
+            throw "pwxe derleme motoru bulunamadı. Lütfen motor klasörünü doğrulayın."
         }
 
-        $target = if ($rbTargetPS7.Checked) { 'PS7' } else { 'PS51' }
-        $mode   = if ($rbWin.Checked) { 'Gui' } else { 'Console' }
-        $title  = if ($txtTitle.Text.Trim()) { $txtTitle.Text.Trim() } else { [IO.Path]::GetFileNameWithoutExtension($ps1) }
-        $comp   = $txtCompany.Text.Trim()
-        $ver    = if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' }
-
-        Write-Log "pwxe Motoru başlatılıyor... [Hedef=$target, Mod=$mode]"
         $bArgs = @{
             Source = $compileInput
-            Output = [IO.Path]::GetFullPath($outExe)
-            Target = $target
-            Mode   = $mode
+            Output = [System.IO.Path]::GetFullPath($buildParams.OutExe)
+            Target = $buildParams.Target
+            Mode   = $buildParams.Mode
             Force  = $true
         }
         if ($iconForBuild) { $bArgs.Icon = $iconForBuild }
-        if ($title) { $bArgs.ProductName = $title; $bArgs.Description = $title }
-        if ($comp) { $bArgs.CompanyName = $comp }
-        if ($ver) { $bArgs.FileVersion = $ver; $bArgs.ProductVersion = $ver }
-        if ($target -eq 'PS7') {
-            if ($chkX86.Checked) {
-                Write-Log 'Bilgi: PS7 çalışma zamanı win-x64 mimarisi ile derleniyor.'
-            }
+        if ($buildParams.Title) { $bArgs.ProductName = $buildParams.Title; $bArgs.Description = $buildParams.Title }
+        if ($buildParams.Company) { $bArgs.CompanyName = $buildParams.Company }
+        if ($buildParams.Ver) { $bArgs.FileVersion = $buildParams.Ver; $bArgs.ProductVersion = $buildParams.Ver }
+        
+        if ($buildParams.Target -eq 'PS7') {
             $bArgs.Architecture = 'win-x64'
-            if ($chkSingleFile.Checked) { $bArgs.SingleFile = $true }
+            if ($buildParams.SingleFile) { $bArgs.SingleFile = $true }
         }
 
-        Write-Log ('Seçenekler: ' + (($bArgs.Keys | Sort-Object) -join ', '))
+        Add-Log "Derleme motoru çalıştırılıyor: $engineScript"
+        $txtStatus.Text = "Derleniyor: $($buildParams.Title)..."
+
         $res = & $engineScript @bArgs
         if ($null -ne $res -and -not $res.Success) {
-            throw "PwX Build Engine derleme hatası: $($res.Error)"
+            throw "Derleme motoru hatası: $($res.Error)"
         }
 
-        if (-not (Test-Path -LiteralPath $outExe -PathType Leaf)) { throw 'Derleme tamamlandı görünse de EXE dosyası oluşmadı. Günlük çıktısını kontrol edin.' }
-        $item = Get-Item -LiteralPath $outExe
-        Write-Log "BAŞARILI: $($item.FullName)"
-        Write-Log ("Dosya boyutu: {0:N1} KB" -f ($item.Length / 1KB))
-        [void][System.Windows.Forms.MessageBox]::Show("EXE oluşturuldu:`r`n$outExe", 'İşlem tamamlandı', 'OK', 'Information')
-        [System.Diagnostics.Process]::Start('explorer.exe', "/select,`"$outExe`"") | Out-Null
+        if (-not (Test-Path -LiteralPath $buildParams.OutExe -PathType Leaf)) {
+            throw "Derleme tamamlandı fakat çıktı EXE dosyası bulunamadı."
+        }
+
+        $item = Get-Item -LiteralPath $buildParams.OutExe
+        $script:LastGeneratedExe = $item.FullName
+
+        Add-Log "BAŞARILI: $($item.FullName) ($([Math]::Round($item.Length / 1KB, 1)) KB)" 'Success'
+        $txtStatus.Text = "Derleme başarıyla tamamlandı!"
+        $pbStatus.IsIndeterminate = $false
+        $pbStatus.Value = 100
+        $btnOpenFolder.IsEnabled = $true
+        [System.Windows.MessageBox]::Show($window, "EXE başarıyla oluşturuldu:`r`n$($item.FullName)", "İşlem Başarılı", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
     }
     catch {
-        Write-Log ('HATA: ' + $_.Exception.Message)
-        [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Derleme hatası', 'OK', 'Error')
+        $errMsg = $_.Exception.Message
+        Add-Log "HATA: $errMsg" 'Error'
+        $txtStatus.Text = "Hata oluştu. Günlük ayrıntılarına bakınız."
+        $pbStatus.IsIndeterminate = $false
+        [System.Windows.MessageBox]::Show($window, $errMsg, "Derleme Hatası", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
     }
     finally {
-        if ($tempPatchedSource -and (Test-Path -LiteralPath $tempPatchedSource)) { Remove-Item -LiteralPath $tempPatchedSource -Force -ErrorAction SilentlyContinue }
-        if ($tempConvertedIcon -and (Test-Path -LiteralPath $tempConvertedIcon)) { Remove-Item -LiteralPath $tempConvertedIcon -Force -ErrorAction SilentlyContinue }
-        $btnBuild.Enabled = $true
+        if ($tempPatchedSource -and (Test-Path -LiteralPath $tempPatchedSource)) {
+            Remove-Item -LiteralPath $tempPatchedSource -Force -ErrorAction SilentlyContinue
+        }
+        if ($tempConvertedIcon -and (Test-Path -LiteralPath $tempConvertedIcon)) {
+            Remove-Item -LiteralPath $tempConvertedIcon -Force -ErrorAction SilentlyContinue
+        }
+        $btnBuild.IsEnabled = $true
     }
 })
-# Başlangıç temasını uygula; güneş/ay simgesi Paint-ThemeSwitch tarafından çizilir.
-Set-Theme $form $script:currentTheme
-$lblBrand.ForeColor = [System.Drawing.Color]::FromArgb(74, 119, 245)
-$btnThemeToggle.Invalidate()
-[void]$form.ShowDialog()
+
+# Başlangıç durumu
+Add-Log "PwX Studio v1.5.0 hazır."
+Add-Log "Dönüştürmek istediğiniz .ps1 dosyasını sürükleyip bırakabilir veya 'Gözat' butonunu kullanabilirsiniz."
+
+# Pencere Kapatıldığında Temiz Çıkış
+$window.Add_Closed({
+    if ([System.Windows.Application]::Current) {
+        [System.Windows.Application]::Current.Shutdown()
+    }
+})
+
+# Pencereyi Göster
+[void]$window.ShowDialog()
