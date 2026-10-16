@@ -115,4 +115,9 @@ Add-Row 'ALL' 'T-009' 'Sözdizimi hatası reddedilir' (($LASTEXITCODE -eq 1) -an
 Remove-Item $bad -Force -ErrorAction SilentlyContinue
 
 $rows | Format-Table -AutoSize
-if ($rows | Where-Object Result -eq 'FAIL') { exit 1 }
+if ($rows | Where-Object Result -eq 'FAIL') {
+    exit 1
+}
+$global:LASTEXITCODE = 0
+exit 0
+
