@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
     PwX Studio v1.5.0 - PowerShell Executable Builder
     - Tamamen bağımsız yerli "PwX Build Engine" kullanır (PS2EXE bağımlılığı tamamen kaldırılmıştır)
@@ -1094,6 +1094,63 @@ $btnBuild.Add_Click({
         $outDir = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($outExe))
         if ($outDir -and -not (Test-Path -LiteralPath $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 
+        $iconForBuild = $null
+        if ($txtLogo.Text.Trim()) {
+            $selectedIconPath = (Resolve-Path -LiteralPath $txtLogo.Text.Trim()).Path
+            if ([IO.Path]::GetExtension($selectedIconPath) -ieq '.ico') { 
+                $iconForBuild = $selectedIconPath 
+            } else {
+                $iconForBuild = Join-Path $env:TEMP ('pwx_icon_' + [guid]::NewGuid().ToString('N') + '.ico')
+                $tempConvertedIcon = $iconForBuild
+                Convert-ToIco $selectedIconPath $iconForBuild
+                Write-Log 'Seçilen görsel EXE uyumlu çok boyutlu ICO formatına dönüştürüldü.'
+            }
+        }
+
+        $compileInput = (Resolve-Path -LiteralPath $ps1).Path
+        if ($iconForBuild) {
+            # Simge yolu önce çözülür; seçilen ICO kaynak PowerShell'e gömülür ve desteklenen WinForms formlarına atanır.
+            $iconBytes = [System.IO.File]::ReadAllBytes($iconForBuild)
+            $iconBase64 = [Convert]::ToBase64String($iconBytes)
+            $sourceText = [System.IO.File]::ReadAllText($compileInput)
+            $iconBootstrap = @'
+# PwX Studio embedded window icon bootstrap
+Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+try {
+    if (-not $script:PwXEmbeddedIcon) {
+        $script:PwXIconBytes = [Convert]::FromBase64String('__PWX_ICON_BASE64__')
+        $script:PwXIconStream = New-Object System.IO.MemoryStream (,$script:PwXIconBytes)
+        $script:PwXEmbeddedIcon = New-Object System.Drawing.Icon -ArgumentList $script:PwXIconStream
+    }
+    function Set-PwXFormIcon($targetForm) {
+        try { if ($targetForm -is [System.Windows.Forms.Form] -and $script:PwXEmbeddedIcon) { $targetForm.Icon = $script:PwXEmbeddedIcon } } catch {}
+    }
+} catch { }
+'@
+            $iconBootstrap = $iconBootstrap.Replace('__PWX_ICON_BASE64__', $iconBase64)
+            $formPattern = '(?m)^(\s*)(\$[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:New-Object\s+(?:System\.Windows\.Forms\.)?Form\b[^\r\n]*|\[System\.Windows\.Forms\.Form\]::new\([^\r\n]*\))\s*$'
+            $formMatches = [regex]::Matches($sourceText, $formPattern)
+            if ($formMatches.Count -gt 0) {
+                $patchedText = [regex]::Replace($sourceText, $formPattern, [System.Text.RegularExpressions.MatchEvaluator]{
+                    param($m)
+                    $indent = $m.Groups[1].Value
+                    $varName = $m.Groups[2].Value
+                    return $m.Value + [Environment]::NewLine + $indent + 'Set-PwXFormIcon ' + $varName + [Environment]::NewLine + $indent + $varName + '.Add_Shown({ Set-PwXFormIcon ' + $varName + ' })'
+                })
+                $drawingLine = '(?m)^\s*Add-Type\s+-AssemblyName\s+System\.Drawing\s*$'
+                if ([regex]::IsMatch($patchedText, $drawingLine)) {
+                    $patchedText = [regex]::Replace($patchedText, $drawingLine, { param($m) $m.Value + [Environment]::NewLine + $iconBootstrap }, 1)
+                } else { 
+                    $patchedText = $iconBootstrap + [Environment]::NewLine + $patchedText 
+                }
+                $tempPatchedSource = Join-Path $env:TEMP ('PwX_IconPatched_' + [guid]::NewGuid().ToString('N') + '.ps1')
+                [System.IO.File]::WriteAllText($tempPatchedSource, $patchedText, (New-Object System.Text.UTF8Encoding($true)))
+                $compileInput = $tempPatchedSource
+                Write-Log ("Pencere simgesi kaynak koda uygulandı: {0} WinForms form kurucusu bulundu." -f $formMatches.Count)
+            }
+        }
+
         # -------------------------------------------------------------
         #  PwX Build Engine (Yerli Bağımsız Motor)
         # -------------------------------------------------------------
@@ -1123,9 +1180,13 @@ $btnBuild.Add_Click({
         if ($title) { $bArgs.ProductName = $title; $bArgs.Description = $title }
         if ($comp) { $bArgs.CompanyName = $comp }
         if ($ver) { $bArgs.FileVersion = $ver; $bArgs.ProductVersion = $ver }
-        if ($chkX86.Checked) { $bArgs.Architecture = 'win-x86' }
-        if ($chkX64.Checked) { $bArgs.Architecture = 'win-x64' }
-        if ($target -eq 'PS7' -and $chkSingleFile.Checked) { $bArgs.SingleFile = $true }
+        if ($target -eq 'PS7') {
+            if ($chkX86.Checked) {
+                Write-Log 'Bilgi: PS7 çalışma zamanı win-x64 mimarisi ile derleniyor.'
+            }
+            $bArgs.Architecture = 'win-x64'
+            if ($chkSingleFile.Checked) { $bArgs.SingleFile = $true }
+        }
 
         Write-Log ('Seçenekler: ' + (($bArgs.Keys | Sort-Object) -join ', '))
         $res = & $engineScript @bArgs
