@@ -37,7 +37,8 @@ Henüz yayımlanmamış geliştirmeler.
 
 ### Changed
 - PwX Studio tamamen harici paket bağımlılıksız, çevrimdışı çalışabilen bağımsız bir yapıya kavuşturuldu.
-- Arayüz boyutu ve yerleşimi (`880x915` px) yeni hedef kontrolleri için optimize edildi.
+- **Responsive & Sizable Pencere:** Sabit boyut kilidi kaldırıldı; pencere serbestçe yeniden boyutlandırılabilir, tam ekran yapılabilir hâle getirildi ve küçük ekranlar için dinamik kaydırma çubuğu (`AutoScroll`) eklendi.
+- **Motor Ayrıştırması (pwxe):** Çekirdek derleme motoru `pwxe` olarak adlandırılarak [github.com/mtahiryilmazz/pwxe](https://github.com/mtahiryilmazz/pwxe) adresinde bağımsız bir CLI & modül deposuna ayrıldı; PwX Studio hem sistemdeki `pwxe` modülünü hem de dahili kopyayı destekleyen hibrit yapıya kavuşturuldu.
 - Uygulama marka başlığı `PwX Studio v1.5.0` olarak güncellendi.
 
 ### Fixed
