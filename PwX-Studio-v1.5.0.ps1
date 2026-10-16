@@ -225,7 +225,7 @@ function Search-Icons([string]$query, [int]$sourceIndex, [string]$icons8ApiKey =
                 try {
                     $wc = New-Object System.Net.WebClient
                     $wc.Encoding = [System.Text.Encoding]::UTF8
-                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.4.3'
+                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
                     $json = $wc.DownloadString($apiHost + '/search' + $queryPart) | ConvertFrom-Json
                     if ($json -and $null -ne $json.icons) { break }
                 } catch { $lastError = $_.Exception.Message }
@@ -246,7 +246,7 @@ function Search-Icons([string]$query, [int]$sourceIndex, [string]$icons8ApiKey =
         $i8url = 'https://search.icons8.com/api/iconsets/v5/search?term=' + [uri]::EscapeDataString($q) + '&amount=40&offset=0&language=en&authors=icons8&isFree=true&spellcheck=true&suggest=true'
         $wc8 = New-Object System.Net.WebClient
         $wc8.Encoding = [System.Text.Encoding]::UTF8
-        $wc8.Headers['User-Agent'] = 'PwX-Studio/1.4.3'
+        $wc8.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
         if ($icons8ApiKey) { $wc8.Headers['Api-Key'] = $icons8ApiKey }
         try {
             $j8 = $wc8.DownloadString($i8url) | ConvertFrom-Json
@@ -903,7 +903,7 @@ function Invoke-IconDownload {
         $safeName = ([string]$script:selName.Name -replace '[^\w\-]', '_')
         $file = Join-Path $dir ($safeName + '.png')
         $wc = New-Object System.Net.WebClient
-        $wc.Headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) PwX-Studio/1.4.3'
+        $wc.Headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) PwX-Studio/1.5.0'
         $rawFile = Join-Path $dir ($safeName + '.download')
         $errors = New-Object System.Collections.Generic.List[string]
         $candidates = @(Get-IconPngCandidates $script:selName 256 (Get-CurrentHex))
@@ -985,7 +985,7 @@ $btnSearch.Add_Click({
                 $flow.Controls.Add($pb)
 
                 $wc = New-Object System.Net.WebClient
-                $wc.Headers['User-Agent'] = 'PwX-Studio/1.4.3'
+                $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
                 $state = [pscustomobject]@{ Box=$pb; FallbackUrl=(Get-IconResultFallbackPngUrl $iconItem 96 $hex); IsFallback=$false; Provider=$iconItem.Provider }
                 $wc.Add_DownloadDataCompleted({
                     param($sender, $e)

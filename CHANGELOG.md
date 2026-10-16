@@ -42,7 +42,13 @@ Henüz yayımlanmamış geliştirmeler.
 
 ### Fixed
 - `pwxengine/tests/Run-Smoke.ps1` test betiğinde kasıtlı sözdizimi reddi (`T-009`) sonrası kalan `$LASTEXITCODE = 1` sızıntısı giderildi; açık `exit 0` eklenerek GitHub Actions Windows CI süreci (Run #31) tamamen başarılı (yeşil) hâle getirildi.
+- Arayüz içindeki tüm User-Agent istemci tanımlayıcıları `PwX-Studio/1.5.0` olarak güncellendi.
 - Türkçe karakterler (`ş, ğ, ü, ç, ö, ı, İ`) ve UTF-8 BOM kodlama uyumluluğu korundu.
+
+### Governance & Community
+- MIT Açık Kaynak Lisansı (`LICENSE`) projeye tanımlandı.
+- GitHub topluluk standartları eklendi: Hata Bildirimi (Bug Report), Özellik İsteği (Feature Request), PR Şablonu, `CONTRIBUTING.md` ve `SECURITY.md`.
+- Temiz ve kapsamlı `.gitignore` yapılandırması oluşturuldu.
 
 ---
 

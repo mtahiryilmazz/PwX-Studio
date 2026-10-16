@@ -1,0 +1,33 @@
+# Windows Thumbnail Cache & Desktop
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Visual Studio & VS Code
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Build & Compilation Artifacts
+[Bb]in/
+[Oo]bj/
+*.log
+*.tmp
+*.download
+pwx_icon_*.ico
+PwX_IconPatched_*.ps1
+
+# PowerShell Temporary Files
+*~
+*.swp
+
+# OS-generated files
+.DS_Store
