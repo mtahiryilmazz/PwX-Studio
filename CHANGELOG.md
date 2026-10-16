@@ -21,6 +21,25 @@ Henüz yayımlanmamış geliştirmeler.
 
 > Bu bölümdeki maddeler planlanan çalışmalardır; tamamlanmış özellik olarak değerlendirilmemelidir.
 
+## [1.5.0] — 2026-10-16
+
+### Added
+- **PwX Build Engine Entegrasyonu:** PwX Studio grafik arayüzüne PS2EXE'den bağımsız yerel dönüştürme motoru entegre edildi.
+- **Hedef Çalışma Zamanı Seçimi:**
+  - **PowerShell 5.1:** Windows dahili `csc.exe` derleyicisi kullanılarak harici SDK veya internet gerektirmeden sıfır bağımlılıkla EXE üretimi.
+  - **PowerShell 7.4+:** Modern `.NET 8 SDK` ve `Microsoft.PowerShell.SDK` ile self-contained EXE üretimi.
+  - **Tek Dosya (Single-File):** PowerShell 7 için bağımsız, taşınabilir tek dosya EXE paketleme seçeneği.
+- **Dönüştürme Motoru Seçim Arayüzü:** Arayüze "Dönüştürme Motoru & Hedef" paneli eklendi; varsayılan olarak PwX Engine seçili gelirken geriye dönük uyumluluk için PS2EXE modu korunmuştur.
+
+### Changed
+- Varsayılan EXE üretim altyapısı PS2EXE yerine yerli **PwX Build Engine** olarak güncellendi.
+- Arayüz pencere boyutu (`880x915` px) ve bileşen yerleşimleri yeni motor/hedef kontrollerini barındıracak şekilde uyarlandı.
+- Uygulama başlığı ve marka gösterimi `PwX Studio v1.5.0` olarak güncellendi.
+
+### Fixed
+- `pwxengine/tests/Run-Smoke.ps1` duman test betiğinde kasıtlı sözdizimi reddi (`T-009`) sonrası kalan `$LASTEXITCODE = 1` durumunun CI runner'a sızması giderildi; açık `exit 0` eklenerek GitHub Actions CI süreci (Run #31) tamamen başarılı (yeşil) hâle getirildi.
+- Türkçe karakterler (`ş, ğ, ü, ç, ö, ı, İ`) ve UTF-8 BOM kodlama uyumluluğu korundu.
+
 ---
 
 ## [1.4.2] — 2026-10-15
