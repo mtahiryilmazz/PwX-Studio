@@ -26,6 +26,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PwxGui)'=='true'">
+    <!-- GUI payloads may use Windows Forms and/or WPF. Keep console builds cross-targeted. -->
+    <TargetFramework Condition="'$(PwxFramework)'=='net8.0'">net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <OutputType>WinExe</OutputType>
     <DefineConstants>$(DefineConstants);PWX_GUI</DefineConstants>
   </PropertyGroup>

@@ -2,13 +2,18 @@
 // Gomulu payload.ps1 dosyasini benzersiz gecici klasore cikarir, PowerShell SDK ile calistirir,
 // betigin cikis kodunu dondurur ve gecici klasoru temizler.
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
+using System.Management.Automation;
+using System.Management.Automation.Host;
+using System.Management.Automation.Runspaces;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
 
 namespace PwX.BuildHost
 {
@@ -55,9 +60,7 @@ namespace PwX.BuildHost
             {
                 if (s == null) throw new InvalidOperationException("Gomulu betik bulunamadi.");
                 using (FileStream fs = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                {
                     s.CopyTo(fs); // payload build sirasinda UTF-8 BOM ile yazilmistir
-                }
             }
         }
 
@@ -75,20 +78,20 @@ namespace PwX.BuildHost
             psArgs[4] = "-File";
             psArgs[5] = scriptPath;
             Array.Copy(userArgs, 0, psArgs, 6, userArgs.Length);
-
             return Microsoft.PowerShell.ConsoleShell.Start(string.Empty, string.Empty, psArgs);
         }
 #endif
 
 #if PWX_GUI
         // GUI modu: konsol penceresi yok; STA runspace icinde calistirir.
-        // Sinirlama (Roadmap Asama 3/4'te test edilecek): Read-Host gibi konsol etkilesimi desteklenmez.
+        // PowerShell 'exit N' komutunu PSHost.SetShouldExit uzerinden bildirir.
         private static int RunHidden(string scriptPath, string[] args)
         {
             InitialSessionState iss = InitialSessionState.CreateDefault2();
             iss.ExecutionPolicy = Microsoft.PowerShell.ExecutionPolicy.Bypass;
+            var host = new ExitCodeHost();
 
-            using (Runspace rs = RunspaceFactory.CreateRunspace(iss))
+            using (Runspace rs = RunspaceFactory.CreateRunspace(host, iss))
             {
                 rs.ApartmentState = ApartmentState.STA;
                 rs.ThreadOptions = PSThreadOptions.UseCurrentThread;
@@ -97,26 +100,26 @@ namespace PwX.BuildHost
                 using (PowerShell ps = PowerShell.Create())
                 {
                     ps.Runspace = rs;
-                    ps.AddCommand(scriptPath);
-
+                    // Run the payload text as the pipeline's top-level script.
+                    // This follows Microsoft's hosting sample: a top-level "exit N"
+                    // reaches PSHost.SetShouldExit, while AddArgument binds script params.
+                    ps.AddScript(File.ReadAllText(scriptPath));
+                    // pwsh -File gibi: "-Ad deger" adlandirilmis parametre, digerleri konumsal.
+                    // (Hepsini AddArgument ile gecmek "-Message abc -Code 5" gibi cagrilari bozar.)
                     for (int i = 0; i < args.Length; i++)
                     {
                         string a = args[i];
                         if (a.Length > 1 && a[0] == '-' && char.IsLetter(a[1]))
                         {
                             string name = a.Substring(1);
-                            if (i + 1 < args.Length && !(args[i + 1].Length > 1 && args[i + 1][0] == '-' && char.IsLetter(args[i + 1][1])))
-                                ps.AddParameter(name, args[++i]);
-                            else
-                                ps.AddParameter(name);
+                            bool nextIsParam = i + 1 < args.Length && args[i + 1].Length > 1 && args[i + 1][0] == '-' && char.IsLetter(args[i + 1][1]);
+                            if (i + 1 < args.Length && !nextIsParam) ps.AddParameter(name, args[++i]);
+                            else ps.AddParameter(name);
                         }
                         else ps.AddArgument(a);
                     }
 
-                    try
-                    {
-                        ps.Invoke();
-                    }
+                    try { ps.Invoke(); }
                     catch (RuntimeException ex)
                     {
                         ReportFatal(ex.Message);
@@ -129,10 +132,81 @@ namespace PwX.BuildHost
                         return 1;
                     }
 
+                    if (host.ShouldExit)
+                        return host.ExitCode;
+
                     object last = rs.SessionStateProxy.PSVariable.GetValue("LASTEXITCODE");
                     int code;
-                    return (last != null && int.TryParse(last.ToString(), out code)) ? code : 0;
+                    return last != null && int.TryParse(last.ToString(), out code) ? code : 0;
                 }
+            }
+        }
+
+        private sealed class ExitCodeHost : PSHost
+        {
+            private readonly HeadlessHostUI _ui = new HeadlessHostUI();
+            private readonly Guid _instanceId = Guid.NewGuid();
+
+            internal bool ShouldExit { get; private set; }
+            internal int ExitCode { get; private set; }
+
+            public override string Name { get { return "PwX GUI Host"; } }
+            public override Version Version { get { return typeof(PowerShell).Assembly.GetName().Version; } }
+            public override Guid InstanceId { get { return _instanceId; } }
+            public override PSHostUserInterface UI { get { return _ui; } }
+            public override CultureInfo CurrentCulture { get { return Thread.CurrentThread.CurrentCulture; } }
+            public override CultureInfo CurrentUICulture { get { return Thread.CurrentThread.CurrentUICulture; } }
+
+            public override void SetShouldExit(int exitCode)
+            {
+                ExitCode = exitCode;
+                ShouldExit = true;
+            }
+
+            public override void EnterNestedPrompt()
+            {
+                throw new NotSupportedException("GUI modunda ic ice konsol istemi desteklenmez.");
+            }
+
+            public override void ExitNestedPrompt() { }
+            public override void NotifyBeginApplication() { }
+            public override void NotifyEndApplication() { }
+        }
+
+        // Konsol bulunmadigi icin metinsel host ciktilari gizlidir; Write-Host hataya dusmez.
+        // Read-Host/credential istemleri GUI host tarafindan desteklenmez.
+        private sealed class HeadlessHostUI : PSHostUserInterface
+        {
+            public override PSHostRawUserInterface RawUI { get { return null; } }
+            public override string ReadLine() { throw new NotSupportedException("GUI modunda Read-Host desteklenmez."); }
+            public override SecureString ReadLineAsSecureString() { throw new NotSupportedException("GUI modunda parola istemi desteklenmez."); }
+            public override void Write(string value) { }
+            public override void Write(ConsoleColor foregroundColor, ConsoleColor backgroundColor, string value) { }
+            public override void WriteLine(string value) { }
+            public override void WriteErrorLine(string value) { }
+            public override void WriteDebugLine(string message) { }
+            public override void WriteProgress(long sourceId, ProgressRecord record) { }
+            public override void WriteVerboseLine(string message) { }
+            public override void WriteWarningLine(string message) { }
+
+            public override Dictionary<string, PSObject> Prompt(string caption, string message, Collection<FieldDescription> descriptions)
+            {
+                throw new NotSupportedException("GUI modunda etkileşimli istem desteklenmez.");
+            }
+
+            public override PSCredential PromptForCredential(string caption, string message, string userName, string targetName)
+            {
+                throw new NotSupportedException("GUI modunda kimlik bilgisi istemi desteklenmez.");
+            }
+
+            public override PSCredential PromptForCredential(string caption, string message, string userName, string targetName, PSCredentialTypes allowedCredentialTypes, PSCredentialUIOptions options)
+            {
+                throw new NotSupportedException("GUI modunda kimlik bilgisi istemi desteklenmez.");
+            }
+
+            public override int PromptForChoice(string caption, string message, Collection<ChoiceDescription> choices, int defaultChoice)
+            {
+                throw new NotSupportedException("GUI modunda secim istemi desteklenmez.");
             }
         }
 #endif

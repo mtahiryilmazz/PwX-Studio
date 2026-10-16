@@ -41,6 +41,31 @@ foreach ($t in $targets) {
     Add-Row $t 'T-005' 'Türkçe karakterler' ($o -match 'ğüşıöçĞÜŞİÖÇ')
 }
 
+# PS7 GUI host must compile and propagate the script's exit N value to the process.
+if ($targets -contains 'PS7') {
+    $guiOut = Join-Path $root 'artifacts\test-results\PS7-GUI\hello-gui.exe'
+    $guiRes = & $build -Source $sample -Output $guiOut -Target PS7 -Mode Gui -Force
+    if ($guiRes.Success -and (Test-Path -LiteralPath $guiRes.OutputPath)) {
+        # GUI (WinExe) programlari '&' ile cagrildiginda PowerShell beklemez ve $LASTEXITCODE guncellenmez.
+        # Cikis kodu yalnizca Start-Process -Wait -PassThru ile guvenilir olculur.
+        function Get-GuiExit([string]$Exe, [string[]]$ArgList) {
+            $p = Start-Process -FilePath $Exe -ArgumentList $ArgList -Wait -PassThru -WindowStyle Hidden
+            return $p.ExitCode
+        }
+        $guiExit = Get-GuiExit $guiRes.OutputPath @('-Code', '17')
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir (17)' ($guiExit -eq 17) "beklenen: 17; alınan: $guiExit"
+        $guiExit = Get-GuiExit $guiRes.OutputPath @('-Code', '1')
+        Add-Row 'PS7-GUI' 'T-GUI-002' 'GUI host çıkış kodu 1' ($guiExit -eq 1) "beklenen: 1; alınan: $guiExit"
+        $guiExit = Get-GuiExit $guiRes.OutputPath @()
+        Add-Row 'PS7-GUI' 'T-GUI-003' 'GUI host normal bitiş 0' ($guiExit -eq 0) "beklenen: 0; alınan: $guiExit"
+        $guiExit = Get-GuiExit $guiRes.OutputPath @('-Message', 'abc', '-Code', '5')
+        Add-Row 'PS7-GUI' 'T-GUI-004' 'GUI host adlandırılmış parametre sırası' ($guiExit -eq 5) "beklenen: 5; alınan: $guiExit"
+    }
+    else {
+        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir' $false 'GUI derlemesi başarısız'
+    }
+}
+
 # T-009: sözdizimi hatası -> derleme başarısız, EXE oluşmamalı
 $bad = Join-Path ([IO.Path]::GetTempPath()) ('pwx-bad-' + [guid]::NewGuid().ToString('N') + '.ps1')
 [IO.File]::WriteAllText($bad, "Write-Output 'x'`r`nif ($true {", (New-Object Text.UTF8Encoding($true)))
