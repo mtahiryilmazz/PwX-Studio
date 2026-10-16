@@ -1,5 +1,5 @@
 ﻿<#
-.SYNOPSIS  PwX Build Engine duman testleri (Roadmap T-001, T-002, T-003, T-004, T-005, T-009).
+.SYNOPSIS  PwX Build Engine duman testleri (T-001..T-006, T-GUI-001..009, T-009).
 #>
 [CmdletBinding()]
 param([ValidateSet('PS51', 'PS7', 'All')][string]$Target = 'All', [switch]$SingleFile)
@@ -39,27 +39,67 @@ foreach ($t in $targets) {
 
     $o = (& $exePath | Out-String)
     Add-Row $t 'T-005' 'Türkçe karakterler' ($o -match 'ğüşıöçĞÜŞİÖÇ')
+
+    if ($t -eq 'PS7') {
+        $o = (& $exePath 'konumsal-deger' | Out-String)
+        Add-Row $t 'T-006' 'Konumsal argüman' ($o -match 'konumsal-deger')
+    }
 }
 
-# PS7 GUI host must compile and propagate the script's exit N value to the process.
+# PS7 GUI host: tek EXE'den (gui-edge.ps1) çıkış kodu ve argüman bağlama senaryoları.
 if ($targets -contains 'PS7') {
-    $guiOut = Join-Path $root 'artifacts\test-results\PS7-GUI\hello-gui.exe'
-    $guiRes = & $build -Source $sample -Output $guiOut -Target PS7 -Mode Gui -Force
+    $guiSample = Join-Path $PSScriptRoot 'samples\gui-edge.ps1'
+    $guiOut = Join-Path $root 'artifacts\test-results\PS7-GUI\gui-edge.exe'
+    $guiRes = & $build -Source $guiSample -Output $guiOut -Target PS7 -Mode Gui -Force
     if ($guiRes.Success -and (Test-Path -LiteralPath $guiRes.OutputPath)) {
-        # GUI (WinExe) programlari '&' ile cagrildiginda PowerShell beklemez ve $LASTEXITCODE guncellenmez.
-        # Cikis kodu yalnizca Start-Process -Wait -PassThru ile guvenilir olculur.
-        function Get-GuiExit([string]$Exe, [string[]]$ArgList) {
-            $p = Start-Process -FilePath $Exe -ArgumentList $ArgList -Wait -PassThru -WindowStyle Hidden
+        $guiExe     = $guiRes.OutputPath
+        $guiDir     = Split-Path -Parent $guiExe
+        $guiErrLog  = Join-Path $guiDir 'gui-error.log'
+        $guiOutFile = Join-Path $guiDir 'gui-out.txt'
+        Remove-Item -LiteralPath $guiErrLog, $guiOutFile -Force -ErrorAction SilentlyContinue
+
+        # GUI (WinExe) programlari '&' ile çağrıldığında PowerShell beklemez ve $LASTEXITCODE güncellenmez.
+        # Çıkış kodu yalnızca Process nesnesinden güvenilir ölçülür. Zaman aşımı, takılan bir GUI
+        # sürecinin CI'ı kilitlemesini önler. PWX_ERROR_LOG, hata iletişim kutusu yerine dosyaya yazdırır.
+        function ConvertTo-ArgString([string[]]$List) {
+            ($List | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' '
+        }
+        function Get-GuiExit([string[]]$ArgList = @()) {
+            $sp = @{ FilePath = $guiExe; PassThru = $true; WindowStyle = 'Hidden' }
+            if ($ArgList.Count -gt 0) { $sp.ArgumentList = ConvertTo-ArgString $ArgList }   # boş ArgumentList hata verir
+            $p = Start-Process @sp
+            $null = $p.Handle                                                                # ExitCode'un okunabilmesi için
+            if (-not $p.WaitForExit(60000)) { try { $p.Kill() } catch { }; return -999 }     # -999: zaman aşımı
             return $p.ExitCode
         }
-        $guiExit = Get-GuiExit $guiRes.OutputPath @('-Code', '17')
-        Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir (17)' ($guiExit -eq 17) "beklenen: 17; alınan: $guiExit"
-        $guiExit = Get-GuiExit $guiRes.OutputPath @('-Code', '1')
-        Add-Row 'PS7-GUI' 'T-GUI-002' 'GUI host çıkış kodu 1' ($guiExit -eq 1) "beklenen: 1; alınan: $guiExit"
-        $guiExit = Get-GuiExit $guiRes.OutputPath @()
-        Add-Row 'PS7-GUI' 'T-GUI-003' 'GUI host normal bitiş 0' ($guiExit -eq 0) "beklenen: 0; alınan: $guiExit"
-        $guiExit = Get-GuiExit $guiRes.OutputPath @('-Message', 'abc', '-Code', '5')
-        Add-Row 'PS7-GUI' 'T-GUI-004' 'GUI host adlandırılmış parametre sırası' ($guiExit -eq 5) "beklenen: 5; alınan: $guiExit"
+
+        $env:PWX_ERROR_LOG = $guiErrLog
+        try {
+            $e = Get-GuiExit @('-Code', '17')
+            Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir (17)' ($e -eq 17) "beklenen: 17; alınan: $e"
+            $e = Get-GuiExit @('-Code', '1')
+            Add-Row 'PS7-GUI' 'T-GUI-002' 'GUI host çıkış kodu 1' ($e -eq 1) "beklenen: 1; alınan: $e"
+            $e = Get-GuiExit
+            Add-Row 'PS7-GUI' 'T-GUI-003' 'GUI host normal bitiş 0' ($e -eq 0) "beklenen: 0; alınan: $e"
+            $e = Get-GuiExit @('-Name', 'abc', '-Code', '5')
+            Add-Row 'PS7-GUI' 'T-GUI-004' 'GUI host adlandırılmış parametre sırası' ($e -eq 5) "beklenen: 5; alınan: $e"
+            $e = Get-GuiExit @('-Code:7')
+            Add-Row 'PS7-GUI' 'T-GUI-005' 'GUI host -Param:değer biçimi' ($e -eq 7) "beklenen: 7; alınan: $e"
+            $e = Get-GuiExit @('-Loud', '-Code', '9')
+            Add-Row 'PS7-GUI' 'T-GUI-006' 'Açık exit, Write-Error sonrası da kazanır; [switch] değer tüketmez' ($e -eq 9) "beklenen: 9; alınan: $e"
+
+            $e = Get-GuiExit @('-Name', 'şğü ÇÖİ', '-Out', $guiOutFile, '-Code', '0')
+            $got = if (Test-Path -LiteralPath $guiOutFile) { (Get-Content -LiteralPath $guiOutFile -Encoding UTF8 -Raw).Trim() } else { '<dosya yok>' }
+            Add-Row 'PS7-GUI' 'T-GUI-007' 'Unicode/boşluklu değer betiğe ulaşır' (($e -eq 0) -and ($got -eq 'şğü ÇÖİ|False|0')) "çıkış: $e; içerik: $got"
+
+            $e = Get-GuiExit @('-Native', '-NoExit')
+            Add-Row 'PS7-GUI' 'T-GUI-008' 'Açık exit yok: yerel komut kodu sızmaz (0)' ($e -eq 0) "beklenen: 0; alınan: $e"
+
+            $e = Get-GuiExit @('-Throw')
+            $errText = if (Test-Path -LiteralPath $guiErrLog) { (Get-Content -LiteralPath $guiErrLog -Raw) } else { '' }
+            Add-Row 'PS7-GUI' 'T-GUI-009' 'Sonlandırıcı hata: çıkış 1, hata günlüğe yazılır' (($e -eq 1) -and ($errText -match 'boom')) "çıkış: $e; günlük: $($errText.Trim())"
+        }
+        finally { Remove-Item Env:\PWX_ERROR_LOG -ErrorAction SilentlyContinue }
     }
     else {
         Add-Row 'PS7-GUI' 'T-GUI-001' 'GUI host betik çıkış kodunu iletir' $false 'GUI derlemesi başarısız'
