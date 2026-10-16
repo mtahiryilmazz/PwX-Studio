@@ -37,97 +37,8 @@ $TrMap = @{
 }
 
 # ------------------------------------------------------------------
-#  C# stub: gömülü script'i geçici dosyaya çıkarıp powershell ile çalıştırır
-# ------------------------------------------------------------------
-$StubTemplate = @'
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-
-[assembly: AssemblyTitle("__TITLE__")]
-[assembly: AssemblyProduct("__TITLE__")]
-[assembly: AssemblyCompany("__COMPANY__")]
-[assembly: AssemblyVersion("__VER__")]
-[assembly: AssemblyFileVersion("__VER__")]
-
-static class Program
-{
-    static readonly bool HIDDEN = __HIDDEN__;
-    static readonly bool UTF8CON = __UTF8__;
-
-    [DllImport("kernel32.dll")] static extern uint GetConsoleOutputCP();
-    [DllImport("kernel32.dll")] static extern bool SetConsoleOutputCP(uint cp);
-
-    [STAThread]
-    static int Main(string[] args)
-    {
-        string tmp = Path.Combine(Path.GetTempPath(), "p2e_" + Guid.NewGuid().ToString("N") + ".ps1");
-        uint oldCp = 0;
-        try
-        {
-            if (!HIDDEN && UTF8CON)
-            {
-                try { oldCp = GetConsoleOutputCP(); SetConsoleOutputCP(65001); } catch { }
-            }
-
-            using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.ps1"))
-            using (FileStream f = File.Create(tmp))
-            {
-                s.CopyTo(f);
-            }
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append("-NoProfile -ExecutionPolicy Bypass -STA -File \"" + tmp + "\"");
-            foreach (string a in args)
-            {
-                string esc = a.Replace("\"", "\\\"");
-                if (esc.EndsWith("\\")) esc += "\\";
-                sb.Append(" \"" + esc + "\"");
-            }
-
-            string ps = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
-            ProcessStartInfo psi = new ProcessStartInfo(ps, sb.ToString());
-            psi.UseShellExecute = false;
-            psi.CreateNoWindow = HIDDEN;
-            psi.EnvironmentVariables["PS1EXE_DIR"] = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
-
-            using (Process p = Process.Start(psi))
-            {
-                p.WaitForExit();
-                return p.ExitCode;
-            }
-        }
-        catch (Exception ex)
-        {
-            if (!HIDDEN) Console.Error.WriteLine(ex.Message);
-            return 1;
-        }
-        finally
-        {
-            try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
-            if (oldCp != 0) { try { SetConsoleOutputCP(oldCp); } catch { } }
-        }
-    }
-}
-'@
-
-# ------------------------------------------------------------------
 #  Yardımcı fonksiyonlar
 # ------------------------------------------------------------------
-function Find-Csc {
-    $c = Join-Path $env:windir 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-    if (Test-Path $c) { return $c }
-    $c = Join-Path $env:windir 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
-    if (Test-Path $c) { return $c }
-    return $null
-}
-
-function Escape-Cs([string]$t) {
-    return ($t -replace '\\', '\\' -replace '"', '\"')
-}
 
 function Convert-ToIco([string]$srcPath, [string]$dstPath) {
     $bytes = [System.IO.File]::ReadAllBytes($srcPath)
@@ -177,18 +88,6 @@ function Convert-ToIco([string]$srcPath, [string]$dstPath) {
     finally { $img.Dispose(); $ms0.Dispose() }
 }
 
-function Load-PreviewImage([string]$path) {
-    try {
-        if ([System.IO.Path]::GetExtension($path).ToLower() -eq '.ico') {
-            $ico = New-Object System.Drawing.Icon $path, 64, 64
-            return $ico.ToBitmap()
-        }
-        $bytes = [System.IO.File]::ReadAllBytes($path)
-        $ms = New-Object System.IO.MemoryStream (,$bytes)
-        return [System.Drawing.Image]::FromStream($ms)
-    }
-    catch { return $null }
-}
 
 # ---- Web ikon arama (Iconify) ----
 function Convert-TrQuery([string]$q) {
@@ -385,7 +284,7 @@ function Add-Button([string]$text, [int]$x, [int]$y, [int]$w, $parent = $form) {
 
 # Modern tema altyapisi (Windows PowerShell 5.1 ile uyumlu)
 $script:currentTheme = 'Açık'
-function Apply-Theme($root, [string]$theme) {
+function Set-Theme($root, [string]$theme) {
     $dark = ($theme -eq 'Koyu')
     if ($dark) {
         $bg = [System.Drawing.Color]::FromArgb(30, 32, 36)
@@ -443,7 +342,7 @@ function Apply-Theme($root, [string]$theme) {
         } else {
             $c.BackColor = $bg
         }
-        if ($c.Controls.Count -gt 0) { Apply-Theme $c $theme }
+        if ($c.Controls.Count -gt 0) { Set-Theme $c $theme }
     }
 }
 
@@ -468,22 +367,20 @@ function Get-LucideThemeBitmap([string]$name) {
     } finally { $ms.Dispose() }
 }
 
-function Paint-ThemeSwitch($sender, $eventArgs) {
-    $g = $eventArgs.Graphics
+function Update-ThemeSwitch($ctrl, $pArgs) {
+    $g = $pArgs.Graphics
     $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
     # Butonun arka planını temizleme; WinForms'un çizdiği arka plan korunur.
     $darkNow = ($script:currentTheme -eq 'Koyu')
     $track = if ($darkNow) { [System.Drawing.Color]::FromArgb(48, 112, 210) } else { [System.Drawing.Color]::FromArgb(215, 222, 232) }
     $knob = if ($darkNow) { [System.Drawing.Color]::FromArgb(248, 250, 252) } else { [System.Drawing.Color]::White }
-    $icon = if ($darkNow) { [System.Drawing.Color]::FromArgb(58, 72, 94) } else { [System.Drawing.Color]::FromArgb(204, 139, 0) }
-    $w = $sender.ClientSize.Width
-    $h = $sender.ClientSize.Height
+    $w = $ctrl.ClientSize.Width
+    $h = $ctrl.ClientSize.Height
     $trackH = [single]([Math]::Min(30, $h - 8))
     $trackW = [single]([Math]::Min(68, $w - 8))
     $tx = [single](($w - $trackW) / 2)
     $ty = [single](($h - $trackH) / 2)
     $trackPath = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $r = $trackH / 2
     $trackPath.AddArc($tx, $ty, $trackH, $trackH, 90, 180)
     $trackPath.AddArc(($tx + $trackW - $trackH), $ty, $trackH, $trackH, 270, 180)
     $trackPath.CloseFigure()
@@ -499,7 +396,7 @@ function Paint-ThemeSwitch($sender, $eventArgs) {
     $iy = $knobY + ($knobSize - $iconSize) / 2
     $iconImage = if ($darkNow) { $script:moonThemeBitmap } else { $script:sunThemeBitmap }
     if ($iconImage) { $g.DrawImage($iconImage, [single]$ix, [single]$iy, [single]$iconSize, [single]$iconSize) }
-    if ($sender.Focused) {
+    if ($ctrl.Focused) {
         $focusPen = New-Object System.Drawing.Pen([System.Drawing.SystemColors]::Highlight, 1)
         try { $g.DrawRectangle($focusPen, 1, 1, $w - 3, $h - 3) } finally { $focusPen.Dispose() }
     }
@@ -522,7 +419,7 @@ $btnThemeToggle.TabStop = $true
 $btnThemeToggle.AccessibleRole = [System.Windows.Forms.AccessibleRole]::CheckButton
 $btnThemeToggle.AccessibleName = 'Tema anahtarı'
 $btnThemeToggle.AccessibleDescription = 'Açık ve koyu tema arasında geçiş yapar. Açık tema için güneş, koyu tema için ay simgesi.'
-$btnThemeToggle.Add_Paint({ param($s, $e) Paint-ThemeSwitch $s $e })
+$btnThemeToggle.Add_Paint({ param($s, $e) Update-ThemeSwitch $s $e })
 $form.Controls.Add($btnThemeToggle)
 
 # PwX Studio marka başlığı: sabit üst şerit, ana form yerleşimini değiştirmez.
@@ -541,7 +438,7 @@ $script:themeTip = New-Object System.Windows.Forms.ToolTip
 $script:themeTip.SetToolTip($btnThemeToggle, 'Koyu temaya geç')
 $btnThemeToggle.Add_Click({
     if ($script:currentTheme -eq 'Koyu') { $script:currentTheme = 'Açık' } else { $script:currentTheme = 'Koyu' }
-    Apply-Theme $form $script:currentTheme
+    Set-Theme $form $script:currentTheme
     if ($lblBrand) { $lblBrand.ForeColor = [System.Drawing.Color]::FromArgb(74, 119, 245) }
     $btnThemeToggle.AccessibleDescription = if ($script:currentTheme -eq 'Koyu') { 'Koyu tema etkin. Açık temaya geçmek için anahtara basın.' } else { 'Açık tema etkin. Koyu temaya geçmek için anahtara basın.' }
     $script:themeTip.SetToolTip($btnThemeToggle, $(if ($script:currentTheme -eq 'Koyu') { 'Açık temaya geç' } else { 'Koyu temaya geç' }))
@@ -988,14 +885,14 @@ $btnSearch.Add_Click({
                 $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
                 $state = [pscustomobject]@{ Box=$pb; FallbackUrl=(Get-IconResultFallbackPngUrl $iconItem 96 $hex); IsFallback=$false; Provider=$iconItem.Provider }
                 $wc.Add_DownloadDataCompleted({
-                    param($sender, $e)
+                    param($sourceWc, $e)
                     $st = $e.UserState
                     $box = $st.Box
                     if ($e.Error -or $e.Cancelled) {
                         if (-not $st.IsFallback -and $st.Provider -ne 'Icons8' -and $box -and -not $box.IsDisposed) {
                             try {
                                 $st.IsFallback = $true
-                                $sender.DownloadDataAsync([uri]$st.FallbackUrl, $st)
+                                $sourceWc.DownloadDataAsync([uri]$st.FallbackUrl, $st)
                                 return
                             } catch {}
                         }
@@ -1212,7 +1109,7 @@ try {
     }
 })
 # Başlangıç temasını uygula; güneş/ay simgesi Paint-ThemeSwitch tarafından çizilir.
-Apply-Theme $form $script:currentTheme
+Set-Theme $form $script:currentTheme
 $lblBrand.ForeColor = [System.Drawing.Color]::FromArgb(74, 119, 245)
 $btnThemeToggle.Invalidate()
 [void]$form.ShowDialog()
