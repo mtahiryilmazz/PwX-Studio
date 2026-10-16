@@ -1,21 +1,22 @@
 # 🚀 PwX Studio v1.5.0 — Release Notes
 
-**PwX Studio v1.5.0**, harici `ps2exe` modülü bağımlılığını tamamen ortadan kaldırarak **%100 yerli ve bağımsız "PwX Build Engine"** motoruna geçiş yapılan dönüm noktası bir sürümdür. Artık PowerShell betiklerinizi hiçbir harici modül indirmeden, tamamen çevrimdışı (offline) ve yüksek performansla Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürebilirsiniz.
+**PwX Studio v1.5.0**, harici `ps2exe` modülü bağımlılığını tamamen ortadan kaldırarak **%100 yerli ve bağımsız [pwxe (PwX Engine)](https://github.com/mtahiryilmazz/pwxe)** motoruna geçiş yapılan dönüm noktası bir sürümdür. Artık PowerShell betiklerinizi hiçbir harici modül indirmeden, tamamen çevrimdışı (offline) ve yüksek performansla Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürebilirsiniz.
 
 ---
 
 ## 🌟 Öne Çıkan Yenilikler
 
-### 1. ⚙️ Tamamen Bağımsız Yerli "PwX Build Engine"
+### 1. ⚙️ Tamamen Bağımsız Çekirdek Motor: [pwxe](https://github.com/mtahiryilmazz/pwxe)
 - **Sıfır Dış Bağımlılık:** `ps2exe` PowerShell modülü, PSGallery indirme mekanizmaları ve harici betik bağımlılıkları tamamen kaldırıldı.
 - **Tamamen Çevrimdışı (Offline) Çalışabilirlik:** İnternet erişimi olmayan kurumsal ve izole sistemlerde sorunsuz çalışır.
+- **Ayrı CLI & Modül:** Çekirdek motor artık [github.com/mtahiryilmazz/pwxe](https://github.com/mtahiryilmazz/pwxe) adresinde bağımsız bir CLI ve modül olarak da sunulmaktadır (`pwxe script.ps1` veya `Install-Module pwxe`).
 - **Doğrudan C# Derleme:** Windows ile yerleşik gelen `csc.exe` (Roslyn / .NET Framework) ve modern `.NET SDK` altyapısı doğrudan kullanılır.
 
 ### 2. 🎯 Çift Hedef Çalışma Zamanı (Target Runtime) Desteği
 - **PowerShell 5.1 (Klasik / Hafif):**
   - Windows dahili `csc.exe` kullanılarak üretilir.
   - Ek hiçbir SDK veya runtime kurulumu gerektirmez.
-  - Minimum dosya boyutu, ultra hafif ve hızlı `.exe` çıktısı.
+  - Minimum dosya boyutu (~500 KB), ultra hafif ve hızlı `.exe` çıktısı.
 - **PowerShell 7.4+ (Modern & Çapraz Platform Gücü):**
   - Modern `.NET 8 SDK` ve `Microsoft.PowerShell.SDK` ile tam uyumlu.
   - Gelişmiş PowerShell 7 dil özelliklerini ve modüllerini destekler.
@@ -26,11 +27,11 @@
 - **Otomatik Form Simgesi Enjeksiyonu:** Seçilen uygulama simgesi yalnızca Windows Gezgini'ndeki `.exe` simgesini değil, aynı zamanda betik içindeki WinForms pencerelerinin başlık çubuğu ve görev çubuğu simgelerini de otomatik olarak besler.
 - Çok boyutlu ICO formatı dönüştürme ve güvenli bootstrap mekanizması.
 
-### 4. 🎨 Optimize Edilmiş Arayüz & Kullanıcı Deneyimi
-- Yeni **"Hedef Çalışma Zamanı (PwX Build Engine)"** kontrol grubu eklendi.
-- Hedef seçimine göre (PS 5.1 / PS 7.4+) dinamik aktifleşen seçenekler (Single-File kilidi vb.).
-- Optimize edilmiş 880x915 piksel pencere boyutu.
-- Açık (Light) ve Koyu (Dark) tema desteği korundu.
+### 4. 🖥️ Tamamen Responsive & Yeniden Boyutlandırılabilir Arayüz
+- Sabit pencere boyutu kilidi kaldırıldı; pencere serbestçe yeniden boyutlandırılabilir ve tam ekran yapılabilir.
+- Küçük veya dizüstü ekranlar için otomatik dikey kaydırma çubuğu (`AutoScroll`) desteği eklendi.
+- Yeni **"Hedef Çalışma Zamanı (pwxe)"** kontrol grubu eklendi.
+- Açık (Light) ve Koyu (Dark) Lucide tema desteği korundu.
 
 ### 5. 🛡️ CI/CD ve Kararlılık İyileştirmeleri
 - GitHub Actions CI/CD test ortamında sözdizimi doğrulama ve derleme testleri %100 başarılı (yeşil) hâle getirildi.
