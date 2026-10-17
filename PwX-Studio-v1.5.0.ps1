@@ -2041,10 +2041,9 @@ try {
 
         # pwxe Derleme Motorunu Bulma
         $engineScript = $null
+        # Oncelik: bagimsiz pwxe (kardes klasor) > kurulu pwxe modulu > Studio icindeki gomulu kopya (yedek)
         $possiblePaths = @(
-            (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
-            (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
-            (Join-Path (Get-Location) 'pwxe\scripts\PwX-Build.ps1'),
+            (Join-Path $PSScriptRoot '..\pwxe\scripts\PwX-Build.ps1'),
             (Join-Path (Get-Location) '..\pwxe\scripts\PwX-Build.ps1')
         )
         foreach ($p in $possiblePaths) {
@@ -2052,12 +2051,25 @@ try {
         }
 
         if (-not $engineScript) {
-            $pwxeMod = Get-Module -ListAvailable pwxe -ErrorAction SilentlyContinue | Select-Object -First 1
+            $pwxeMod = Get-Module -ListAvailable pwxe -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1
             if ($pwxeMod) {
                 $candidate = Join-Path $pwxeMod.ModuleBase 'scripts\PwX-Build.ps1'
                 if (Test-Path -LiteralPath $candidate) { $engineScript = $candidate }
             }
         }
+
+        if (-not $engineScript) {
+            $fallbackPaths = @(
+                (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
+                (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
+                (Join-Path (Get-Location) 'pwxe\scripts\PwX-Build.ps1')
+            )
+            foreach ($p in $fallbackPaths) {
+                if ($p -and (Test-Path -LiteralPath $p)) { $engineScript = $p; break }
+            }
+        }
+
+        if ($engineScript) { Add-Log "Derleme motoru: $engineScript" }
 
         if (-not $engineScript) {
             throw "pwxe derleme motoru bulunamadı. Lütfen motor klasörünü doğrulayın."
