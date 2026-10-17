@@ -506,6 +506,27 @@ function Get-PreviewBitmapImage([string]$path) {
 #  XAML Arayüz Tanımı (Dinamik Tema Desteği & 2 Sütunlu Düzen)
 # ------------------------------------------------------------------
 
+# Kucuk ekranlar (15.6" dizustu, yuksek DPI olcekleme) icin pencereyi calisma alanina sigdir
+function Set-WindowFitToWorkArea {
+    param([System.Windows.Window]$Win, [double]$Margin = 24, [switch]$Center)
+    try {
+        $wa   = [System.Windows.SystemParameters]::WorkArea
+        $maxW = [Math]::Max(480, $wa.Width  - $Margin)
+        $maxH = [Math]::Max(420, $wa.Height - $Margin)
+        $Win.MaxWidth  = $maxW
+        $Win.MaxHeight = $maxH
+        if ($Win.MinWidth  -gt $maxW) { $Win.MinWidth  = $maxW }
+        if ($Win.MinHeight -gt $maxH) { $Win.MinHeight = $maxH }
+        if ($Win.Width  -gt $maxW) { $Win.Width  = $maxW }
+        if ($Win.Height -gt $maxH) { $Win.Height = $maxH }
+        if ($Center) {
+            $Win.WindowStartupLocation = [System.Windows.WindowStartupLocation]::Manual
+            $Win.Left = $wa.Left + [Math]::Max(0, ($wa.Width  - $Win.Width)  / 2)
+            $Win.Top  = $wa.Top  + [Math]::Max(0, ($wa.Height - $Win.Height) / 2)
+        }
+    } catch {}
+}
+
 [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -924,6 +945,7 @@ function Get-PreviewBitmapImage([string]$path) {
 
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [System.Windows.Markup.XamlReader]::Load($reader)
+Set-WindowFitToWorkArea -Win $window -Center
 
 # Logo ve ikon ata (Varsa)
 $pwxIconCandidate = if ($PSScriptRoot) { Join-Path $PSScriptRoot 'ico\PwX-Studio.ico' } else { '.\ico\PwX-Studio.ico' }
@@ -1470,6 +1492,7 @@ function Open-FluentIconDialog {
 
     $dlgReader = (New-Object System.Xml.XmlNodeReader $dlgXaml)
     $dlgWindow = [System.Windows.Markup.XamlReader]::Load($dlgReader)
+    Set-WindowFitToWorkArea -Win $dlgWindow
     $dlgWindow.Owner = $window
 
     $txtQ         = $dlgWindow.FindName('TxtQ')
