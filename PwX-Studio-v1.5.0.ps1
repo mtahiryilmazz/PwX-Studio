@@ -859,7 +859,9 @@ function Set-WindowFitToWorkArea {
                                          ToolTip="Windows ile dahili gelen csc.exe derleyicisini kullanır." Margin="0,2,0,8"/>
                             <RadioButton x:Name="RbTargetPS7" GroupName="TargetRuntime" Content="PowerShell 7.4+ (.NET 8 SDK)" 
                                          ToolTip="Modern PowerShell 7 ve .NET 8 SDK altyapısını kullanır." Margin="0,0,0,6"/>
-                            <CheckBox x:Name="ChkSingleFile" Content="Tek Dosya (Single-File)" IsEnabled="False" Margin="22,0,0,16"/>
+                            <CheckBox x:Name="ChkSingleFile" Content="Tek Dosya (Single-File)" IsEnabled="False" Margin="22,0,0,6"/>
+                            <CheckBox x:Name="ChkSmallSize" Content="Küçük boyut (hedefte .NET 8 Runtime gerekir)" IsEnabled="False" Margin="22,0,0,16"
+                                      ToolTip="FrameworkDependent: .NET çalışma zamanı EXE'ye eklenmez, çıktı çok daha küçük olur. Çalıştıracak bilgisayarda .NET 8 Runtime (GUI için Windows Desktop Runtime 8) kurulu olmalıdır. pwsh gerekmez."/>
 
                             <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,14"/>
 
@@ -973,6 +975,7 @@ $txtCompany     = $window.FindName('TxtCompany')
 $rbTargetPS51   = $window.FindName('RbTargetPS51')
 $rbTargetPS7    = $window.FindName('RbTargetPS7')
 $chkSingleFile  = $window.FindName('ChkSingleFile')
+$chkSmallSize   = $window.FindName('ChkSmallSize')
 
 $null           = $window.FindName('RbConsole')
 $rbGui          = $window.FindName('RbGui')
@@ -1119,10 +1122,13 @@ $txtTitle.Add_TextChanged({
 # PS7 seçildiğinde Tek Dosya onay kutusunu etkinleştir
 $rbTargetPS7.Add_Checked({
     $chkSingleFile.IsEnabled = $true
+    $chkSmallSize.IsEnabled = $true
 })
 $rbTargetPS51.Add_Checked({
     $chkSingleFile.IsEnabled = $false
     $chkSingleFile.IsChecked = $false
+    $chkSmallSize.IsEnabled = $false
+    $chkSmallSize.IsChecked = $false
 })
 
 # Günlük Temizleme
@@ -1986,6 +1992,7 @@ $btnBuild.Add_Click({
         Ver             = if ($txtVer.Text.Trim() -match '^\d+(\.\d+){1,3}$') { $txtVer.Text.Trim() } else { '1.0.0.0' }
         Company         = $txtCompany.Text.Trim()
         SingleFile      = [bool]$chkSingleFile.IsChecked
+        SmallSize       = [bool]$chkSmallSize.IsChecked
         IsX86           = [bool]$chkX86.IsChecked
         IsAdmin         = [bool]$chkAdmin.IsChecked
         IsUtf8          = [bool]$chkUtf8.IsChecked
@@ -2113,14 +2120,37 @@ try {
         if ($buildParams.Target -eq 'PS7') {
             $bArgs.Architecture = 'win-x64'
             if ($buildParams.SingleFile) { $bArgs.SingleFile = $true }
+            if ($buildParams.SmallSize) { $bArgs.RuntimeMode = 'FrameworkDependent' }
         }
 
         Add-Log "Derleme motoru çalıştırılıyor: $engineScript"
         $txtStatus.Text = "Derleniyor: $($buildParams.Title)..."
 
-        $res = & $engineScript @bArgs
+        $res = @(& $engineScript @bArgs) | Where-Object { $_ -and $_.PSObject.Properties['Success'] } | Select-Object -Last 1
+
+        # PS7 gereksinimleri (.NET SDK 8+, NuGet kaynağı) eksikse: kullanıcı onayıyla otomatik kur ve yeniden dene
+        if ($null -ne $res -and -not $res.Success -and $buildParams.Target -eq 'PS7') {
+            $missing = @($res.Diagnostics | Where-Object { $_.Severity -eq 'Error' -and ($_.Code -eq 'PWX3005' -or $_.Code -eq 'PWX3006') })
+            if ($missing.Count -gt 0) {
+                $detail = (@($missing | ForEach-Object { '- ' + $_.Message })) -join "`r`n"
+                $answer = [System.Windows.MessageBox]::Show($window,
+                    "PS7 hedefi için eksik gereksinimler var:`r`n`r`n$detail`r`n`r`nOtomatik kurulsun / düzeltilsin mi?`r`n`r`n(İnternet gerekir. winget veya Microsoft'un resmi dotnet-install betiği kullanılır; yönetici onayı istenebilir. Kurulum sırasında pencere birkaç dakika yanıt vermeyebilir.)",
+                    'Gereksinimler Eksik',
+                    [System.Windows.MessageBoxButton]::YesNo,
+                    [System.Windows.MessageBoxImage]::Question)
+                if ($answer -eq [System.Windows.MessageBoxResult]::Yes) {
+                    Add-Log 'Eksik gereksinimler otomatik kuruluyor/düzeltiliyor...' 'Warning'
+                    $txtStatus.Text = 'Gereksinimler kuruluyor...'
+                    $bArgs.AutoInstallPrereqs = $true
+                    $res = @(& $engineScript @bArgs) | Where-Object { $_ -and $_.PSObject.Properties['Success'] } | Select-Object -Last 1
+                }
+            }
+        }
+
         if ($null -ne $res -and -not $res.Success) {
-            throw "Derleme motoru hatası: $($res.Error)"
+            $errText = (@($res.Diagnostics | Where-Object { $_.Severity -eq 'Error' } | ForEach-Object { "$($_.Code) $($_.Message)" })) -join "`r`n"
+            if (-not $errText) { $errText = 'Bilinmeyen hata. Günlük dosyasına bakın.' }
+            throw "Derleme motoru hatası:`r`n$errText"
         }
 
         if (-not (Test-Path -LiteralPath $buildParams.OutExe -PathType Leaf)) {

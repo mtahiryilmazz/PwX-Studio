@@ -3,7 +3,7 @@
 .SYNOPSIS
   PwX Build Engine - PS2EXE'den bağımsız .ps1 -> .exe dönüştürücü (komut satırı).
 .DESCRIPTION
-  Kaynak betiği DERLEME SIRASINDA ÇALIŞTIRMAZ; yalnızca sözdizimini ayrıştırır.
+  Kaynak betiği DERLEME SIRASINDA ÇALIŞTIRMADAN; yalnızca sözdizimini ayrıştırır.
   PS7   : src\PwX.BuildHost.PS7 (PowerShell SDK host) -> dotnet publish
   PS51  : src\PwX.BuildHost.PS51 (C# başlatıcı)       -> .NET Framework csc.exe
 .EXAMPLE
@@ -30,7 +30,10 @@ param(
     [string]$Framework = 'net8.0',     # PS SDK 7.4.x -> net8.0
     [string]$LogPath,
     [switch]$Force,
-    [switch]$KeepTemp
+    [switch]$KeepTemp,
+    [switch]$EnableTrim,
+    [switch]$EnableUpx,
+    [switch]$AutoInstallPrereqs   # PS7: eksik .NET SDK 8+ / NuGet kaynağını otomatik kur/düzelt
 )
 
 Set-StrictMode -Version 2.0
@@ -38,6 +41,7 @@ $ErrorActionPreference = 'Stop'
 $script:Root  = Split-Path -Parent $PSScriptRoot
 $script:Diags = New-Object System.Collections.Generic.List[object]
 $script:LogFile = $null
+$script:EnvSaved = $null
 $script:Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $script:Utf8Bom   = New-Object System.Text.UTF8Encoding($true)
 
@@ -91,6 +95,102 @@ function Get-ScriptText {
 }
 function ConvertTo-CsLiteral { param([string]$s) if ($null -eq $s) { $s = '' }; ($s -replace '\\', '\\' -replace '"', '\"' -replace "[\r\n]+", ' ') }
 function ConvertTo-XmlText   { param([string]$s) [Security.SecurityElement]::Escape($s) }
+
+# ---------------------------------------------------------------- PS7 gereksinimleri
+function Invoke-NativeLines {
+    param([string]$File, [string[]]$Arguments)
+    $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    try {
+        $out = @(& $File @Arguments 2>&1 | ForEach-Object { [string]$_ })
+        $code = $LASTEXITCODE
+    }
+    finally { $ErrorActionPreference = $old }
+    [pscustomobject]@{ Code = $code; Lines = $out }
+}
+function Get-DotnetSdkInfo {
+    # 'dotnet' komutu yalnızca runtime ile de bulunur; gerçek bir SDK (8+) aranır.
+    $cands = New-Object System.Collections.Generic.List[string]
+    $cmd = Get-Command dotnet -ErrorAction SilentlyContinue
+    if ($cmd) { $cands.Add($cmd.Source) }
+    $roots = @($env:ProgramFiles, ${env:ProgramFiles(x86)})
+    if ($env:LOCALAPPDATA) { $roots += (Join-Path $env:LOCALAPPDATA 'Microsoft') }
+    foreach ($root in $roots) {
+        if ($root) {
+            $p = Join-Path $root 'dotnet\dotnet.exe'
+            if (Test-Path -LiteralPath $p) { $cands.Add($p) }
+        }
+    }
+    foreach ($c in ($cands | Select-Object -Unique)) {
+        $r = Invoke-NativeLines $c @('--list-sdks')
+        $vers = @($r.Lines | ForEach-Object { ($_ -split ' ')[0] } | Where-Object { $_ -match '^(\d+)\.' -and [int]$Matches[1] -ge 8 })
+        if ($vers.Count -gt 0) { return [pscustomobject]@{ Path = $c; Version = $vers[$vers.Count - 1] } }
+    }
+    return $null
+}
+function Install-DotnetSdk8 {
+    # 1) winget  2) yedek: Microsoft'un resmi dotnet-install.ps1 betiği (kullanıcı klasörüne, yönetici gerektirmez)
+    $winget = Get-Command winget -ErrorAction SilentlyContinue
+    if ($winget) {
+        Write-Log '.NET SDK 8 winget ile kuruluyor (yönetici onayı istenebilir, birkaç dakika sürebilir)...'
+        $r = Invoke-NativeLines $winget.Source @('install', '--id', 'Microsoft.DotNet.SDK.8', '--exact', '--silent', '--accept-package-agreements', '--accept-source-agreements')
+        foreach ($l in $r.Lines) { Write-Log $l 'Debug' }
+        $info = Get-DotnetSdkInfo
+        if ($info) { return $info }
+        Write-Log "winget kurulumu doğrulanamadı (çıkış kodu $($r.Code)); yedek yöntem deneniyor." 'Warning'
+    }
+    else { Write-Log 'winget bulunamadı; yedek yöntem (dotnet-install.ps1) kullanılacak.' 'Warning' }
+    try {
+        $dir = Join-Path $env:LOCALAPPDATA 'Microsoft\dotnet'
+        $tmp = Join-Path ([IO.Path]::GetTempPath()) 'dotnet-install.ps1'
+        try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+        Write-Log ".NET SDK 8, resmi dotnet-install.ps1 ile kullanıcı klasörüne kuruluyor: $dir"
+        Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $tmp -UseBasicParsing
+        $psExe = (Get-Command powershell.exe -ErrorAction Stop).Source
+        $r = Invoke-NativeLines $psExe @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $tmp, '-Channel', '8.0', '-InstallDir', $dir)
+        foreach ($l in $r.Lines) { Write-Log $l 'Debug' }
+    }
+    catch { Write-Log "Yedek kurulum başarısız: $($_.Exception.Message)" 'Warning' }
+    return (Get-DotnetSdkInfo)
+}
+function Get-NuGetSources {
+    param([string]$DotnetExe)
+    $r = Invoke-NativeLines $DotnetExe @('nuget', 'list', 'source')
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($l in $r.Lines) {
+        if ($l -match '^\s*\d+\.\s+(.+?)\s+\[(Enabled|Disabled)\]\s*$') {
+            $list.Add([pscustomobject]@{ Name = $Matches[1]; Enabled = ($Matches[2] -eq 'Enabled'); Url = '' })
+        }
+        elseif ($list.Count -gt 0 -and $l -match '^\s+(\S.*?)\s*$') {
+            $last = $list[$list.Count - 1]
+            if (-not $last.Url) { $last.Url = $Matches[1] }
+        }
+    }
+    [pscustomobject]@{ Sources = $list.ToArray(); NoneFound = (($r.Lines -join "`n") -match 'No sources found') }
+}
+function Test-NuGetReady {
+    # Yalnızca KESİN "etkin kaynak yok" durumunda $false döner; çıktı ayrıştırılamazsa engellemez.
+    param([string]$DotnetExe)
+    $s = Get-NuGetSources $DotnetExe
+    $enabled = @($s.Sources | Where-Object { $_.Enabled })
+    if ($enabled.Count -gt 0) { return $true }
+    if ($s.NoneFound -or @($s.Sources).Count -gt 0) { return $false }
+    return $true
+}
+function Repair-NuGetSources {
+    # Kullanıcı düzeyindeki NuGet.Config'e nuget.org ekler veya devre dışı nuget.org'u etkinleştirir.
+    param([string]$DotnetExe)
+    $s = Get-NuGetSources $DotnetExe
+    $org = @($s.Sources | Where-Object { $_.Url -match 'api\.nuget\.org' }) | Select-Object -First 1
+    if ($org) {
+        $r = Invoke-NativeLines $DotnetExe @('nuget', 'enable', 'source', $org.Name)
+    }
+    else {
+        $r = Invoke-NativeLines $DotnetExe @('nuget', 'add', 'source', 'https://api.nuget.org/v3/index.json', '--name', 'nuget.org')
+    }
+    foreach ($l in $r.Lines) { Write-Log $l 'Debug' }
+    return (Test-NuGetReady $DotnetExe)
+}
+
 
 # ---------------------------------------------------------------- ana akış
 $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -151,7 +251,7 @@ try {
         $distDir = Join-Path $outDir $baseName
         $finalExe = Join-Path $distDir ($baseName + '.exe')
         if ((Test-Path -LiteralPath $distDir) -and -not $Force) { Stop-Build 'PWX1006' "Hedef klasör zaten var: $distDir (üzerine yazmak için -Force)" }
-        if ((Test-Path -LiteralPath $distDir) -and -not (Test-Path -LiteralPath (Join-Path $distDir '.pwx-build'))) { Stop-Build 'PWX1006' "Hedef klasör PwX tarafından oluşturulmamış, silinmeyecek: $distDir" }
+        if ((Test-Path -LiteralPath $distDir) -and -not (Test-Path -LiteralPath (Join-Path $distDir '.pwx-build'))) { Stop-Build 'PWX1006' "Hedef klasör PwX tarafından oluşturulmamış, silinm[...]" }
     }
     elseif ((Test-Path -LiteralPath $Output) -and -not $Force) { Stop-Build 'PWX1006' "Çıktı dosyası zaten var: $Output (üzerine yazmak için -Force)" }
 
@@ -168,12 +268,33 @@ try {
 
     if ($Target -eq 'PS7') {
         # ------------------------------------------------ PowerShell 7 backend
-        $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
-        if (-not $dotnet) { Stop-Build 'PWX3001' '.NET SDK bulunamadı. scripts\Check-Environment.ps1 çalıştırın.' }
-        # 'dotnet' komutu yalnizca runtime ile de bulunur; PS7 hedefi icin gercek bir SDK (8+) gerekir.
-        $sdkList = @(& $dotnet.Source --list-sdks 2>$null | ForEach-Object { ($_ -split ' ')[0] })
-        $hasSdk8 = @($sdkList | Where-Object { $_ -match '^(\d+)\.' -and [int]$Matches[1] -ge 8 }).Count -gt 0
-        if (-not $hasSdk8) { Stop-Build 'PWX3004' '.NET SDK 8+ kurulu degil (yalnizca runtime bulundu). Kurulum: winget install Microsoft.DotNet.SDK.8' }
+        # Mod doğrulamaları
+        if ($EnableTrim -and $RuntimeMode -ne 'SelfContained') {
+            Stop-Build 'PWX3007' '-EnableTrim yalnızca -RuntimeMode SelfContained ile kullanılabilir (trimming self-contained gerektirir). Not: PowerShell SDK reflection kullandığı için trimming deneyseldir.'
+        }
+        if ($RuntimeMode -eq 'FrameworkDependent') {
+            $needs = if ($Mode -eq 'Gui') { '.NET 8 Desktop Runtime (Microsoft.WindowsDesktop.App 8.x)' } else { '.NET 8 Runtime (Microsoft.NETCore.App 8.x)' }
+            Write-Log "UYARI: FrameworkDependent çıktı, çalışacağı bilgisayarda $needs gerektirir. pwsh gerekmez; PowerShell motoru çıktıya dahildir." 'Warning'
+        }
+
+        # PS7 hedefi gereksinimleri: gerçek bir .NET SDK (8+) ve etkin bir NuGet paket kaynağı.
+        $script:EnvSaved = @{ DOTNET_CLI_UI_LANGUAGE = $env:DOTNET_CLI_UI_LANGUAGE; VSLANG = $env:VSLANG }
+        $env:DOTNET_CLI_UI_LANGUAGE = 'en'; $env:VSLANG = '1033'   # ayrıştırılabilir, kodlama sorunsuz çıktı
+        $sdkInfo = Get-DotnetSdkInfo
+        if (-not $sdkInfo) {
+            if (-not $AutoInstallPrereqs) { Stop-Build 'PWX3005' '.NET SDK 8+ kurulu değil (yalnızca runtime yetmez). Otomatik kurulum için -AutoInstallPrereqs kullanın veya: winget install Microsoft.DotNet.SDK.8' }
+            Write-Log '.NET SDK 8+ bulunamadı; otomatik kurulum başlatılıyor...' 'Warning'
+            $sdkInfo = Install-DotnetSdk8
+            if (-not $sdkInfo) { Stop-Build 'PWX3005' '.NET SDK 8 otomatik kurulamadı. Elle kurun: winget install Microsoft.DotNet.SDK.8 (veya https://aka.ms/dotnet/download)' }
+            Write-Log ".NET SDK $($sdkInfo.Version) kuruldu."
+        }
+        $dotnet = [pscustomobject]@{ Source = $sdkInfo.Path }
+        Write-Log ".NET SDK $($sdkInfo.Version): $($sdkInfo.Path)" 'Debug'
+        if (-not (Test-NuGetReady $sdkInfo.Path)) {
+            if (-not $AutoInstallPrereqs) { Stop-Build 'PWX3006' 'Etkin bir NuGet paket kaynağı yok; PowerShell SDK paketleri indirilemez. Otomatik düzeltme için -AutoInstallPrereqs kullanın veya: dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org' }
+            Write-Log 'Etkin NuGet kaynağı yok; nuget.org ekleniyor/etkinleştiriliyor (kullanıcı düzeyi ayar)...' 'Warning'
+            if (-not (Repair-NuGetSources $sdkInfo.Path)) { Stop-Build 'PWX3006' 'NuGet kaynağı düzeltilemedi. Elle: dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org' }
+        }
         $hostSrc = Join-Path $script:Root 'src\PwX.BuildHost.PS7'
         if (-not (Test-Path -LiteralPath $hostSrc)) { Stop-Build 'PWX3002' "Host projesi bulunamadı: $hostSrc" }
         $hostDir = Join-Path $workDir 'host'
@@ -202,10 +323,21 @@ try {
                 '--nologo', '-v', 'minimal', '-p:DebugType=none', '-p:DebugSymbols=false')
         $pa += $(if ($RuntimeMode -eq 'SelfContained') { @('--self-contained', 'true') } else { @('--self-contained', 'false') })
         if ($SingleFile) { $pa += @('-p:PublishSingleFile=true', '-p:IncludeNativeLibrariesForSelfExtract=true', '-p:IncludeAllContentForSelfExtract=true') }
+        if ($EnableTrim) {
+            Write-Log 'UYARI: -EnableTrim deneyseldir; PowerShell reflection kullandığından çıktıyı mutlaka test edin.' 'Warning'
+            $pa += @('-p:PublishTrimmed=true')
+        }
 
         Write-Log "dotnet publish çalışıyor (ilk çalıştırmada PowerShell SDK indirilir; birkaç dakika sürebilir)..."
         $code = Invoke-Native $dotnet.Source $pa $workDir
-        if ($code -ne 0) { Stop-Build 'PWX3003' "dotnet publish başarısız (çıkış kodu $code). Ayrıntı için günlüğe bakın: $LogPath" }
+        if ($code -ne 0) {
+            $why = ''
+            $logText = ''
+            try { $logText = [IO.File]::ReadAllText($script:LogFile) } catch { }
+            if ($logText -match 'NU1301') { $why = ' NuGet sunucusuna ulaşılamadı (internet, proxy veya güvenlik duvarını kontrol edin).' }
+            elseif ($logText -match 'NU110[01]') { $why = ' NuGet paketleri çözümlenemedi (etkin paket kaynağı yok ya da kaynakta paket bulunamadı); kontrol: dotnet nuget list source' }
+            Stop-Build 'PWX3003' "dotnet publish başarısız (çıkış kodu $code).$why Ayrıntı için günlüğe bakın: $LogPath"
+        }
 
         $built = Join-Path $pub 'PwXApp.exe'
         if (-not (Test-Path -LiteralPath $built)) { Stop-Build 'PWX3004' 'Yayın çıktısında PwXApp.exe bulunamadı.' }
@@ -229,6 +361,21 @@ try {
             Copy-Item -Path (Join-Path $pub '*') -Destination $distDir -Recurse -Force
             Rename-Item -LiteralPath (Join-Path $distDir 'PwXApp.exe') -NewName ($baseName + '.exe')
             [IO.File]::WriteAllText((Join-Path $distDir '.pwx-build'), "PwX Build Engine`r`n", $script:Utf8NoBom)
+        }
+
+        # Opsiyonel (deneysel): UPX sıkıştırma
+        if ($EnableUpx) {
+            $upx = Get-Command upx -ErrorAction SilentlyContinue
+            if (-not $upx) { Write-Log 'UPX bulunamadı; sıkıştırma atlandı.' 'Warning' }
+            elseif ($SingleFile) { Write-Log 'UPX atlandı: tek-dosya (single-file) paketler UPX ile bozulabilir.' 'Warning' }
+            else {
+                $exeToCompress = Join-Path $distDir ($baseName + '.exe')
+                Write-Log "UPX (deneysel) uygulanıyor: $exeToCompress"
+                $r = Invoke-NativeLines $upx.Source @('--best', '--lzma', $exeToCompress)
+                foreach ($l in $r.Lines) { Write-Log $l 'Debug' }
+                if ($r.Code -ne 0) { Write-Log "UPX başarısız (çıkış kodu $($r.Code)); çıktıyı kontrol edin." 'Warning' }
+                else { Write-Log 'UPX sıkıştırması tamamlandı.' }
+            }
         }
     }
     else {
@@ -283,6 +430,10 @@ catch {
     Write-Log 'DERLEME BAŞARISIZ.' 'Error'
 }
 finally {
+    if ($script:EnvSaved) {
+        $env:DOTNET_CLI_UI_LANGUAGE = $script:EnvSaved.DOTNET_CLI_UI_LANGUAGE
+        $env:VSLANG = $script:EnvSaved.VSLANG
+    }
     if ($workDir -and (Test-Path -LiteralPath $workDir) -and -not $KeepTemp) {
         try { Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction Stop } catch { Write-Log "Geçici klasör silinemedi: $workDir" 'Warning' }
     }

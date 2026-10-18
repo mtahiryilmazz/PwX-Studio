@@ -12,6 +12,17 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 Henüz yayımlanmamış geliştirmeler.
 
+### Added
+- PS7: eksik .NET SDK 8+ veya NuGet kaynağı algılanırsa onay penceresiyle otomatik kurulum/düzeltme teklifi
+- PS7: **"Küçük boyut"** (`FrameworkDependent`) onay kutusu; hedefte .NET 8 Runtime gerekir (`pwsh` gerekmez)
+
+### Fixed
+- Pencere küçük ve yüksek DPI'lı ekranlara (ör. 15.6") sığacak şekilde sınırlandı; başlık çubuğu/butonlar ekran dışında kalmıyor
+- Derleme hatalarında motorun gerçek hata metni gösteriliyor (önceden olmayan `$res.Error` alanı okunuyordu)
+- Gömülü `pwxe` kopyası güncel motorla eşitlendi; Studio artık önce bağımsız `pwxe` klasörünü (kardeş dizin) veya kurulu modülü tercih ediyor
+- PS7 varsayılanı `SelfContained` olarak korundu; önceki README'deki "FrameworkDependent varsayılan, `pwsh` gerekir" ifadeleri düzeltildi
+- Depo köküne yanlışlıkla eklenen `.patch` dosyaları kaldırıldı
+
 ### Planned
 - [ ] Mevcut özelliklerin kapsamlı testlerinin tamamlanması.
 - [ ] Windows sürümleri ve farklı ekran ölçeklerinde arayüz testlerinin yapılması.

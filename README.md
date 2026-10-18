@@ -18,7 +18,7 @@
 
 ---
 
-> ⚡ **PS7 size optimization:** PwX Studio now prefers the smaller `FrameworkDependent` mode for PowerShell 7 builds by default. This keeps generated `.exe` files significantly smaller while still allowing `SelfContained` and `SingleFile` builds when needed.
+> ⚡ **PS7 çıktı modları:** Varsayılan `SelfContained`'dır; çıktı hedef bilgisayarda ek kurulum olmadan çalışır. Daha küçük çıktı için Studio'daki **"Küçük boyut"** seçeneği (`FrameworkDependent`) kullanılabilir; bu durumda hedef bilgisayarda **.NET 8 Runtime** (GUI için Windows Desktop Runtime 8) kurulu olmalıdır. `pwsh` gerekmez, PowerShell motoru çıktıya dahildir.
 
 ---
 
@@ -38,7 +38,7 @@
 
 **PwX Studio**, PowerShell (`.ps1`) betiklerinizi tek bir tıklamayla taşınabilir Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürmek için tasarlanmış, modern ve kullanıcı dostu bir masaüstü uygulamasıdır.
 
-PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız bir PowerShell modülü ve CLI aracı olarak da kullanılabilir. Güncel davranışta PS7 çıktıları varsayılan olarak `FrameworkDependent` çalışır; böylece hedef sistemde uygun `pwsh` kuruluysa çok daha küçük EXE üretimi elde edilir.
+PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız bir PowerShell modülü ve CLI aracı olarak da kullanılabilir. PS7 çıktıları varsayılan olarak `SelfContained` üretilir; isteğe bağlı `FrameworkDependent` modu çok daha küçük çıktı verir ancak hedefte .NET 8 Runtime gerektirir.
 
 ---
 
@@ -49,8 +49,8 @@ PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız
 - **🎯 Çift hedef çalışma zamanı:**
   - **PowerShell 5.1:** hafif ve yerel `.exe` çıktısı
   - **PowerShell 7.4+:** modern dil özellikleri ve modern `.NET` altyapısı
-- **📦 Küçük varsayılan PS7 çıktısı:** `FrameworkDependent` modu varsayılandır; EXE boyutunu önemli ölçüde düşürür
-- **🧩 İsteğe bağlı sıkıştırma ve trimming:** `-EnableTrim` ve `-EnableUpx` seçenekleri kullanılabilir
+- **📦 İsteğe bağlı küçük PS7 çıktısı:** "Küçük boyut" (`FrameworkDependent`) seçeneği EXE boyutunu önemli ölçüde düşürür; hedefte .NET 8 Runtime gerekir
+- **🧪 Deneysel CLI seçenekleri:** `-EnableTrim` (yalnızca `SelfContained` ile) ve `-EnableUpx`; Studio arayüzünde sunulmaz
 - **🖼️ Simge ve WinForms entegrasyonu:** uygulama simgesi ve form başlık simgesi otomatik olarak eklenir
 - **🌗 Açık / koyu tema:** modern kullanıcı deneyimi
 
@@ -77,30 +77,33 @@ PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız
 
 ## 🧩 Örnek derleme modları
 
-### PS7 default (daha küçük .exe)
-
-Bu seçenek, hedef PC'de compatible `pwsh` kurulu olduğu varsayımıyla en küçük çıktı için idealdir.
+### PS7 default (self-contained, tek başına çalışır)
 
 ```powershell
 Invoke-Pwxe -Source .\modern.ps1 -Output .\modern.exe -Target PS7
 ```
 
-### PS7 self-contained (daha büyük ama tek başına çalışır)
+### PS7 küçük çıktı (hedefte .NET 8 Runtime gerekir)
+
+`pwsh` gerekmez; yalnızca .NET çalışma zamanı çıktıya eklenmez. GUI uygulamaları için Windows Desktop Runtime 8 gerekir.
 
 ```powershell
-Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-selfcontained.exe -Target PS7 -Runtime SelfContained -SingleFile
+Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-small.exe -Target PS7 -Runtime FrameworkDependent
 ```
 
-### PS7 trimming denemesi
+### PS7 tek dosya
 
 ```powershell
-Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-trimmed.exe -Target PS7 -Runtime FrameworkDependent -EnableTrim
+Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-single.exe -Target PS7 -Runtime SelfContained -SingleFile
 ```
 
-### PS7 UPX sıkıştırması (opsiyonel)
+### Deneysel: trimming ve UPX
+
+`-EnableTrim` yalnızca `SelfContained` ile çalışır ve PowerShell reflection kullandığı için çıktı mutlaka test edilmelidir. `-EnableUpx` tek-dosya çıktılarda atlanır; antivirüs yazılımları UPX ile paketlenmiş dosyaları şüpheli işaretleyebilir.
 
 ```powershell
-Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-upx.exe -Target PS7 -Runtime FrameworkDependent -EnableUpx
+Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-trimmed.exe -Target PS7 -Runtime SelfContained -EnableTrim
+Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-upx.exe -Target PS7 -EnableUpx
 ```
 
 ---
