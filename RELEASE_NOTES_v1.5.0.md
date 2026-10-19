@@ -6,6 +6,11 @@
 
 ## 🌟 Öne Çıkan Yenilikler
 
+### 0. 🧰 Tam seçenek aktarımı
+
+- Studio seçenekleri artık pwxe motoruna gerçek parametreler olarak aktarılır: x86/x64, yönetici yetkisi, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma.
+- PS7 FrameworkDependent + SingleFile küçük dağıtım seçeneği olarak kullanılabilir; hedefte .NET 8 Runtime, GUI için Windows Desktop Runtime 8 gerekir.
+
 ### 1. ⚙️ Tamamen Bağımsız Çekirdek Motor: [pwxe](https://github.com/mtahiryilmazz/pwxe)
 - **Sıfır Dış Bağımlılık:** `ps2exe` PowerShell modülü, PSGallery indirme mekanizmaları ve harici betik bağımlılıkları tamamen kaldırıldı.
 - **Tamamen Çevrimdışı (Offline) Çalışabilirlik:** İnternet erişimi olmayan kurumsal ve izole sistemlerde sorunsuz çalışır.

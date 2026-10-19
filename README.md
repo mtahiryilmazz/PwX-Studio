@@ -44,6 +44,10 @@ PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız
 
 ## 🚀 Öne Çıkan Özellikler
 
+### Windows çıktı seçenekleri
+
+Studio artık pwxe motoruna x86/x64, yönetici yetkisi, DPI farkındalığı, Windows sürüm uyumluluğu, uzun dosya yolları, EXE.config, UTF-8/Unicode çıktı ve çıktı bastırma seçeneklerini aktarır. PS7 için SelfContained varsayılandır; Küçük boyut seçeneği FrameworkDependent üretir.
+
 - **🖥️ Responsive arayüz:** pencere yeniden boyutlandırılabilir ve küçük ekranlarda kullanılabilir
 - **⚡ Dahili pwxe motoru:** harici `ps2exe` bağımlılığı yok, tamamen çevrimdışı çalışır
 - **🎯 Çift hedef çalışma zamanı:**

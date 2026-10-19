@@ -815,6 +815,12 @@ Referanslar uygulama öncesinde tekrar kontrol edilmelidir. SDK, runtime, paket 
 
 ## 19. Sonuç
 
+## 20. Güncel uygulama durumu — 2026-10-19
+
+pwxe motoru ve PwX Studio entegrasyonu doğrulanmıştır. PS5.1 ve PS7 Console/GUI, SelfContained, FrameworkDependent ve SingleFile yolları test edilmiştir. Studio seçenekleri artık motor parametrelerine aktarılır: mimari, yönetici manifesti, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma.
+
+PS7 FrameworkDependent hedefte .NET 8 Runtime, GUI hedefinde Windows Desktop Runtime 8 ister; pwsh kurulumu gerekmez. SelfContained varsayılandır. Test sonuçları ve boyut ölçümleri proje dışındaki çalışma raporunda ve pwxe test artefaktlarında tutulur.
+
 PwX Studio'nun bağımsız EXE dönüştürme motoru projesi, mevcut arayüzü koruyarak ayrı bir derleme altyapısı geliştirme yaklaşımıyla yürütülecektir.
 
 İlk hedef, bütün özellikleri aynı anda tamamlamak değil; **PS2EXE'ye bağımlı olmayan, kontrollü testleri geçen minimal bir motor** oluşturmaktır.

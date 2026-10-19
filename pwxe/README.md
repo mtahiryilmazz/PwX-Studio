@@ -34,6 +34,10 @@ tests/samples/hello.ps1              Roadmap Aşama 2 örnek betiği
 Seçenekler: `-Mode Console|Gui`, `-Icon x.ico`, `-ProductName`, `-CompanyName`, `-Description`, `-FileVersion 1.2.3.4`,
 `-ProductVersion`, `-RuntimeMode SelfContained|FrameworkDependent`, `-Architecture win-x64|win-arm64`, `-LogPath`, `-Force`, `-KeepTemp`.
 
+## Güncel çıktı seçenekleri
+
+SelfContained varsayılandır. FrameworkDependent küçük çıktı seçeneğidir; Console hedefinde .NET 8 Runtime, GUI hedefinde Windows Desktop Runtime 8 gerekir. SingleFile iki runtime modu ile de kullanılabilir. Mimari win-x86, win-x64 veya win-arm64 seçilebilir. Yönetici, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma seçenekleri desteklenir.
+
 ## Tasarım kararları
 
 - Kaynak betik derleme sırasında **çalıştırılmaz**, yalnızca `Parser::ParseFile` ile ayrıştırılır (hata kodu `PWX1003`, satır/sütun ile).

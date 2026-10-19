@@ -991,6 +991,9 @@ $chkSupportOS   = $window.FindName('ChkSupportOS')
 $chkLongPaths   = $window.FindName('ChkLongPaths')
 $chkNoOutput    = $window.FindName('ChkNoOutput')
 
+$chkX64.Add_Checked({ if ($chkX86) { $chkX86.IsChecked = $false } })
+$chkX86.Add_Checked({ if ($chkX64) { $chkX64.IsChecked = $false } })
+
 $btnBuild       = $window.FindName('BtnBuild')
 $btnOpenFolder  = $window.FindName('BtnOpenFolder')
 $pbStatus       = $window.FindName('PbStatus')
@@ -2116,9 +2119,17 @@ try {
         if ($buildParams.Title) { $bArgs.ProductName = $buildParams.Title; $bArgs.Description = $buildParams.Title }
         if ($buildParams.Company) { $bArgs.CompanyName = $buildParams.Company }
         if ($buildParams.Ver) { $bArgs.FileVersion = $buildParams.Ver; $bArgs.ProductVersion = $buildParams.Ver }
+        $bArgs.Admin = $buildParams.IsAdmin
+        $bArgs.Utf8 = $buildParams.IsUtf8
+        $bArgs.Unicode = $buildParams.IsUnicode
+        $bArgs.Dpi = $buildParams.IsDpi
+        $bArgs.Config = $buildParams.IsConfig
+        $bArgs.SupportOS = $buildParams.IsSupportOS
+        $bArgs.LongPaths = $buildParams.IsLongPaths
+        $bArgs.NoOutput = $buildParams.IsNoOutput
+        $bArgs.Architecture = if ($buildParams.IsX86) { 'win-x86' } else { 'win-x64' }
         
         if ($buildParams.Target -eq 'PS7') {
-            $bArgs.Architecture = 'win-x64'
             if ($buildParams.SingleFile) { $bArgs.SingleFile = $true }
             if ($buildParams.SmallSize) { $bArgs.RuntimeMode = 'FrameworkDependent' }
         }

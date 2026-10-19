@@ -13,6 +13,8 @@ Proje: PwX Studio — PowerShell to EXE Builder
 Henüz yayımlanmamış geliştirmeler.
 
 ### Added
+- Studio seçenekleri pwxe motoruna bağlandı: x86/x64, yönetici, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma.
+- PS7 FrameworkDependent + SingleFile kombinasyonu desteklendi.
 - PS7: eksik .NET SDK 8+ veya NuGet kaynağı algılanırsa onay penceresiyle otomatik kurulum/düzeltme teklifi
 - PS7: **"Küçük boyut"** (`FrameworkDependent`) onay kutusu; hedefte .NET 8 Runtime gerekir (`pwsh` gerekmez)
 
@@ -24,7 +26,6 @@ Henüz yayımlanmamış geliştirmeler.
 - Depo köküne yanlışlıkla eklenen `.patch` dosyaları kaldırıldı
 
 ### Planned
-- [ ] Mevcut özelliklerin kapsamlı testlerinin tamamlanması.
 - [ ] Windows sürümleri ve farklı ekran ölçeklerinde arayüz testlerinin yapılması.
 - [ ] Kurulum, kullanım ve sorun giderme belgelerinin tamamlanması.
 - [ ] Gerçek uygulama ekran görüntülerinin hazırlanması.
