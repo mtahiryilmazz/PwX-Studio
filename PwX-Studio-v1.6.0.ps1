@@ -1,12 +1,12 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
-    PwX Studio v1.5.0 - PowerShell Executable Builder
+    PwX Studio v1.6.0 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
     - Dinamik Tema Desteği: Açık Tema ve Koyu Tema geçişi
     - PowerShell 5.1 (Dahili csc.exe) ve PowerShell 7 (.NET 8 SDK) hedef desteği
     - Çok kaynaklı Web İkon Arama Hub'ı (Gelişmiş Türkçe/İngilizce Arama & Renk Kartelası)
     - Türkçe karakter uyumlu (UTF-8 dosya ve konsol UTF-8 çıktı motoru)
-    Çalıştırma: powershell.exe -STA -ExecutionPolicy Bypass -File .\PwX-Studio-v1.5.0.ps1
+    Çalıştırma: powershell.exe -STA -ExecutionPolicy Bypass -File .\PwX-Studio-v1.6.0.ps1
 #>
 
 Set-StrictMode -Version 2.0
@@ -224,7 +224,7 @@ function Search-Icons([string]$query, [int]$sourceIndex) {
                 try {
                     $wc = New-Object System.Net.WebClient
                     $wc.Encoding = [System.Text.Encoding]::UTF8
-                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
+                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.6.0'
                     $json = $wc.DownloadString($apiHost + '/search' + $queryPart) | ConvertFrom-Json
                     if ($json -and $null -ne $json.icons) { break }
                 } catch { }
@@ -436,7 +436,7 @@ function Get-IconBatchSvgs($iconItems) {
     $svgCache = @{}
     $wc = New-Object System.Net.WebClient
     $wc.Encoding = [System.Text.Encoding]::UTF8
-    $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
+    $wc.Headers['User-Agent'] = 'PwX-Studio/1.6.0'
 
     foreach ($p in $byPrefix.Keys) {
         $list = $byPrefix[$p]
@@ -530,7 +530,7 @@ function Set-WindowFitToWorkArea {
 [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="PwX Studio v1.5.0 - PowerShell Executable Builder" 
+        Title="PwX Studio v1.6.0 - PowerShell Executable Builder"
         Height="840" Width="980" MinHeight="680" MinWidth="840"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}" Foreground="{DynamicResource TextBrush}" 
@@ -727,7 +727,7 @@ function Set-WindowFitToWorkArea {
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="⚡ PwX Studio" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
                         <Border Background="{DynamicResource BorderBrush}" CornerRadius="4" Padding="8,2" Margin="12,2,0,2" VerticalAlignment="Center">
-                            <TextBlock Text="v1.5.0" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
+                            <TextBlock Text="v1.6.0" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
                         </Border>
                     </StackPanel>
                     <TextBlock Text="PowerShell betiklerini (.ps1) sıfır bağımlılıkla yerel Windows çalıştırılabilir dosyalarına (.exe) dönüştürün." 
@@ -940,7 +940,7 @@ function Set-WindowFitToWorkArea {
         </Border>
 
         <!-- 4. Footer (Sade ve Temiz) -->
-        <TextBlock Grid.Row="3" Text="PwX Studio v1.5.0 • PowerShell Executable Builder" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+        <TextBlock Grid.Row="3" Text="PwX Studio v1.6.0 • PowerShell Executable Builder" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,8,0,0" HorizontalAlignment="Center"/>
     </Grid>
 </Window>
 '@
@@ -1695,7 +1695,7 @@ function Open-FluentIconDialog {
                         "https://api.unisvg.com/$prefix/$iconName.svg"
                     )
                     $wcSvg = New-Object System.Net.WebClient
-                    $wcSvg.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
+                    $wcSvg.Headers['User-Agent'] = 'PwX-Studio/1.6.0'
                     $wcSvg.Encoding = [System.Text.Encoding]::UTF8
 
                     foreach ($sUrl in $svgUrls) {
@@ -1717,7 +1717,7 @@ function Open-FluentIconDialog {
             if (-not $downloadSuccess) {
                 $candidates = @(Get-IconPngCandidates $item 256 $hex)
                 $wc = New-Object System.Net.WebClient
-                $wc.Headers['User-Agent'] = 'PwX-Studio/1.5.0'
+                $wc.Headers['User-Agent'] = 'PwX-Studio/1.6.0'
 
                 foreach ($u in $candidates) {
                     try {
@@ -2197,7 +2197,7 @@ try {
 })
 
 # Başlangıç durumu
-Add-Log "PwX Studio v1.5.0 hazır."
+Add-Log "PwX Studio v1.6.0 hazır."
 Add-Log "Dönüştürmek istediğiniz .ps1 dosyasını sürükleyip bırakabilir veya 'Gözat' butonunu kullanabilirsiniz."
 
 # Pencere Kapatıldığında Temiz Çıkış

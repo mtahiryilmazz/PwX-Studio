@@ -27,4 +27,4 @@ Varsa hata günlüğü veya ekran görüntüleri.
 - İşletim Sistemi: [örn. Windows 11 Pro 23H2]
 - PowerShell Sürümü: [örn. 5.1 veya 7.4.2]
 - .NET SDK Sürümü (PS7 derlemesi yapıldıysa): [örn. .NET 8.0]
-- PwX Studio Sürümü: [v1.5.0]
+- PwX Studio Sürümü: [v1.6.0]

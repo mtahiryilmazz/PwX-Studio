@@ -444,6 +444,7 @@ v1.4.2 kaynak kodunda şu alanlar bulunuyor:
 | v1.5.0-preview.1 | Bağımsız motor prototipinin ilk entegrasyonu |
 | v1.5.0-preview.2 | Test düzeltmeleri ve hedef runtime desteği |
 | v1.5.0 | Kabul kriterleri karşılanırsa ilk kararlı bağımsız motor sürümü |
+| v1.6.0 | Seçeneklerin motorla tam kablolaması, FrameworkDependent/SingleFile ve doğrulanmış dağıtım |
 
 Bu sürüm numaraları öneridir; takvim veya yayın taahhüdü değildir.
 

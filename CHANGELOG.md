@@ -10,6 +10,17 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-10-19
+
+### Added
+- PwX Studio seçenekleri pwxe motoruna gerçek parametreler olarak bağlandı: x86/x64, yönetici yetkisi, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma.
+- PS7 FrameworkDependent + SingleFile küçük dağıtım seçeneği.
+- PS5.1, PS7 Console, PS7 GUI, negatif senaryolar ve log doğrulamasını kapsayan test matrisi.
+
+### Changed
+- SelfContained varsayılan olarak korundu; FrameworkDependent açık bir küçük boyut seçeneği olarak kaldı.
+- Runtime gereksinimleri build-machine ve target-machine olarak belgelerde ayrıştırıldı.
+
 Henüz yayımlanmamış geliştirmeler.
 
 ### Added
