@@ -1,57 +1,140 @@
-# PwX Studio — PwX Build Engine (ilk prototip)
+# pwxe — PwX Build Engine & CLI
 
-Tamamen bağımsız `.ps1 → .exe` dönüştürme motoru. `IMPLEMENTATION_ROADMAP.md` Aşama 0–5 + Bölüm 17 karşılığıdır.
-Mevcut `PwX-Studio-v1.4.2.ps1` dosyasına **dokunulmaz**; bu klasör ayrı geliştirme alanıdır.
+<p align="center">
+  <strong>Modern, ultra-fast and standalone PowerShell script to EXE build engine.</strong><br>
+  <em>Convert PowerShell scripts into native Windows executables with zero external dependencies.</em>
+</p>
 
-## Klasör yapısı
+<p align="center">
+  <a href="https://github.com/mtahiryilmazz/pwxe/releases/latest"><img src="https://img.shields.io/badge/release-v1.6.1-blue.svg?style=flat-square" alt="Latest Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg?style=flat-square" alt="Platform: Windows">
+  <img src="https://img.shields.io/badge/PowerShell-5.1%20%7C%207.4%2B-5391FE.svg?style=flat-square" alt="PowerShell 5.1 & 7.4+">
+  <img src="https://img.shields.io/badge/PSGallery-pwxe-success.svg?style=flat-square" alt="PowerShell Gallery: pwxe">
+</p>
 
-```
-scripts/Check-Environment.ps1        Ortam kontrolü (PS 5.1, pwsh, .NET SDK, csc.exe, NuGet erişimi)
-scripts/PwX-Build.ps1                Motor (komut satırı): ön kontrol -> paketle -> doğrula -> günlük
-src/PwX.BuildHost.PS7/               PowerShell 7 hostu (Microsoft.PowerShell.SDK, self-contained)
-src/PwX.BuildHost.PS51/Stub.cs       Windows PowerShell 5.1 başlatıcısı (csc.exe ile derlenir, .NET SDK gerekmez)
-tests/Run-Smoke.ps1                  T-001..T-005, T-009 duman testleri
-tests/samples/hello.ps1              Roadmap Aşama 2 örnek betiği
-```
+---
 
-## Kullanım
+## 🌟 Why pwxe?
 
+`pwxe` is the standalone compilation engine that powers [PwX Studio](https://github.com/mtahiryilmazz/pwxstudio). Designed from the ground up for command-line users, DevOps engineers, and CI/CD automation pipelines:
+
+- **🚀 Zero External Dependencies:** No need to download unverified third-party modules or connect to PSGallery at compile time. Works 100% offline in air-gapped enterprise environments.
+- **⚡ Dual Target Runtimes:**
+  - **PowerShell 5.1:** Uses Windows native `csc.exe` (Roslyn / .NET Framework) to build ultra-lightweight (~500 KB) executables in under 0.5 seconds.
+  - **PowerShell 7.4+:** Compiles modern scripts using `.NET 8 SDK` and `Microsoft.PowerShell.SDK`.
+- **📦 Single-File Packaging:** Option to embed all PS7 runtime libraries into a single, self-contained `.exe`.
+- **🖼️ Icon & Form Integration:** Automatic PE header icon embedding + WinForms runtime icon bootstrapping.
+
+---
+
+## Build modes and Windows options
+
+PS7 builds include the PowerShell engine. The pwsh command is not required on the target machine.
+
+| Mode | Target-machine requirement | Typical size |
+|---|---|---:|
+| SelfContained | No .NET runtime installation | Largest; single-file is commonly 100+ MiB |
+| FrameworkDependent | .NET 8 Runtime; GUI requires .NET 8 Desktop Runtime | Small host or roughly 40 MiB single-file |
+
+SelfContained remains the default. Use RuntimeMode FrameworkDependent when a smaller distribution is more important than zero runtime prerequisites. Single-file can be combined with either mode.
+
+The engine supports x86/x64, administrator execution, DPI awareness, Windows compatibility, long paths, EXE.config generation, UTF-8/Unicode output and output suppression.
+
+The PS7 build machine needs a .NET 8 SDK and an enabled NuGet source. The target machine only needs the runtime listed above.
+
+## 📥 Installation
+
+From **PowerShell Gallery**:
 ```powershell
-# 1) Ortam
-.\scripts\Check-Environment.ps1
-
-# 2) PS 5.1 hedefi (.NET SDK gerekmez, hedefte powershell.exe şart)
-.\scripts\PwX-Build.ps1 -Source .\tests\samples\hello.ps1 -Output .\out\hello51.exe -Target PS51 -Force
-
-# 3) PS 7 hedefi, self-contained (ilk derlemede internet ister)
-.\scripts\PwX-Build.ps1 -Source .\tests\samples\hello.ps1 -Output .\out\hello7.exe -Target PS7 -Force
-.\scripts\PwX-Build.ps1 -Source .\tests\samples\hello.ps1 -Output .\out\hello7.exe -Target PS7 -SingleFile -Force   # deneysel
-
-# 4) Testler
-.\tests\Run-Smoke.ps1
+Install-Module -Name pwxe -Scope CurrentUser
 ```
 
-Seçenekler: `-Mode Console|Gui`, `-Icon x.ico`, `-ProductName`, `-CompanyName`, `-Description`, `-FileVersion 1.2.3.4`,
-`-ProductVersion`, `-RuntimeMode SelfContained|FrameworkDependent`, `-Architecture win-x64|win-arm64`, `-LogPath`, `-Force`, `-KeepTemp`.
+Or clone directly from GitHub:
+```powershell
+git clone https://github.com/mtahiryilmazz/pwxe.git
+Import-Module .\pwxe\pwxe.psd1
+```
 
-## Güncel çıktı seçenekleri
+---
 
-SelfContained varsayılandır. FrameworkDependent küçük çıktı seçeneğidir; Console hedefinde .NET 8 Runtime, GUI hedefinde Windows Desktop Runtime 8 gerekir. SingleFile iki runtime modu ile de kullanılabilir. Mimari win-x86, win-x64 veya win-arm64 seçilebilir. Yönetici, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma seçenekleri desteklenir.
+## 🚀 Usage
 
-## Tasarım kararları
+### 1. Simple Quick Compile (CLI)
+```powershell
+pwxe .\myscript.ps1 .\myapp.exe
+```
 
-- Kaynak betik derleme sırasında **çalıştırılmaz**, yalnızca `Parser::ParseFile` ile ayrıştırılır (hata kodu `PWX1003`, satır/sütun ile).
-- Payload her zaman **UTF-8 BOM** ile gömülür; BOM'suz dosya UTF-8 sayılır, geçerli UTF-8 değilse Windows-1254 uyarısıyla okunur.
-- Her çalıştırma benzersiz `pwx-<guid>` geçici klasörü kullanır; yalnızca o klasör silinir.
-- Argümanlar `CommandLineToArgvW` kurallarıyla tırnaklanır (PS 5.1) / `ConsoleShell` argüman dizisi olarak geçer (PS 7); shell komut dizesi birleştirilmez.
-- Mevcut çıktı/klasör `-Force` olmadan ezilmez; klasör yalnızca `.pwx-build` işareti varsa silinir.
-- Trimming/AOT yok (Roadmap Bölüm 14).
+### 2. Full-Featured Cmdlet (`Invoke-Pwxe`)
+```powershell
+Invoke-Pwxe -Source .\myscript.ps1 `
+            -Output .\myapp.exe `
+            -Target PS51 `
+            -Mode Gui `
+            -Icon .\app.ico `
+            -Title "My App" `
+            -CompanyName "My Company" `
+            -FileVersion "1.0.0.0"
+```
 
-## Bilinen sınırlar / henüz doğrulanmadı
+### 3. PowerShell 7 Single-File Build
+```powershell
+Invoke-Pwxe -Source .\modern.ps1 `
+            -Output .\modern.exe `
+            -Target PS7 `
+            -Runtime SelfContained `
+            -SingleFile
+```
 
-- Bu prototip **Windows'ta henüz derlenip çalıştırılmadı**. İlk iş `tests\Run-Smoke.ps1` çalıştırmak; sonuçları `COMPATIBILITY.md`'ye yazın (Aşama 3–4).
-- `PsSdkVersion 7.4.6` / `net8.0` varsayılandır; Roadmap 4.4'e göre güncel sürüm uyumluluğunu doğrulayıp sabitleyin.
-- PS 7 `-SingleFile` + PowerShell SDK birlikte sorun çıkarabilir (modül dosyaları, açılış süresi). Varsayılan çıktı klasör düzenindedir.
-- PS 7 GUI modu konsol etkileşimi (Read-Host) desteklemez; WinForms/WPF betikleri Aşama 4'te ayrıca test edilmeli.
-- PS 5.1 hedefi hedef makinedeki `powershell.exe`'yi kullanır (runtime gömülmez).
-- Harici modül/dosya bağımlılık manifesti, kod imzalama ve GUI entegrasyonu sonraki aşamalardır.
+---
+
+## 📊 Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `-Source` | String | *Required* | Path to input `.ps1` script |
+| `-Output` | String | `Source.exe` | Output `.exe` path |
+| `-Target` | `PS51` / `PS7` | `PS51` | Target PowerShell engine |
+| `-Mode` | `Console` / `Gui` | `Console` | Console window visibility |
+| `-Runtime` | `SelfContained` / `FrameworkDependent` | `SelfContained` | PS7 runtime bundling |
+| `-SingleFile` | Switch | `False` | Embed all dependencies into single `.exe` (PS7) |
+| `-EnableTrim` | Switch | `False` | **Experimental.** `PublishTrimmed`; requires `-Runtime SelfContained` (PowerShell uses reflection - test the output) |
+| `-EnableUpx` | Switch | `False` | **Experimental.** UPX-compress the output if `upx` is on PATH (skipped for single-file; may trigger AV false positives) |
+| `-AutoInstallPrereqs` | Switch | `False` | PS7: install a missing .NET SDK 8 (winget, or the official `dotnet-install.ps1`) and enable `nuget.org` if no NuGet source is enabled |
+
+> **PS7 output modes:** `SelfContained` (default) runs on any Windows machine without extra installs. `FrameworkDependent` is much smaller but needs the **.NET 8 Runtime** (GUI apps: **Windows Desktop Runtime 8**) on the target machine - `pwsh` is *not* required, the PowerShell engine ships inside the output. See [docs/PS7-build-modes.md](docs/PS7-build-modes.md).
+| `-Icon` | String | `$null` | Application `.ico` file path |
+| `-Title` | String | File name | Product name and description |
+| `-CompanyName` | String | `$null` | Company/Publisher name |
+| `-FileVersion` | String | `1.0.0.0` | Assembly file version |
+| `-Force` | Switch | `False` | Overwrite existing output |
+
+---
+
+## 🖥️ Desktop GUI: PwX Studio
+
+If you prefer a modern, full-featured desktop GUI with built-in online icon search, dark mode themes, and drag-and-drop support, check out **[PwX Studio](https://github.com/mtahiryilmazz/pwxstudio)**.
+
+---
+
+## 🧪 Testing
+
+[![pwxe CI](https://github.com/mtahiryilmazz/pwxe/actions/workflows/ci.yml/badge.svg)](https://github.com/mtahiryilmazz/pwxe/actions/workflows/ci.yml)
+
+| Suite | Command | Covers |
+| :--- | :--- | :--- |
+| Module | `powershell.exe -ExecutionPolicy Bypass -File .\tests\Test-Module.ps1` | Manifest, exports, `Invoke-Pwxe` PS51 + PS7 end-to-end |
+| GUI host logic | `pwsh .\tests\Test-GuiHostLogic.ps1` | PS7 GUI host exit codes & argument binding |
+| Smoke | `powershell.exe -ExecutionPolicy Bypass -File .\tests\Run-Smoke.ps1 [-SingleFile]` | PS51, PS7 console, PS7 GUI executables |
+
+All suites run on every push via GitHub Actions as separate checks.
+
+## 🗺️ Roadmap
+
+See our planned milestones, security signing, and cross-platform goals in [ROADMAP.md](ROADMAP.md).
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
