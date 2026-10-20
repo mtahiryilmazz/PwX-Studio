@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
     PwX Studio v1.6.1 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
@@ -964,14 +964,14 @@ Set-WindowFitToWorkArea -Win $window -Center
 
 # Logo ve ikon ata (Akıllı İkon Tespiti & Dahili İkon Desteği)
 $pwxIconCandidate = $null
-$iconPaths = @(
-    (if ($PSScriptRoot) { Join-Path $PSScriptRoot 'ico\PwX-Studio.ico' }),
-    '.\ico\PwX-Studio.ico',
-    (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Github\PwX-Studio\ico\PwX-Studio.ico'),
-    (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Documents\Github\PwX-Studio\ico\PwX-Studio.ico'),
-    (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\ico\PwX-Studio.ico'),
-    (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine\ico\PwX-Studio.ico')
-)
+$iconPaths = @()
+if ($PSScriptRoot) { $iconPaths += (Join-Path $PSScriptRoot 'ico\PwX-Studio.ico') }
+$iconPaths += '.\ico\PwX-Studio.ico'
+$iconPaths += (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Github\PwX-Studio\ico\PwX-Studio.ico')
+$iconPaths += (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Documents\Github\PwX-Studio\ico\PwX-Studio.ico')
+$iconPaths += (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\ico\PwX-Studio.ico')
+$iconPaths += (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine\ico\PwX-Studio.ico')
+
 foreach ($ip in $iconPaths) {
     if ($ip -and (Test-Path -LiteralPath $ip)) { $pwxIconCandidate = $ip; break }
 }
