@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
     PwX Studio v1.6.0 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
@@ -1070,6 +1070,114 @@ function Add-Log([string]$msg, [string]$level = 'Info') {
 }
 Set-Alias Append-Log Add-Log -Scope Script
 
+# ==================================================================
+#  pwxe Derleme Motoru Yönetimi (Akıllı Arama ve Dahili Gömülü Motor)
+# ==================================================================
+$script:EmbeddedPwXEngineZipBase64 = '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'
+
+function Deploy-EmbeddedPwXEngine {
+    param([switch]$Force)
+    try {
+        $engineDir = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine'
+        $scriptPath = Join-Path $engineDir 'scripts\PwX-Build.ps1'
+        if (-not $Force -and (Test-Path -LiteralPath $scriptPath)) {
+            return $scriptPath
+        }
+
+        if (-not (Test-Path -LiteralPath $engineDir)) {
+            [System.IO.Directory]::CreateDirectory($engineDir) | Out-Null
+        }
+
+        $bytes = [System.Convert]::FromBase64String($script:EmbeddedPwXEngineZipBase64)
+        $ms = New-Object System.IO.MemoryStream(,$bytes)
+        $zip = New-Object System.IO.Compression.ZipArchive($ms, [System.IO.Compression.ZipArchiveMode]::Read)
+        foreach ($entry in $zip.Entries) {
+            $destPath = Join-Path $engineDir $entry.FullName
+            $parentDir = Split-Path -Parent $destPath
+            if (-not (Test-Path -LiteralPath $parentDir)) {
+                [System.IO.Directory]::CreateDirectory($parentDir) | Out-Null
+            }
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
+        }
+        $zip.Dispose()
+        $ms.Dispose()
+
+        if (Test-Path -LiteralPath $scriptPath) {
+            $cfgDir = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio'
+            if (-not (Test-Path $cfgDir)) { [System.IO.Directory]::CreateDirectory($cfgDir) | Out-Null }
+            [System.IO.File]::WriteAllText((Join-Path $cfgDir 'engine_path.txt'), $scriptPath, [System.Text.Encoding]::UTF8)
+            return $scriptPath
+        }
+    } catch {
+        Write-Warning "Dahili pwxe motoru çıkartılamadı: $_"
+    }
+    return $null
+}
+
+function Get-PwXEnginePath {
+    param([switch]$ForceRedeploy)
+
+    # 1. Önceden yapılandırılmış/kaydedilmiş motor yolu
+    $cfgFile = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine_path.txt'
+    if (-not $ForceRedeploy -and (Test-Path -LiteralPath $cfgFile)) {
+        try {
+            $saved = (Get-Content -LiteralPath $cfgFile -Raw).Trim()
+            if ($saved -and (Test-Path -LiteralPath $saved)) { return $saved }
+        } catch {}
+    }
+
+    # 2. Göreli / Komşu Dizinler (Geliştirici veya Taşınabilir Klasör)
+    $relCandidates = @(
+        (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $PSScriptRoot '..\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
+        (Join-Path (Get-Location) 'pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path (Get-Location) '..\pwxe\scripts\PwX-Build.ps1')
+    )
+    foreach ($c in $relCandidates) {
+        if ($c -and (Test-Path -LiteralPath $c)) { return $c }
+    }
+
+    # 3. Yüklü PowerShell Modülü (PSGallery / Yerel PSModulePath)
+    try {
+        $pwxeMod = Get-Module -ListAvailable pwxe -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1
+        if ($pwxeMod) {
+            $modCand = Join-Path $pwxeMod.ModuleBase 'scripts\PwX-Build.ps1'
+            if (Test-Path -LiteralPath $modCand) { return $modCand }
+        }
+    } catch {}
+
+    # 4. Akıllı Tarama: Yaygın Kullanıcı & Geliştirme Dizinleri
+    $userProf = [Environment]::GetFolderPath('UserProfile')
+    $myDocs   = [Environment]::GetFolderPath('MyDocuments')
+    $smartCandidates = @(
+        (Join-Path $myDocs 'Github\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $myDocs 'GitHub\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $userProf 'Documents\Github\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $userProf 'Documents\GitHub\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $userProf 'Desktop\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $userProf 'Downloads\pwxe\scripts\PwX-Build.ps1'),
+        (Join-Path $userProf 'source\repos\pwxe\scripts\PwX-Build.ps1')
+    )
+    foreach ($sc in $smartCandidates) {
+        if ($sc -and (Test-Path -LiteralPath $sc)) { return $sc }
+    }
+
+    # 5. Daha önce otomatik açılmış yerel AppData motoru
+    $appDataScript = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine\scripts\PwX-Build.ps1'
+    if (-not $ForceRedeploy -and (Test-Path -LiteralPath $appDataScript)) {
+        return $appDataScript
+    }
+
+    # 6. Herhangi bir yerde bulunamazsa: Dahili Gömülü Motoru Otomatik Kur
+    $deployed = Deploy-EmbeddedPwXEngine
+    if ($deployed -and (Test-Path -LiteralPath $deployed)) {
+        return $deployed
+    }
+
+    return $null
+}
+
 function Update-PreviewImage([string]$path) {
     if ($path -and (Test-Path -LiteralPath $path)) {
         $bmp = Get-PreviewBitmapImage $path
@@ -2072,40 +2180,28 @@ try {
             }
         }
 
-        # pwxe Derleme Motorunu Bulma
-        $engineScript = $null
-        # Oncelik: bagimsiz pwxe (kardes klasor) > kurulu pwxe modulu > Studio icindeki gomulu kopya (yedek)
-        $possiblePaths = @(
-            (Join-Path $PSScriptRoot '..\pwxe\scripts\PwX-Build.ps1'),
-            (Join-Path (Get-Location) '..\pwxe\scripts\PwX-Build.ps1')
-        )
-        foreach ($p in $possiblePaths) {
-            if ($p -and (Test-Path -LiteralPath $p)) { $engineScript = $p; break }
-        }
-
+        # pwxe Derleme Motorunu Bulma (Akıllı Arama & Dahili Gömülü Motor)
+        $engineScript = Get-PwXEnginePath
         if (-not $engineScript) {
-            $pwxeMod = Get-Module -ListAvailable pwxe -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1
-            if ($pwxeMod) {
-                $candidate = Join-Path $pwxeMod.ModuleBase 'scripts\PwX-Build.ps1'
-                if (Test-Path -LiteralPath $candidate) { $engineScript = $candidate }
+            # Kullanıcıya manuel seçim penceresi sun
+            $res = [System.Windows.MessageBox]::Show($window, "pwxe derleme motoru otomatik konumlarda bulunamadı.`r`n`r`n'PwX-Build.ps1' dosyasını manuel olarak seçmek ister misiniz?", "Derleme Motoru Bulunamadı", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+            if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
+                $ofdEng = New-Object Microsoft.Win32.OpenFileDialog
+                $ofdEng.Title = "PwX-Build.ps1 Dosyasını Seçin"
+                $ofdEng.Filter = "PwX Derleme Motoru (PwX-Build.ps1)|PwX-Build.ps1|Tüm Dosyalar (*.*)|*.*"
+                if ($ofdEng.ShowDialog($window) -eq $true) {
+                    $engineScript = $ofdEng.FileName
+                    $cfgDir = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio'
+                    if (-not (Test-Path $cfgDir)) { [System.IO.Directory]::CreateDirectory($cfgDir) | Out-Null }
+                    [System.IO.File]::WriteAllText((Join-Path $cfgDir 'engine_path.txt'), $engineScript, [System.Text.Encoding]::UTF8)
+                }
             }
         }
 
-        if (-not $engineScript) {
-            $fallbackPaths = @(
-                (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
-                (Join-Path $PSScriptRoot 'pwxengine\scripts\PwX-Build.ps1'),
-                (Join-Path (Get-Location) 'pwxe\scripts\PwX-Build.ps1')
-            )
-            foreach ($p in $fallbackPaths) {
-                if ($p -and (Test-Path -LiteralPath $p)) { $engineScript = $p; break }
-            }
-        }
-
-        if ($engineScript) { Add-Log "Derleme motoru: $engineScript" }
-
-        if (-not $engineScript) {
-            throw "pwxe derleme motoru bulunamadı. Lütfen motor klasörünü doğrulayın."
+        if ($engineScript) { 
+            Add-Log "Derleme motoru: $engineScript" 
+        } else {
+            throw "pwxe derleme motoru bulunamadı veya seçilmedi. Lütfen motor klasörünü doğrulayın."
         }
 
         $bArgs = @{
@@ -2199,6 +2295,14 @@ try {
 # Başlangıç durumu
 Add-Log "PwX Studio v1.6.0 hazır."
 Add-Log "Dönüştürmek istediğiniz .ps1 dosyasını sürükleyip bırakabilir veya 'Gözat' butonunu kullanabilirsiniz."
+
+# Başlangıçta motor durumunu kontrol et ve bildir
+try {
+    $startupEngine = Get-PwXEnginePath
+    if ($startupEngine) {
+        Add-Log "Aktif Derleme Motoru: $startupEngine"
+    }
+} catch {}
 
 # Pencere Kapatıldığında Temiz Çıkış
 $window.Add_Closed({
