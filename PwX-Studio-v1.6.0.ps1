@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
     PwX Studio v1.6.0 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
@@ -22,11 +22,18 @@ try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::
 [Net.ServicePointManager]::DefaultConnectionLimit = 16
 
 # WPF Uygulama Yaşam Döngüsü: İkincil modal pencereler kapatıldığında ana pencerenin kapanmasını önle
-if ($null -eq [System.Windows.Application]::Current) {
-    $app = New-Object System.Windows.Application
-    $app.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
-} else {
-    [System.Windows.Application]::Current.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
+try {
+    if ($null -eq [System.Windows.Application]::Current) {
+        $app = New-Object System.Windows.Application
+        $app.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
+    } else {
+        $currApp = [System.Windows.Application]::Current
+        if ($currApp.Dispatcher -and $currApp.Dispatcher.CheckAccess()) {
+            $currApp.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
+        }
+    }
+} catch {
+    # Çoklu iş parçacığı veya önceden oluşturulmuş Application durumlarında hatayı yut
 }
 
 $trCulture = [System.Globalization.CultureInfo]::GetCultureInfo('tr-TR')
@@ -2357,9 +2364,14 @@ try {
 
 # Pencere Kapatıldığında Temiz Çıkış
 $window.Add_Closed({
-    if ([System.Windows.Application]::Current) {
-        [System.Windows.Application]::Current.Shutdown()
-    }
+    try {
+        if ([System.Windows.Application]::Current) {
+            $currApp = [System.Windows.Application]::Current
+            if ($currApp.Dispatcher -and $currApp.Dispatcher.CheckAccess()) {
+                $currApp.Shutdown()
+            }
+        }
+    } catch {}
 })
 
 # Pencereyi Göster
