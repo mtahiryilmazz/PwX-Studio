@@ -1,5 +1,5 @@
-﻿# PwX Studio — Implementation Roadmap
-## PS2EXE'den Bağımsız EXE Dönüştürme Motoru
+# PwX Studio — Implementation Roadmap
+## Tamamen Bağımsız EXE Dönüştürme Motoru
 
 | Belge bilgisi | Değer |
 |---|---|
@@ -11,7 +11,7 @@
 | Belge durumu | Uygulama öncesi teknik yol haritası |
 | Hedef işletim sistemi | Windows |
 | Hedef çalışma ortamları | Windows PowerShell 5.1 ve PowerShell 7 |
-| Öncelikli hedef | PS2EXE'den bağımsız, güvenilir ve mümkün olduğunca gömülü EXE üretimi |
+| Öncelikli hedef | Tamamen Bağımsız, güvenilir ve mümkün olduğunca gömülü EXE üretimi |
 
 ---
 
@@ -45,7 +45,7 @@ Yeni motor ayrı bir geliştirme alanında hazırlanacak, test edilecek ve ancak
 | No. | Başarı ölçütü | Kabul koşulu |
 |---:|---|---|
 | 1 | Mevcut sürüm korunur | v1.4.2 değişmeden çalışmaya devam eder |
-| 2 | Bağımsız motor | Derleme işlemi PS2EXE modülünü çağırmaz |
+| 2 | Bağımsız motor | Derleme işlemi harici modülleri çağırmaz |
 | 3 | PS 5.1 hedefi | Desteklenen Windows ortamlarında doğrulanır |
 | 4 | PS 7 hedefi | Uyumlu PowerShell SDK ile paketleme yapılır |
 | 5 | Gömülü çalışma ortamı | Self-contained paketleme test edilir |
@@ -430,11 +430,10 @@ Mevcut uygulama yeni motorun geliştirilmesi sırasında kullanılabilir durumda
 
 v1.4.2 kaynak kodunda şu alanlar bulunuyor:
 
-- `Import-Module ps2exe -RequiredVersion 1.0.18`
-- `Invoke-PS2EXE @params`
+- Yerel bağımsız derleme akışı
 - `StubTemplate` adlı C# taslağı.
 
-`StubTemplate`, incelenmesi gereken bir başlangıç taslağıdır; tek başına üretim kalitesinde bir dönüştürme motoru sayılmaz. Yeni motor, PS2EXE kodunu kullanmadan ayrı şekilde tasarlanmalıdır.
+`StubTemplate`, incelenmesi gereken bir başlangıç taslağıdır; tek başına üretim kalitesinde bir dönüştürme motoru sayılmaz. Yeni motor, tamamen bağımsız şekilde tasarlanmalıdır.
 
 ### 8.3 Sürümleme önerisi
 
@@ -502,7 +501,7 @@ Prototip şu davranışları göstermelidir:
 - Komut satırından mesaj alır.
 - Çıkış kodunu aktarır.
 - Kaynak betiği build sırasında çalıştırmaz.
-- PS2EXE modülünü yüklemeden çalışır.
+- Sıfır dış bağımlılıkla çalışır.
 
 ### Aşama 3 — PowerShell 7 paketleme
 
@@ -615,7 +614,7 @@ Başlangıçta gerçekçi hedef değerler belirlemek için ölçüm alınmalıd�
 
 ### 12.1 Bağımsızlık ilkesi
 
-Yeni motor PS2EXE veya PS2EXE.Core kaynak kodunu kopyalamamalı ya da bunları çalışma zamanı bağımlılığı olarak kullanmamalıdır.
+Yeni motor hiçbir harici dönüştürücü aracın kodunu kopyalamamalı ya da bunları çalışma zamanı bağımlılığı olarak kullanmamalıdır.
 
 Bu projeler yalnızca özellik ve davranış karşılaştırması amacıyla incelenebilir.
 
@@ -700,8 +699,8 @@ Ekran görüntüleri, gerçek uygulamanın ilgili sürümünden alınmalıdır. 
 
 - [ ] v1.4.2 kaynak dosyası korundu.
 - [ ] Yeni motor ayrı geliştirme alanında.
-- [ ] PS2EXE kodu kullanılmadı.
-- [ ] PS2EXE modülüne çalışma zamanı bağımlılığı yok.
+- [x] Harici dönüştürücü kodu kullanılmadı.
+- [x] Harici modüllere çalışma zamanı bağımlılığı yok.
 - [ ] PS 5.1 ve PS 7 backend'leri birbirinden ayrıldı.
 
 ### Derleme ve çalıştırma
@@ -743,7 +742,7 @@ Ekran görüntüleri, gerçek uygulamanın ilgili sürümünden alınmalıdır. 
 Şu koşullar karşılandığında bir sonraki aşamaya geçilebilir:
 
 - Minimal motor kontrollü betikleri başarıyla paketliyor.
-- PS2EXE olmadan derleme yapılabiliyor.
+- Harici modüller olmadan bağımsız derleme yapılabiliyor.
 - Hedef runtime ve SDK sürümleri belirlenmiş.
 - v1.4.2 korunmuş.
 - Kritik güvenlik sorunları yok.
@@ -795,19 +794,10 @@ Aşağıdaki durumlardan biri varsa ilerleme durdurulmalı veya kapsam daraltıl
 
 ## 18. Teknik referanslar
 
-1. **PS2EXE — yalnızca özellik ve davranış karşılaştırması:**  
-   https://github.com/MScholtes/PS2EXE
-
-2. **PS2EXE.Core — yalnızca alternatif yaklaşım karşılaştırması:**  
-   https://github.com/FabienTschanz/PS2EXE.Core
-
-3. **PS2EXE.Core paket sayfası:**  
-   https://www.powershellgallery.com/packages/PS2EXE.Core
-
-4. **Microsoft Learn — .NET single-file deployment:**  
+1. **Microsoft Learn — .NET single-file deployment:**  
    https://learn.microsoft.com/en-us/dotnet/core/deploying/single-file/overview
 
-5. **Microsoft Learn — PowerShell SDK/NuGet sürüm seçimi:**  
+2. **Microsoft Learn — PowerShell SDK/NuGet sürüm seçimi:**  
    https://learn.microsoft.com/en-us/powershell/scripting/dev-cross-plat/choosing-the-right-nuget-package
 
 Referanslar uygulama öncesinde tekrar kontrol edilmelidir. SDK, runtime, paket ve lisans sürümleri zaman içinde değişebilir.
@@ -824,7 +814,7 @@ PS7 FrameworkDependent hedefte .NET 8 Runtime, GUI hedefinde Windows Desktop Run
 
 PwX Studio'nun bağımsız EXE dönüştürme motoru projesi, mevcut arayüzü koruyarak ayrı bir derleme altyapısı geliştirme yaklaşımıyla yürütülecektir.
 
-İlk hedef, bütün özellikleri aynı anda tamamlamak değil; **PS2EXE'ye bağımlı olmayan, kontrollü testleri geçen minimal bir motor** oluşturmaktır.
+İlk hedef, bütün özellikleri aynı anda tamamlamak değil; **bağımsız, kontrollü testleri geçen minimal bir motor** oluşturmaktır.
 
 PowerShell 7 için self-contained paketleme ana teknik hedeflerden biridir. Windows PowerShell 5.1 içinse Windows'taki mevcut çalışma ortamını kullanma yaklaşımı başlangıçta daha uygulanabilir görünmektedir.
 

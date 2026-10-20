@@ -1,6 +1,6 @@
 # 🚀 PwX Studio v1.6.1 — Release Notes
 
-**PwX Studio v1.6.1**, harici `ps2exe` modülü bağımlılığını tamamen ortadan kaldırarak **%100 yerli ve bağımsız [pwxe (PwX Engine)](https://github.com/mtahiryilmazz/pwxe)** motoruna geçiş yapılan dönüm noktası bir sürümdür. Artık PowerShell betiklerinizi hiçbir harici modül indirmeden, tamamen çevrimdışı (offline) ve yüksek performansla Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürebilirsiniz.
+**PwX Studio v1.6.1**, harici dönüştürücü modül bağımlılıklarını tamamen ortadan kaldırarak **%100 yerli ve bağımsız [pwxe (PwX Engine)](https://github.com/mtahiryilmazz/pwxe)** motoruna dayalı modern bir sürümdür. Artık PowerShell betiklerinizi hiçbir harici modül indirmeden, tamamen çevrimdışı (offline) ve yüksek performansla Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürebilirsiniz.
 
 ---
 
@@ -12,7 +12,7 @@
 - PS7 FrameworkDependent + SingleFile küçük dağıtım seçeneği olarak kullanılabilir; hedefte .NET 8 Runtime, GUI için Windows Desktop Runtime 8 gerekir.
 
 ### 1. ⚙️ Tamamen Bağımsız Çekirdek Motor: [pwxe](https://github.com/mtahiryilmazz/pwxe)
-- **Sıfır Dış Bağımlılık:** `ps2exe` PowerShell modülü, PSGallery indirme mekanizmaları ve harici betik bağımlılıkları tamamen kaldırıldı.
+- **Sıfır Dış Bağımlılık:** Harici dönüştürücü modülleri, PSGallery indirme mekanizmaları ve harici betik bağımlılıkları tamamen kaldırıldı.
 - **Tamamen Çevrimdışı (Offline) Çalışabilirlik:** İnternet erişimi olmayan kurumsal ve izole sistemlerde sorunsuz çalışır.
 - **Ayrı CLI & Modül:** Çekirdek motor artık [github.com/mtahiryilmazz/pwxe](https://github.com/mtahiryilmazz/pwxe) adresinde bağımsız bir CLI ve modül olarak da sunulmaktadır (`pwxe script.ps1` veya `Install-Module pwxe`).
 - **Doğrudan C# Derleme:** Windows ile yerleşik gelen `csc.exe` (Roslyn / .NET Framework) ve modern `.NET SDK` altyapısı doğrudan kullanılır.
@@ -58,7 +58,7 @@
 ## 📋 Değişiklik Listesi (Changelog)
 
 ### 🗑️ Kaldırılanlar (Removed)
-- `ps2exe` modül denetimi, PSGallery otomatik kurulum adımları ve `Invoke-PS2EXE` çağrıları tamamen temizlendi.
+- Eski harici modül denetimleri, otomatik kurulum adımları ve geçici araç bağımlılıkları tamamen temizlendi.
 - Dış modül veya internet erişimi zorunluluğu sonlandırıldı.
 
 ### ➕ Eklenenler (Added)

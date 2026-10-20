@@ -8,7 +8,7 @@ PwX Studio aktif olarak en son kararlı sürümü için güvenlik güncellemeler
 | :--- | :--- |
 | **1.6.x** | ✅ Aktif Olarak Destekleniyor |
 | 1.5.x | ⚠️ Önceki sürüm; güncelleme önerilir |
-| < 1.5.0 | ❌ Desteklenmiyor (Eski PS2EXE motoru) |
+| < 1.5.0 | ❌ Desteklenmiyor (Eski mimari) |
 
 ## Güvenlik Açığı Bildirimi
 

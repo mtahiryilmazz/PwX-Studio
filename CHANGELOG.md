@@ -59,7 +59,7 @@ Henüz yayımlanmamış geliştirmeler.
 ## [1.5.0] — 2026-10-16
 
 ### Removed
-- **PS2EXE Bağımlılığı Tamamen Kaldırıldı:** `ps2exe` PowerShell modülü, PSGallery otomatik indirme/kurulum mekanizması, `Invoke-PS2EXE` çağrıları ve tüm ilişkili parametre eşlemeleri projeden tamamen temizlendi.
+- **Harici Bağımlılıklar Tamamen Kaldırıldı:** Eski dönüştürücü modül bağımlılıkları, PSGallery indirme mekanizmaları, harici çağrılar ve tüm ilişkili parametre eşlemeleri projeden tamamen temizlendi.
 - Dış modül veya internetten modül çekme zorunluluğu sonlandırıldı.
 
 ### Added
@@ -132,12 +132,12 @@ Henüz yayımlanmamış geliştirmeler.
 - Marka adıyla uyumlu dağıtım dosyaları hazırlandı.
 
 ### Changed
-- Önceki PS2EXE Builder PRO adlandırmasından PwX Studio markasına geçiş yapıldı.
+- Önceki prototip adlandırmasından PwX Studio markasına geçiş yapıldı.
 - Uygulama başlığı ve paketleme adlandırmaları yeni marka doğrultusunda düzenlendi.
 - ZIP paketleme yapısı ve proje tanıtım belgeleri PwX Studio markasına uyarlandı.
 
 ### Maintained
-- ps2exe 1.0.18 sürümünü kontrol etmeye yönelik mevcut mekanizma korundu.
+- Sürüm kontrolüne yönelik mevcut mekanizma korundu.
 - EXE oluşturma işlevi korundu.
 - ICO simgesi seçme işlevi korundu.
 - Açık ve koyu tema desteği korundu.
@@ -149,7 +149,7 @@ Henüz yayımlanmamış geliştirmeler.
 
 ---
 
-## Önceki geliştirme aşaması — PS2EXE Builder PRO
+## Önceki geliştirme aşaması — Prototip Süreci
 
 ### Core
 - PowerShell tabanlı masaüstü uygulamasının geliştirilmesi.
@@ -165,7 +165,7 @@ Henüz yayımlanmamış geliştirmeler.
 - Kısa ekranlarda kullanılabilirliği artırmaya yönelik kaydırma düzenlemeleri.
 
 ### Build and Icon Management
-- ps2exe bağımlılık ve sürüm kontrolü üzerinde çalışılması.
+- Bağımlılık ve sürüm kontrolü üzerinde çalışılması.
 - Kaynak PowerShell dosyası seçme ve EXE oluşturma akışının geliştirilmesi.
 - EXE simgesi seçimi ve simgenin çıktı dosyasına uygulanması üzerinde çalışılması.
 - Derleme günlüklerinin görüntülenmesi ve hata ayıklama sürecinin iyileştirilmesi.
@@ -181,7 +181,7 @@ Henüz yayımlanmamış geliştirmeler.
 ## Sürüm geçmişi hakkında
 
 - Bu kayıt, önceki geliştirme çalışmalarından elde edilen bilgilere göre hazırlanmıştır.
-- PS2EXE Builder PRO aşamasındaki her geliştirme için kesin sürüm numarası ve tamamlanma tarihi doğrulanmış değildir.
+- Prototip aşamasındaki her geliştirme için kesin sürüm numarası ve tamamlanma tarihi doğrulanmış değildir.
 - Gerçek testlerle doğrulanmamış özellikler için kesin başarı veya uyumluluk iddiasında bulunulmaz.
 - Yeni sürüm yayımlanmadan önce değişiklikler, gerçek kaynak kodu ve test sonuçlarıyla karşılaştırılmalıdır.
 - Yeni sürümlerde yalnızca ilgili değişiklikler eklenmeli; eski sürüm kayıtları geriye dönük olarak değiştirilmemelidir.

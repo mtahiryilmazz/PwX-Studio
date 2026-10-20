@@ -1,6 +1,6 @@
 # PwX Studio — PwX Build Engine (ilk prototip)
 
-PS2EXE'den bağımsız `.ps1 → .exe` dönüştürme motoru. `IMPLEMENTATION_ROADMAP.md` Aşama 0–5 + Bölüm 17 (ilk oturum) karşılığıdır.
+Tamamen bağımsız `.ps1 → .exe` dönüştürme motoru. `IMPLEMENTATION_ROADMAP.md` Aşama 0–5 + Bölüm 17 karşılığıdır.
 Mevcut `PwX-Studio-v1.4.2.ps1` dosyasına **dokunulmaz**; bu klasör ayrı geliştirme alanıdır.
 
 ## Klasör yapısı
