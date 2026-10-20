@@ -35,9 +35,9 @@
 | Bileşen | Sürüm | Bağlantı / Yükleme Komutu |
 |---|---|---|
 | **PwX Studio (GUI)** | `v1.6.3` | [GitHub Releases](https://github.com/mtahiryilmazz/PwX-Studio/releases/tag/v1.6.3) |
-| **pwxe (PowerShell Gallery)** | `pwxe 1.6.2` | `Install-PSResource pwxe` veya [PSGallery](https://www.powershellgallery.com/packages/pwxe/1.6.2) |
-| **pwxe (NuGet.org)** | `pwxe 1.6.2` | `dotnet add package pwxe` veya [NuGet](https://www.nuget.org/packages/pwxe/1.6.2) |
-| **pwxe (GitHub)** | `v1.6.2` | [GitHub Reposu](https://github.com/mtahiryilmazz/pwxe) |
+| **pwxe (PowerShell Gallery)** | `pwxe 1.6.3` | `Install-PSResource pwxe` veya [PSGallery](https://www.powershellgallery.com/packages/pwxe/1.6.3) |
+| **pwxe (NuGet.org)** | `pwxe 1.6.3` | `dotnet add package pwxe` veya [NuGet](https://www.nuget.org/packages/pwxe/1.6.3) |
+| **pwxe (GitHub Packages & Releases)** | `v1.6.3` | [GitHub Releases](https://github.com/mtahiryilmazz/pwxe/releases/tag/v1.6.3) |
 
 ---
 
