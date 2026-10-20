@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
     PwX Studio v1.6.1 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
