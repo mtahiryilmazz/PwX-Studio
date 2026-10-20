@@ -10,6 +10,12 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ## [Unreleased]
 
+## [1.6.2] — 2026-10-20
+
+### Added
+- **Çift Dil Desteği (TR / EN):** Arayüz üst başlığına dinamik dil değiştirme butonu (`🌐 TR` / `🌐 EN`) eklendi. Tüm etiketler, araç ipuçları, butonlar ve durum mesajları uygulama yeniden başlatılmadan anında Türkçe ve İngilizce arasında değiştirilebilir.
+- **pwxe v1.6.1 Motor Güncellemesi:** Dahili gömülü motor temiz İngilizce ASCII standardizasyonuna ve NuGet/PSGallery ile tam uyumlu güncel `pwxe` v1.6.1 sürümüne yükseltildi.
+
 ## [1.6.1] — 2026-10-20
 
 ### Added

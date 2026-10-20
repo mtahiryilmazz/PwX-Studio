@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mtahiryilmazz/PwX-Studio/releases/latest"><img src="https://img.shields.io/badge/release-v1.6.1-blue.svg?style=flat-square" alt="Latest Release"></a>
+  <a href="https://github.com/mtahiryilmazz/PwX-Studio/releases/latest"><img src="https://img.shields.io/badge/release-v1.6.2-blue.svg?style=flat-square" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg?style=flat-square" alt="Platform: Windows">
   <img src="https://img.shields.io/badge/Engine-pwxe-success.svg?style=flat-square" alt="Engine: pwxe">
