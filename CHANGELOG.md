@@ -10,6 +10,16 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ## [Unreleased]
 
+## [1.6.3] — 2026-10-20
+
+### Added
+- **🇹🇷 TR / 🇬🇧 EN Bayrak Emojili Dil Seçici:** Arayüz başlığındaki dil seçici butonuna bayrak emojileri (`🇹🇷 TR` / `🇬🇧 EN`) eklendi, buton boyutlandırması ve görsel düzeni iyileştirildi.
+- **Tam Kapsamlı Dinamik Dil Değişimi:** İngilizce (`🇬🇧 EN`) seçildiğinde tüm arayüz bileşenleri (kart başlıkları, dosya seçimi yönergeleri, logo/ikon alanı, hedef çalışma zamanı ve türü, derleme seçenekleri onay kutuları, konsol günlüğü, araç ipuçları ve durum metinleri) anında İngilizce'ye çevrilir; `🇹🇷 TR` seçildiğinde eksiksiz Türkçe'ye geri döner.
+
+### Fixed
+- **Dil Seçim Butonundaki Karakter Kodlama Hatası (Mojibake):** Dil butonundaki bozuk karakter gösterimi giderildi, dosya UTF-8 BOM standardı ile kaydedilerek Türkçe karakterler ve bayrak emojileri Windows ortamlarında hatasız hale getirildi.
+- **Logo Dosyası ve Görünürlük (404) Düzeltmesi:** GitHub deposunda ve belgelerde bağlantısı verilen `ico/pwx_logo.png` dosyası yüksek çözünürlüklü olarak depoya eklendi, logo görüntüleme hatası giderildi.
+
 ## [1.6.2] — 2026-10-20
 
 ### Added

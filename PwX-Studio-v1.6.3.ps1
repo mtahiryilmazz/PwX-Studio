@@ -1,6 +1,6 @@
-﻿#Requires -Version 5.1
+﻿﻿﻿#Requires -Version 5.1
 <#
-    PwX Studio v1.6.2 - PowerShell Executable Builder
+    PwX Studio v1.6.3 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
     - Dinamik Tema Desteği: Açık Tema ve Koyu Tema geçişi
     - PowerShell 5.1 (Dahili csc.exe) ve PowerShell 7 (.NET 8 SDK) hedef desteği
@@ -539,7 +539,7 @@ function Set-WindowFitToWorkArea {
 [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="PwX Studio v1.6.2 - PowerShell Executable Builder"
+        Title="PwX Studio v1.6.3 - PowerShell Executable Builder"
         Height="840" Width="980" MinHeight="680" MinWidth="840"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}" Foreground="{DynamicResource TextBrush}" 
@@ -736,7 +736,7 @@ function Set-WindowFitToWorkArea {
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="⚡ PwX Studio" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
                         <Border Background="{DynamicResource BorderBrush}" CornerRadius="4" Padding="8,2" Margin="12,2,0,2" VerticalAlignment="Center">
-                            <TextBlock Text="v1.6.2" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
+                            <TextBlock Text="v1.6.3" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
                         </Border>
                     </StackPanel>
                     <TextBlock x:Name="LblSubtitle" Text="PowerShell betiklerini (.ps1) sıfır bağımlılıkla yerel Windows çalıştırılabilir dosyalarına (.exe) dönüştürün." 
@@ -746,8 +746,8 @@ function Set-WindowFitToWorkArea {
                 <!-- Açık / Koyu Tema Geçiş Anahtarı (Toggle Switch) -->
                 <!-- SaÄŸ Butonlar: Dil SeÃ§ici ve Tema AnahtarÄ± -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnLangToggle" Content="ğŸŒ TR" Height="28" Padding="10,2" Margin="0,0,12,0" 
-                            FontWeight="Bold" FontSize="11" ToolTip="Dili DeÄŸiÅŸtir / Switch Language (TR / EN)"/>
+                    <Button x:Name="BtnLangToggle" Content="🇹🇷 TR" Height="30" MinWidth="85" Padding="8,2" Margin="0,0,12,0" 
+                            FontWeight="Bold" FontSize="12" ToolTip="Dili Değiştir / Switch Language (🇹🇷 TR / 🇬🇧 EN)"/>
                     <CheckBox x:Name="BtnThemeToggle" Style="{StaticResource ThemeToggleSwitch}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
@@ -760,9 +760,9 @@ function Set-WindowFitToWorkArea {
                 <!-- Kart: Dosya Yapılandırması -->
                 <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="📁 Dosya Yapılandırması" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,12"/>
+                        <TextBlock x:Name="LblFileConfigTitle" Text="📁 Dosya Yapılandırması" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,12"/>
                         
-                        <TextBlock Text="Kaynak PowerShell Betiği (.ps1):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblSourcePs1" Text="Kaynak PowerShell Betiği (.ps1):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -773,7 +773,7 @@ function Set-WindowFitToWorkArea {
                             <Button x:Name="BtnPs1Browse" Grid.Column="2" Content="📁 Gözat..." Width="100" Height="38"/>
                         </Grid>
 
-                        <TextBlock Text="Hedef Yürütülebilir Dosya (.exe):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblTargetExe" Text="Hedef Yürütülebilir Dosya (.exe):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
                         <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -796,8 +796,8 @@ function Set-WindowFitToWorkArea {
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="🎨 Uygulama Logosu &amp; Simgesi" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
-                            <TextBlock Text="Görsel Dosyası (PNG, JPG, BMP, ICO):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="LblAppIcon" Text="🎨 Uygulama Logosu &amp; Simgesi" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="LblIconFile" Text="Görsel Dosyası (PNG, JPG, BMP, ICO):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -810,7 +810,7 @@ function Set-WindowFitToWorkArea {
                                 <Button x:Name="BtnLogoBrowse" Grid.Column="2" Content="🖼️ Dosyadan Seç" Height="38" Padding="12,0"/>
                                 <Button x:Name="BtnWebSearch" Grid.Column="4" Content="🌐 Web'den İkon Ara" Height="38" Padding="12,0"/>
                             </Grid>
-                            <TextBlock Text="Seçilen PNG/JPG görseller derleme anında otomatik olarak 256x256 ICO formatına dönüştürülür." FontSize="11" Foreground="{DynamicResource SubTextBrush}"/>
+                            <TextBlock x:Name="LblIconHint" Text="Seçilen PNG/JPG görseller derleme anında otomatik olarak 256x256 ICO formatına dönüştürülür." FontSize="11" Foreground="{DynamicResource SubTextBrush}"/>
                         </StackPanel>
 
                         <!-- Canlı Önizleme Kutusu -->
@@ -821,7 +821,7 @@ function Set-WindowFitToWorkArea {
                                     <Image x:Name="ImgPreview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Grid>
                             </Border>
-                            <TextBlock Text="Önizleme" FontSize="10" Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="LblPreview" Text="Önizleme" FontSize="10" Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -829,7 +829,7 @@ function Set-WindowFitToWorkArea {
                 <!-- Kart: Meta Veriler -->
                 <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="ℹ️ Uygulama Bilgileri &amp; Meta Veriler" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,12"/>
+                        <TextBlock x:Name="LblAppInfo" Text="ℹ️ Uygulama Bilgileri &amp; Meta Veriler" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,12"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2*" />
@@ -840,17 +840,17 @@ function Set-WindowFitToWorkArea {
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Uygulama Adı / Başlık:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="LblAppTitle" Text="Uygulama Adı / Başlık:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
                                 <TextBox x:Name="TxtTitle" Height="38"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Sürüm (x.x.x.x):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="LblVersion" Text="Sürüm (x.x.x.x):" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
                                 <TextBox x:Name="TxtVer" Height="38" Text="1.0.0.0"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="4">
-                                <TextBlock Text="Şirket / Yayıncı:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="LblCompany" Text="Şirket / Yayıncı:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,5"/>
                                 <TextBox x:Name="TxtCompany" Height="38"/>
                             </StackPanel>
                         </Grid>
@@ -868,7 +868,7 @@ function Set-WindowFitToWorkArea {
                     <!-- Sol Sütun: Hedef Çalışma Zamanı & Uygulama Türü -->
                     <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="⚙️ Hedef Çalışma Zamanı" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="LblTargetRuntime" Text="⚙️ Hedef Çalışma Zamanı" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
                             <RadioButton x:Name="RbTargetPS51" GroupName="TargetRuntime" Content="PowerShell 5.1 (Dahili csc.exe)" IsChecked="True" 
                                          ToolTip="Windows ile dahili gelen csc.exe derleyicisini kullanır." Margin="0,2,0,8"/>
                             <RadioButton x:Name="RbTargetPS7" GroupName="TargetRuntime" Content="PowerShell 7.4+ (.NET 8 SDK)" 
@@ -879,13 +879,13 @@ function Set-WindowFitToWorkArea {
 
                             <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,14"/>
 
-                            <TextBlock Text="🖥️ Uygulama Türü" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="LblAppType" Text="🖥️ Uygulama Türü" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
                             <RadioButton x:Name="RbConsole" GroupName="AppMode" Content="Konsol Uygulaması (CLI)" IsChecked="True" Margin="0,2,0,8"/>
                             <RadioButton x:Name="RbGui" GroupName="AppMode" Content="Pencereli / GUI Uygulama (Konsol Gizli)" Margin="0,0,0,4"/>
 
                             <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,12,0,12"/>
 
-                            <TextBlock Text="🚀 Derleme Motoru Seçimi" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,8"/>
+                            <TextBlock x:Name="LblEngineSelection" Text="🚀 Derleme Motoru Seçimi" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,8"/>
                             <CheckBox x:Name="ChkEmbeddedEngine" Content="Dahili pwxe Motoru (Taşınabilir / Offline)" IsChecked="True" 
                                       ToolTip="pwxe motorunu dış klasörlere ihtiyaç duymadan doğrudan uygulama içerisindeki gömülü motordan çalıştırır. Uygulama masaüstüne veya başka bilgisayara taşındığında sorunsuz çalışmasını sağlar." Margin="0,0,0,4"/>
                         </StackPanel>
@@ -894,7 +894,7 @@ function Set-WindowFitToWorkArea {
                     <!-- Sağ Sütun: Derleme & Çalışma Bayrakları (2 Alt Sütunlu Tertipli Liste) -->
                     <Border Grid.Column="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="🛠️ Derleme &amp; Çalışma Seçenekleri" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="LblBuildOptions" Text="🛠️ Derleme &amp; Çalışma Seçenekleri" FontSize="14" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,10"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -951,7 +951,7 @@ function Set-WindowFitToWorkArea {
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0" Margin="0,0,0,8">
-                    <TextBlock Text="⚡ Canlı Konsol Günlüğü" FontSize="12" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <TextBlock x:Name="LblConsoleTitle" Text="⚡ Canlı Konsol Günlüğü" FontSize="12" FontWeight="Bold" Foreground="#38BDF8"/>
                     <Button x:Name="BtnClearLog" Content="Temizle" HorizontalAlignment="Right" Padding="10,3" FontSize="11"/>
                 </Grid>
                 <TextBox x:Name="TxtConsole" Grid.Row="1" Background="{DynamicResource TerminalBgBrush}" Foreground="{DynamicResource TerminalTextBrush}" FontFamily="Cascadia Code, Consolas" FontSize="12" 
@@ -960,7 +960,7 @@ function Set-WindowFitToWorkArea {
         </Border>
 
         <!-- 4. Footer (Sade ve Temiz) -->
-        <TextBlock Grid.Row="3" Text="PwX Studio v1.6.2 • PowerShell Executable Builder" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+        <TextBlock x:Name="LblFooter" Grid.Row="3" Text="PwX Studio v1.6.3 • PowerShell Executable Builder" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,8,0,0" HorizontalAlignment="Center"/>
     </Grid>
 </Window>
 '@
@@ -1038,7 +1038,8 @@ if ($chkEmbeddedEngine) {
     $chkEmbeddedEngine.Add_Unchecked({ Add-Log "Harici / Sistem pwxe motoru arama modu aktif." })
 }
 
-$null           = $window.FindName('RbConsole')
+$rbConsole      = $window.FindName('RbConsole')
+$lblFooter      = $window.FindName('LblFooter')
 $rbGui          = $window.FindName('RbGui')
 
 $chkAdmin       = $window.FindName('ChkAdmin')
@@ -1110,6 +1111,223 @@ $btnThemeToggle.Add_Click({
         Set-AppTheme 'Koyu'
     }
 })
+
+$script:currentLanguage = 'TR'
+
+function Set-AppLanguage([string]$lang) {
+    $script:currentLanguage = $lang
+    if ($lang -eq 'EN') {
+        if ($btnLangToggle) {
+            $btnLangToggle.Content = "🇬🇧 EN"
+            $btnLangToggle.ToolTip = "Switch Language (Change to 🇹🇷 TR)"
+        }
+        if ($window) { $window.Title = "PwX Studio v1.6.3 - PowerShell Executable Builder" }
+        if ($lblSubtitle) { $lblSubtitle.Text = "Convert PowerShell scripts (.ps1) into native Windows standalone executables (.exe) with zero dependencies." }
+        if ($lblFileConfigTitle) { $lblFileConfigTitle.Text = "📁 File Configuration" }
+        if ($lblSourcePs1) { $lblSourcePs1.Text = "Source PowerShell Script (.ps1):" }
+        if ($txtPs1) { $txtPs1.ToolTip = "Select .ps1 script to convert or drag and drop file here." }
+        if ($btnPs1Browse) { $btnPs1Browse.Content = "📁 Browse..." }
+        if ($lblTargetExe) { $lblTargetExe.Text = "Target Executable (.exe):" }
+        if ($txtOut) { $txtOut.ToolTip = "Specify output location for the generated .exe file." }
+        if ($btnOutBrowse) { $btnOutBrowse.Content = "💾 Save As..." }
+        if ($lblAppIcon) { $lblAppIcon.Text = "🎨 Application Logo & Icon" }
+        if ($lblIconFile) { $lblIconFile.Text = "Image File (PNG, JPG, BMP, ICO):" }
+        if ($txtLogo) { $txtLogo.ToolTip = "Select image to embed as application icon." }
+        if ($btnLogoBrowse) { $btnLogoBrowse.Content = "🖼️ Browse File" }
+        if ($btnWebSearch) { $btnWebSearch.Content = "🌐 Search Web Icon" }
+        if ($lblIconHint) { $lblIconHint.Text = "Selected PNG/JPG images are automatically converted to 256x256 ICO format during build." }
+        if ($txtNoIcon) { $txtNoIcon.Text = "NO ICON" }
+        if ($lblPreview) { $lblPreview.Text = "Preview" }
+        if ($lblAppInfo) { $lblAppInfo.Text = "ℹ️ Application Info & Metadata" }
+        if ($lblAppTitle) { $lblAppTitle.Text = "Application Name / Title:" }
+        if ($lblVersion) { $lblVersion.Text = "Version (x.x.x.x):" }
+        if ($lblCompany) { $lblCompany.Text = "Company / Publisher:" }
+        if ($lblTargetRuntime) { $lblTargetRuntime.Text = "⚙️ Target Runtime" }
+        if ($rbTargetPS51) { 
+            $rbTargetPS51.Content = "PowerShell 5.1 (Built-in csc.exe)" 
+            $rbTargetPS51.ToolTip = "Uses built-in Windows csc.exe compiler without external dependencies."
+        }
+        if ($rbTargetPS7) { 
+            $rbTargetPS7.Content = "PowerShell 7.4+ (.NET 8 SDK)" 
+            $rbTargetPS7.ToolTip = "Uses modern PowerShell 7 core engine with .NET 8 SDK."
+        }
+        if ($chkSingleFile) { $chkSingleFile.Content = "Single-File (.exe)" }
+        if ($chkSmallSize) { 
+            $chkSmallSize.Content = "Small size (requires .NET 8 Runtime on target)" 
+            $chkSmallSize.ToolTip = "FrameworkDependent: .NET runtime is not embedded into EXE. Requires .NET 8 Runtime installed on target machine."
+        }
+        if ($lblAppType) { $lblAppType.Text = "🖥️ Application Type" }
+        if ($rbConsole) { $rbConsole.Content = "Console Application (CLI)" }
+        if ($rbGui) { $rbGui.Content = "Windowed / GUI Application (Hidden Console)" }
+        if ($lblEngineSelection) { $lblEngineSelection.Text = "🚀 Build Engine Selection" }
+        if ($chkEmbeddedEngine) { 
+            $chkEmbeddedEngine.Content = "Embedded pwxe Engine (Portable / Offline)" 
+            $chkEmbeddedEngine.ToolTip = "Runs the build engine directly from the embedded package without external dependencies."
+        }
+        if ($lblBuildOptions) { $lblBuildOptions.Text = "🛠️ Build & Runtime Options" }
+        if ($chkAdmin) { 
+            $chkAdmin.Content = "Administrator Rights (UAC)" 
+            $chkAdmin.ToolTip = "Requests Windows UAC elevation prompt upon launch."
+        }
+        if ($chkUtf8) { 
+            $chkUtf8.Content = "Console UTF-8" 
+            $chkUtf8.ToolTip = "Forces console output encoding to UTF-8 for international characters."
+        }
+        if ($chkX64) { 
+            $chkX64.Content = "64-bit (x64)" 
+            $chkX64.ToolTip = "Target 64-bit processor architecture."
+        }
+        if ($chkX86) { 
+            $chkX86.Content = "32-bit (x86)" 
+            $chkX86.ToolTip = "Target 32-bit (x86) legacy architecture."
+        }
+        if ($chkUnicode) { 
+            $chkUnicode.Content = "Unicode Console" 
+            $chkUnicode.ToolTip = "Provides extended wide-character unicode support."
+        }
+        if ($chkDpi) { 
+            $chkDpi.Content = "DPI Awareness" 
+            $chkDpi.ToolTip = "Ensures crisp rendering on High-DPI displays."
+        }
+        if ($chkConfig) { 
+            $chkConfig.Content = "Generate EXE.config" 
+            $chkConfig.ToolTip = "Generates companion .exe.config for DPI and runtime policies."
+        }
+        if ($chkSupportOS) { 
+            $chkSupportOS.Content = "Windows OS Support" 
+            $chkSupportOS.ToolTip = "Embeds compatibility manifest for Windows 10/11."
+        }
+        if ($chkLongPaths) { 
+            $chkLongPaths.Content = "Long Paths Support" 
+            $chkLongPaths.ToolTip = "Allows file paths longer than 260 characters (MAX_PATH)."
+        }
+        if ($chkNoOutput) { 
+            $chkNoOutput.Content = "Suppress Console Output" 
+            $chkNoOutput.ToolTip = "Silences standard console output."
+        }
+        if ($btnBuild) { $btnBuild.Content = "🚀 BUILD EXE" }
+        if ($btnOpenFolder) { $btnOpenFolder.Content = "📂 Open Folder" }
+        if ($txtStatus) { 
+            if ($txtStatus.Text -eq "Hazır. Kaynak betiği belirleyip 'EXE OLUŞTUR' butonuna basınız.") {
+                $txtStatus.Text = "Ready. Select source script and click 'BUILD EXE'."
+            }
+        }
+        if ($lblConsoleTitle) { $lblConsoleTitle.Text = "⚡ Live Console Log" }
+        if ($btnClearLog) { $btnClearLog.Content = "Clear" }
+        if ($lblFooter) { $lblFooter.Text = "PwX Studio v1.6.3 • PowerShell Executable Builder" }
+    } else {
+        if ($btnLangToggle) {
+            $btnLangToggle.Content = "🇹🇷 TR"
+            $btnLangToggle.ToolTip = "Dili Değiştir (İngilizce'ye geç / Switch to 🇬🇧 EN)"
+        }
+        if ($window) { $window.Title = "PwX Studio v1.6.3 - PowerShell Executable Builder" }
+        if ($lblSubtitle) { $lblSubtitle.Text = "PowerShell betiklerini (.ps1) sıfır bağımlılıkla yerel Windows çalıştırılabilir dosyalarına (.exe) dönüştürün." }
+        if ($lblFileConfigTitle) { $lblFileConfigTitle.Text = "📁 Dosya Yapılandırması" }
+        if ($lblSourcePs1) { $lblSourcePs1.Text = "Kaynak PowerShell Betiği (.ps1):" }
+        if ($txtPs1) { $txtPs1.ToolTip = "Dönüştürülecek .ps1 betiğini seçin veya dosyayı buraya sürükleyin." }
+        if ($btnPs1Browse) { $btnPs1Browse.Content = "📁 Gözat..." }
+        if ($lblTargetExe) { $lblTargetExe.Text = "Hedef Yürütülebilir Dosya (.exe):" }
+        if ($txtOut) { $txtOut.ToolTip = "Oluşturulacak .exe dosyasının kaydedileceği konumu belirleyin." }
+        if ($btnOutBrowse) { $btnOutBrowse.Content = "💾 Farklı Kaydet..." }
+        if ($lblAppIcon) { $lblAppIcon.Text = "🎨 Uygulama Logosu &amp; Simgesi" }
+        if ($lblIconFile) { $lblIconFile.Text = "Görsel Dosyası (PNG, JPG, BMP, ICO):" }
+        if ($txtLogo) { $txtLogo.ToolTip = "Uygulama simgesi olarak gömülecek görseli seçin." }
+        if ($btnLogoBrowse) { $btnLogoBrowse.Content = "🖼️ Dosyadan Seç" }
+        if ($btnWebSearch) { $btnWebSearch.Content = "🌐 Web'den İkon Ara" }
+        if ($lblIconHint) { $lblIconHint.Text = "Seçilen PNG/JPG görseller derleme anında otomatik olarak 256x256 ICO formatına dönüştürülür." }
+        if ($txtNoIcon) { $txtNoIcon.Text = "SİMGE YOK" }
+        if ($lblPreview) { $lblPreview.Text = "Önizleme" }
+        if ($lblAppInfo) { $lblAppInfo.Text = "ℹ️ Uygulama Bilgileri &amp; Meta Veriler" }
+        if ($lblAppTitle) { $lblAppTitle.Text = "Uygulama Adı / Başlık:" }
+        if ($lblVersion) { $lblVersion.Text = "Sürüm (x.x.x.x):" }
+        if ($lblCompany) { $lblCompany.Text = "Şirket / Yayıncı:" }
+        if ($lblTargetRuntime) { $lblTargetRuntime.Text = "⚙️ Hedef Çalışma Zamanı" }
+        if ($rbTargetPS51) { 
+            $rbTargetPS51.Content = "PowerShell 5.1 (Dahili csc.exe)" 
+            $rbTargetPS51.ToolTip = "Windows ile dahili gelen csc.exe derleyicisini kullanır."
+        }
+        if ($rbTargetPS7) { 
+            $rbTargetPS7.Content = "PowerShell 7.4+ (.NET 8 SDK)" 
+            $rbTargetPS7.ToolTip = "Modern PowerShell 7 ve .NET 8 SDK altyapısını kullanır."
+        }
+        if ($chkSingleFile) { $chkSingleFile.Content = "Tek Dosya (Single-File)" }
+        if ($chkSmallSize) { 
+            $chkSmallSize.Content = "Küçük boyut (hedefte .NET 8 Runtime gerekir)" 
+            $chkSmallSize.ToolTip = "FrameworkDependent: .NET çalışma zamanı EXE'ye eklenmez, çıktı çok daha küçük olur. Çalıştıracak bilgisayarda .NET 8 Runtime (GUI için Windows Desktop Runtime 8) kurulu olmalıdır. pwsh gerekmez."
+        }
+        if ($lblAppType) { $lblAppType.Text = "🖥️ Uygulama Türü" }
+        if ($rbConsole) { $rbConsole.Content = "Konsol Uygulaması (CLI)" }
+        if ($rbGui) { $rbGui.Content = "Pencereli / GUI Uygulama (Konsol Gizli)" }
+        if ($lblEngineSelection) { $lblEngineSelection.Text = "🚀 Derleme Motoru Seçimi" }
+        if ($chkEmbeddedEngine) { 
+            $chkEmbeddedEngine.Content = "Dahili pwxe Motoru (Taşınabilir / Offline)" 
+            $chkEmbeddedEngine.ToolTip = "pwxe motorunu dış klasörlere ihtiyaç duymadan doğrudan uygulama içerisindeki gömülü motordan çalıştırır. Uygulama masaüstüne veya başka bilgisayara taşındığında sorunsuz çalışmasını sağlar."
+        }
+        if ($lblBuildOptions) { $lblBuildOptions.Text = "🛠️ Derleme &amp; Çalışma Seçenekleri" }
+        if ($chkAdmin) { 
+            $chkAdmin.Content = "Yönetici Yetkisi (UAC)" 
+            $chkAdmin.ToolTip = "Windows UAC yönetici onayı ister."
+        }
+        if ($chkUtf8) { 
+            $chkUtf8.Content = "Konsol UTF-8" 
+            $chkUtf8.ToolTip = "Türkçe karakterlerin doğru gösterilmesini sağlar."
+        }
+        if ($chkX64) { 
+            $chkX64.Content = "64-bit (x64)" 
+            $chkX64.ToolTip = "64-bit mimari için derler."
+        }
+        if ($chkX86) { 
+            $chkX86.Content = "32-bit (x86)" 
+            $chkX86.ToolTip = "32-bit mimari uyumluluğu sağlar."
+        }
+        if ($chkUnicode) { 
+            $chkUnicode.Content = "Unicode Konsol" 
+            $chkUnicode.ToolTip = "Genişletilmiş karakter desteği sağlar."
+        }
+        if ($chkDpi) { 
+            $chkDpi.Content = "DPI Farkındalığı" 
+            $chkDpi.ToolTip = "Yüksek çözünürlüklü ekranlarda net görünüm sağlar."
+        }
+        if ($chkConfig) { 
+            $chkConfig.Content = "EXE.config Oluştur" 
+            $chkConfig.ToolTip = "DPI ve runtime ayarları için .config dosyası üretir."
+        }
+        if ($chkSupportOS) { 
+            $chkSupportOS.Content = "Windows Sürüm Bilgisi" 
+            $chkSupportOS.ToolTip = "Modern Windows sürümleriyle uyumluluk bildirir."
+        }
+        if ($chkLongPaths) { 
+            $chkLongPaths.Content = "Uzun Dosya Yolları" 
+            $chkLongPaths.ToolTip = "260 karakterden uzun dosya yollarına izin verir."
+        }
+        if ($chkNoOutput) { 
+            $chkNoOutput.Content = "Çıktıyı Bastır" 
+            $chkNoOutput.ToolTip = "Standart konsol çıktısını bastırır."
+        }
+        if ($btnBuild) { $btnBuild.Content = "🚀 EXE OLUŞTUR" }
+        if ($btnOpenFolder) { $btnOpenFolder.Content = "📂 Klasörü Aç" }
+        if ($txtStatus) { 
+            if ($txtStatus.Text -eq "Ready. Select source script and click 'BUILD EXE'.") {
+                $txtStatus.Text = "Hazır. Kaynak betiği belirleyip 'EXE OLUŞTUR' butonuna basınız."
+            }
+        }
+        if ($lblConsoleTitle) { $lblConsoleTitle.Text = "⚡ Canlı Konsol Günlüğü" }
+        if ($btnClearLog) { $btnClearLog.Content = "Temizle" }
+        if ($lblFooter) { $lblFooter.Text = "PwX Studio v1.6.3 • PowerShell Executable Builder" }
+    }
+}
+
+if ($btnLangToggle) {
+    $btnLangToggle.Add_Click({
+        if ($script:currentLanguage -eq 'TR') {
+            Set-AppLanguage 'EN'
+            Add-Log "Language switched to English (🇬🇧 EN)."
+        } else {
+            Set-AppLanguage 'TR'
+            Add-Log "Dil Türkçe olarak ayarlandı (🇹🇷 TR)."
+        }
+    })
+}
 
 function Add-Log([string]$msg, [string]$level = 'Info') {
     $time = (Get-Date).ToString("HH:mm:ss")
@@ -2398,7 +2616,7 @@ try {
 })
 
 # Başlangıç durumu
-Add-Log "PwX Studio v1.6.2 hazır."
+Add-Log "PwX Studio v1.6.3 hazır."
 Add-Log "Dönüştürmek istediğiniz .ps1 dosyasını sürükleyip bırakabilir veya 'Gözat' butonunu kullanabilirsiniz."
 
 # Başlangıçta motor durumunu kontrol et ve bildir
