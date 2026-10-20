@@ -1,6 +1,6 @@
-# 🚀 PwX Studio v1.6.0 — Release Notes
+﻿# 🚀 PwX Studio v1.6.1 — Release Notes
 
-**PwX Studio v1.6.0**, harici `ps2exe` modülü bağımlılığını tamamen ortadan kaldırarak **%100 yerli ve bağımsız [pwxe (PwX Engine)](https://github.com/mtahiryilmazz/pwxe)** motoruna geçiş yapılan dönüm noktası bir sürümdür. Artık PowerShell betiklerinizi hiçbir harici modül indirmeden, tamamen çevrimdışı (offline) ve yüksek performansla Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürebilirsiniz.
+**PwX Studio v1.6.1**, harici `ps2exe` modülü bağımlılığını tamamen ortadan kaldırarak **%100 yerli ve bağımsız [pwxe (PwX Engine)](https://github.com/mtahiryilmazz/pwxe)** motoruna geçiş yapılan dönüm noktası bir sürümdür. Artık PowerShell betiklerinizi hiçbir harici modül indirmeden, tamamen çevrimdışı (offline) ve yüksek performansla Windows çalıştırılabilir (`.exe`) dosyalarına dönüştürebilirsiniz.
 
 ---
 
@@ -81,8 +81,8 @@
 
 | Dosya Adı | Açıklama |
 | :--- | :--- |
-| **`PwX-Studio-v1.6.0.exe`** | Kurulum gerektirmeyen taşınabilir (portable) Windows GUI uygulaması |
-| **`PwX-Studio-v1.6.0.ps1`** | Kaynak PowerShell grafik arayüz betiği |
+| **`PwX-Studio-v1.6.1.exe`** | Kurulum gerektirmeyen taşınabilir (portable) Windows GUI uygulaması |
+| **`PwX-Studio-v1.6.1.ps1`** | Kaynak PowerShell grafik arayüz betiği |
 | **`Source code (zip / tar.gz)`** | PwX Studio ve PwX Build Engine tam kaynak kodu |
 
 ---

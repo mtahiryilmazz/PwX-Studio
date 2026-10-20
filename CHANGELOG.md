@@ -10,6 +10,18 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ## [Unreleased]
 
+## [1.6.1] — 2026-10-20
+
+### Added
+- **Dahili Gömülü Motor (Embedded Fallback):** `pwxe` derleme motorunun çekirdek betikleri ve C# host şablonları PwX Studio içine gömüldü. Dış klasör olmadan %100 taşınabilir (offline) çalışma sağlandı.
+- **Arayüz Seçeneği:** Sol sütundaki hedef çalışma zamanı alanına **"Dahili pwxe Motoru (Taşınabilir / Offline)"** onay kutusu eklendi.
+- **Akıllı Motor Arama (Smart Resolution):** Sistem modülleri, geliştirici çalışma alanları (`Documents\Github\pwxe`) ve AppData dizinleri otomatik taranır.
+- **Logo ve İkon Entegrasyonu:** `ico\PwX-Studio.ico` dosyası derleme parametresi olarak `.exe` dosya simgesine ve WPF pencere başlığına entegre edildi.
+
+### Fixed
+- **WPF Thread Access Hatası:** PowerShell konsolu ve çoklu iş parçacığı senaryolarında `Application.ShutdownMode` üzerinden oluşan erişim hatası güvenli hale getirildi.
+- Exe dosyası masaüstüne taşındığında motor bulunamama sorunu giderildi.
+
 ## [1.6.0] — 2026-10-19
 
 ### Added
