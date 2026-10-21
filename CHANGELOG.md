@@ -23,6 +23,7 @@ Proje: PwX Studio — PowerShell to EXE Builder
 - **Karakter Kodlaması ve Dil Butonu:** Bozuk karakter kodlamaları XML sayısal karakter referansları ve UTF-8 BOM ile tamamen düzeltildi.
 - **Eksik İkon Fonksiyonları:** Web ikon indirme ve normalleştirme işlemlerinde kullanılan `Test-ImageFile`, `Save-NormalizedPng` ve `Get-IconPngCandidates` fonksiyonları uygulandı.
 - **Dokümantasyon & Bağımlılık Yolları:** PR şablonu ve katkı rehberindeki eski `pwxengine` referansları `pwxe` olarak güncellendi; telif hakkı isimleri eşitlendi.
+- **Depo Temizliği:** Eski sürümlere ait ikili dosyalar (`PwX-Studio-v1.6.3.exe`, `PwX-Studio-v1.6.3.ps1`) ve eski sürüm notları depodan kaldırılarak repo boyutu optimize edildi.
 
 ## [1.6.3] — 2026-10-20
 
