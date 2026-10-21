@@ -54,5 +54,4 @@
 | Dosya | Açıklama |
 |---|---|
 | **`PwX-Studio-v1.6.4.exe`** | Sürüm etiketli bağımsız Windows yürütülebilir dosyası |
-| **`PwX-Studio.exe`** | Doğrudan çalıştırılabilir güncel PwX Studio ana dosyası |
 | **`PwX-Studio-v1.6.4.ps1`** | Açık kaynak PowerShell grafik arayüz betiği (WPF) |
