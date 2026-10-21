@@ -31,3 +31,18 @@ PwX_IconPatched_*.ps1
 
 # OS-generated files
 .DS_Store
+
+# --- Secrets & Sensitive Data ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.p12
+*.snk
+*.keystore
+*.token
+*.cer
+*secret*
+*credentials*

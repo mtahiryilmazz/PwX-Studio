@@ -10,6 +10,20 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ## [Unreleased]
 
+## [1.6.4] — 2026-10-21
+
+### Security & Hardening
+- **Güvenilir Motor Arama Yolu (Search Path Planting Koruması):** `Get-PwXEnginePath` içerisindeki `(Get-Location)` (çalışma dizini), `Downloads\pwxe` ve `Desktop\pwxe` aramaları kaldırılarak arama yolu ele geçirme riski engellendi. Motor yalnızca `$PSScriptRoot`, resmi PowerShell modülü (`Get-Module pwxe`) veya doğrulanmış gömülü AppData motorundan çalıştırılır.
+- **Zip Slip Koruması:** Dahili `pwxe` motoru zip arşivinden `%LOCALAPPDATA%\PwX-Studio\engine` dizinine çıkartılırken kanonik yol sınır kontrolü getirilerek dizin dışına dosya yazma zafiyeti kapatıldı.
+- **Dahili Motor Otomatik Güncelleme:** Gömülü motorun SHA-256 özeti `.engine_hash` dosyası ile doğrulanarak, Studio güncellemelerinde kullanıcıların eski motoru kullanmaya devam etmesi engellendi.
+- **Bilinmeyen Parametre Uyarıları:** Derleme motorunun desteklemediği parametreler sessizce yutulmak yerine canlı konsol günlüğünde kullanıcıya uyarı (`[UYARI]`) olarak bildirilir.
+
+### Fixed
+- **Temiz Ortam Başlangıç Çökmesi:** Temiz kurulumlarda ikon bulunmadığında `Deploy-EmbeddedIcon` çağrısının tanımsız fonksiyon hatası fırlatması fonksiyon sıralaması düzeltilerek giderildi.
+- **Karakter Kodlaması ve Dil Butonu:** Bozuk karakter kodlamaları XML sayısal karakter referansları ve UTF-8 BOM ile tamamen düzeltildi.
+- **Eksik İkon Fonksiyonları:** Web ikon indirme ve normalleştirme işlemlerinde kullanılan `Test-ImageFile`, `Save-NormalizedPng` ve `Get-IconPngCandidates` fonksiyonları uygulandı.
+- **Dokümantasyon & Bağımlılık Yolları:** PR şablonu ve katkı rehberindeki eski `pwxengine` referansları `pwxe` olarak güncellendi; telif hakkı isimleri eşitlendi.
+
 ## [1.6.3] — 2026-10-20
 
 ### Added

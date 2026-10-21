@@ -18,7 +18,7 @@ PwX Studio tamamen Windows PowerShell ve yerleşik C# altyapısı üzerine inşa
    ```
 3. Değişikliklerinizi yapın ve test edin:
    ```powershell
-   powershell.exe -ExecutionPolicy Bypass -File .\pwxengine\tests\Run-Smoke.ps1
+   powershell.exe -ExecutionPolicy Bypass -File .\pwxe\tests\Run-Smoke.ps1
    ```
 4. Kodlama standartlarına ve UTF-8 BOM karakter kodlamasına dikkat edin.
 5. Değişikliklerinizi commit edin:
