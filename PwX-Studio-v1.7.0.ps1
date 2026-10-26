@@ -1089,7 +1089,7 @@ function Set-WindowFitToWorkArea {
                             <CheckBox x:Name="ChkSign" Grid.Column="1" Content="İmzalama Etkin" VerticalAlignment="Center" Margin="0" ToolTip="Üretilen EXE'yi Authenticode dijital sertifikası ile imzalar."/>
                         </Grid>
                         
-                        <Grid x:Name="PnlSignSettings" IsEnabled="False">
+                        <Grid x:Name="PnlSignSettings" Margin="0,4,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -1114,7 +1114,7 @@ function Set-WindowFitToWorkArea {
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="TxtCertValue" Height="34" ToolTip="40 karakterlik HEX parmak izi veya PFX dosya yolu."/>
-                                    <Button x:Name="BtnBrowseCert" Grid.Column="1" Content="Gözat..." Margin="8,0,0,0" Height="34" Width="75" Visibility="Collapsed"/>
+                                    <Button x:Name="BtnBrowseCert" Grid.Column="1" Content="Sertifika Seç..." Margin="8,0,0,0" Height="34" Width="110" Visibility="Visible" ToolTip="Windows Sertifika Deposundan (CurrentUser\My) kod imzalama sertifikası seçin."/>
                                 </Grid>
                             </StackPanel>
 
@@ -1584,6 +1584,7 @@ function Set-AppLanguage([string]$lang) {
         if ($btnClearLog) { $btnClearLog.Content = "Temizle" }
         if ($lblFooter) { $lblFooter.Text = "PwX Studio v1.7.0 • PowerShell Executable Builder" }
     }
+    try { Update-SignUI } catch { }
 }
 
 if ($btnLangToggle) {
@@ -1771,6 +1772,173 @@ $btnOpenFolder.Add_Click({
         }
     }
 })
+
+# ------------------------------------------------------------------
+#  UAC & Authenticode Kod İmzalama Olay Yöneticileri (v1.7.0)
+# ------------------------------------------------------------------
+
+function Update-SignUI {
+    $isThumb = $true
+    if ($cmbCertSource -and $cmbCertSource.SelectedItem) {
+        if ([string]$cmbCertSource.SelectedItem.Tag -eq 'File') { $isThumb = $false }
+    }
+
+    $isEn = ($btnLangToggle -and $btnLangToggle.Content -match 'TR')
+
+    if ($isThumb) {
+        if ($lblCertValue) {
+            $lblCertValue.Text = if ($isEn) { "Certificate Thumbprint:" } else { "Sertifika Parmak İzi (Thumbprint):" }
+        }
+        if ($btnBrowseCert) {
+            $btnBrowseCert.Visibility = [System.Windows.Visibility]::Visible
+            $btnBrowseCert.Content = if ($isEn) { "Select Cert..." } else { "Sertifika Seç..." }
+            $btnBrowseCert.ToolTip = if ($isEn) { "Browse and select certificate from Windows Certificate Store" } else { "Windows Sertifika Deposundan (CurrentUser\My) kod imzalama sertifikası seçin." }
+        }
+        if ($txtCertPassword) {
+            $txtCertPassword.IsEnabled = $false
+            $txtCertPassword.ToolTip = if ($isEn) { "Password not needed for Windows Store certificate" } else { "Windows sertifika deposundaki sertifikalar için parola gerekmez." }
+        }
+        if ($lblCertPassword) {
+            $lblCertPassword.Opacity = 0.5
+        }
+    } else {
+        if ($lblCertValue) {
+            $lblCertValue.Text = if ($isEn) { "PFX / P12 File Path:" } else { "PFX / P12 Dosya Yolu:" }
+        }
+        if ($btnBrowseCert) {
+            $btnBrowseCert.Visibility = [System.Windows.Visibility]::Visible
+            $btnBrowseCert.Content = if ($isEn) { "Browse..." } else { "Gözat..." }
+            $btnBrowseCert.ToolTip = if ($isEn) { "Browse disk for .pfx or .p12 certificate file" } else { "Diskten .pfx veya .p12 sertifika dosyası seçin." }
+        }
+        if ($txtCertPassword) {
+            $txtCertPassword.IsEnabled = $true
+            $txtCertPassword.ToolTip = if ($isEn) { "Enter PFX password if protected" } else { "PFX sertifikanız şifreliyse giriniz." }
+        }
+        if ($lblCertPassword) {
+            $lblCertPassword.Opacity = 1.0
+        }
+    }
+
+    if ($pnlSignSettings) {
+        if ($chkSign -and -not $chkSign.IsChecked) {
+            $pnlSignSettings.Opacity = 0.65
+        } else {
+            $pnlSignSettings.Opacity = 1.0
+        }
+    }
+}
+
+if ($chkSign) {
+    $chkSign.Add_Checked({ Update-SignUI })
+    $chkSign.Add_Unchecked({ Update-SignUI })
+}
+
+if ($cmbCertSource) {
+    $cmbCertSource.Add_SelectionChanged({ Update-SignUI })
+}
+
+if ($txtCertValue) {
+    $txtCertValue.Add_TextChanged({
+        if ($txtCertValue.Text.Trim() -and $chkSign -and -not $chkSign.IsChecked) {
+            $chkSign.IsChecked = $true
+            Update-SignUI
+        }
+    })
+}
+
+if ($btnBrowseCert) {
+    $btnBrowseCert.Add_Click({
+        if ($chkSign -and -not $chkSign.IsChecked) {
+            $chkSign.IsChecked = $true
+            Update-SignUI
+        }
+
+        $isThumb = $true
+        if ($cmbCertSource -and $cmbCertSource.SelectedItem) {
+            if ([string]$cmbCertSource.SelectedItem.Tag -eq 'File') { $isThumb = $false }
+        }
+
+        if ($isThumb) {
+            try {
+                Add-Type -AssemblyName System.Security
+                $store = New-Object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::My, [System.Security.Cryptography.X509Certificates.StoreLocation]::CurrentUser)
+                $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
+                $certs = $store.Certificates
+                if ($certs.Count -eq 0) {
+                    $lmStore = New-Object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::My, [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine)
+                    $lmStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
+                    $certs = $lmStore.Certificates
+                    $lmStore.Close()
+                }
+
+                if ($certs -and $certs.Count -gt 0) {
+                    $title = if ($btnLangToggle -and $btnLangToggle.Content -match 'TR') { "Select Code Signing Certificate" } else { "Kod İmzalama Sertifikası Seçin" }
+                    $msg = if ($btnLangToggle -and $btnLangToggle.Content -match 'TR') { "Select the certificate to use for signing:" } else { "İmzalama için kullanılacak dijital sertifikayı seçiniz:" }
+                    $selected = [System.Security.Cryptography.X509Certificates.X509Certificate2UI]::SelectFromCollection(
+                        $certs,
+                        $title,
+                        $msg,
+                        [System.Security.Cryptography.X509Certificates.X509SelectionFlag]::SingleSelection,
+                        (New-Object System.IntPtr -ArgumentList 0)
+                    )
+                    if ($selected -and $selected.Count -gt 0) {
+                        $txtCertValue.Text = $selected[0].Thumbprint
+                        Add-Log "Sertifika seçildi: $($selected[0].Subject) (Thumbprint: $($selected[0].Thumbprint))"
+                    }
+                } else {
+                    $noCertMsg = if ($btnLangToggle -and $btnLangToggle.Content -match 'TR') {
+                        "No certificates found in Windows Certificate Store (CurrentUser\My).`nYou can also use 'PFX / P12 File' option to select a certificate file from disk."
+                    } else {
+                        "Windows Sertifika Deposunda (CurrentUser\My) yüklü sertifika bulunamadı.`nAlternatif olarak 'PFX / P12 Dosyası' seçeneği ile diskten sertifika yükleyebilirsiniz."
+                    }
+                    $noCertTitle = if ($btnLangToggle -and $btnLangToggle.Content -match 'TR') { "Certificate Not Found" } else { "Sertifika Bulunamadı" }
+                    [System.Windows.MessageBox]::Show($noCertMsg, $noCertTitle, [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+                }
+                $store.Close()
+            } catch {
+                Add-Log "[UYARI] Sertifika deposu açılamadı: $($_.Exception.Message)"
+            }
+        } else {
+            $ofd = New-Object Microsoft.Win32.OpenFileDialog
+            $ofd.Title = if ($btnLangToggle -and $btnLangToggle.Content -match 'TR') { "Select PFX / P12 Certificate File" } else { "PFX / P12 Sertifika Dosyası Seçin" }
+            $ofd.Filter = "Sertifika Dosyaları (*.pfx;*.p12)|*.pfx;*.p12|Tüm Dosyalar (*.*)|*.*"
+            if ($txtCertValue.Text -and (Test-Path -LiteralPath $txtCertValue.Text)) {
+                $ofd.InitialDirectory = [System.IO.Path]::GetDirectoryName($txtCertValue.Text)
+            }
+            if ($ofd.ShowDialog($window) -eq $true) {
+                $txtCertValue.Text = $ofd.FileName
+                Add-Log "PFX sertifika dosyası seçildi: $($ofd.FileName)"
+            }
+        }
+    })
+}
+
+# UAC Checkbox ve ExecutionLevel ComboBox senkronizasyonu
+if ($chkAdmin -and $cmbExecutionLevel) {
+    $chkAdmin.Add_Checked({
+        if ($cmbExecutionLevel.SelectedIndex -eq 0) {
+            $cmbExecutionLevel.SelectedIndex = 1
+        }
+    })
+    $chkAdmin.Add_Unchecked({
+        if ($cmbExecutionLevel.SelectedIndex -eq 1) {
+            $cmbExecutionLevel.SelectedIndex = 0
+        }
+    })
+    $cmbExecutionLevel.Add_SelectionChanged({
+        if ($cmbExecutionLevel.SelectedItem) {
+            $tag = [string]$cmbExecutionLevel.SelectedItem.Tag
+            if ($tag -eq 'requireAdministrator') {
+                $chkAdmin.IsChecked = $true
+            } elseif ($tag -eq 'asInvoker') {
+                $chkAdmin.IsChecked = $false
+            }
+        }
+    })
+}
+
+# Başlangıç durumu
+Update-SignUI
 
 # ------------------------------------------------------------------
 #  Web İkon Arama Modülü (WPF Modal Dialog & Renk Kartelası)
