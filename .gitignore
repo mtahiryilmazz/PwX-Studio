@@ -46,3 +46,9 @@ PwX_IconPatched_*.ps1
 *.cer
 *secret*
 *credentials*
+
+# Local standalone utility and enterprise scripts
+Printer_Enterprise_*.ps1
+Ultimate_Printer_*.ps1
+WinUtil.*
+

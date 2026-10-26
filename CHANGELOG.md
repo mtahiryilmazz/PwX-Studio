@@ -8,7 +8,18 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ---
 
-## [Unreleased]
+## [1.7.0] — 2026-10-26
+
+### Added
+- **pwxe 1.7.0 Entegrasyonu:** PwX Studio içerisindeki dahili motor `pwxe v1.7.0` sürümüne yükseltildi, dahili Base64 zip arşivi ve `.engine_hash` bütünlük takibi yenilendi.
+- **Authenticode Dijital Kod İmzalama:** Arayüze Authenticode kod imzalama kartı eklendi. Windows Sertifika Deposu (Thumbprint) veya PFX/P12 dosyası ile RFC 3161 zaman damgalı otomatik imzalama desteği sağlandı. Parolalar `PasswordBox` bileşeni ile maskelenir.
+- **UAC Manifest İzin Düzeyi (ExecutionLevel):** Windows uygulama bildirimine (`app.manifest`) doğrudan `asInvoker`, `requireAdministrator` veya `highestAvailable` izin düzeylerini ekleyen seçim kutusu eklendi; mevcut `ChkAdmin` onay kutusu ile çift yönlü senkronize edildi.
+- **Evrensel Pencere Simgesi Enjeksiyonu (Universal Icon Injection):** Hem Windows Forms (`Form`) hem de modern WPF / XAML (`Window`) pencerelerini bellek akışı (`System.Drawing.Icon` + `BitmapFrame`) üzerinden otomatik yakalayıp simge atayan evrensel `Set-PwXAppIcon` altyapısı ve çalışma zamanı `add_Idle` dinamik kancası uygulandı.
+- **Windows 11 Fluent Seçim Kutuları (ComboBox):** Tüm ComboBox ve ComboBoxItem kontrolleri, Açık ve Koyu tema fırçalarıyla (`{DynamicResource ...}`) dinamik renk alan, 6px yuvarlatılmış köşeli, zarif ok ve gölge efektli modern XAML şablonuna kavuşturuldu.
+
+### Security & Hardening
+- **Bağımsız Betik İzolasyonu (.gitignore):** Kök dizinde bulunan bağımsız kurumsal araç betikleri (`Printer_Enterprise_*.ps1`, `Ultimate_Printer_*.ps1`, `WinUtil.*`) `.gitignore` kuralıyla dışlanarak genel depoya sızma riski ortadan kaldırıldı.
+- **Mükerrer ve Güvensiz Fonksiyon Temizliği:** Betik içerisindeki mükerrer ve güvensiz `Get-PwXEnginePath` / `Deploy-EmbeddedPwXEngine` bloğu (ZipSlip ve CWD script preloading açığı barındıran) kaldırılarak kanonik kök dizin denetimi yapan güvenli fonksiyon korundu.
 
 ## [1.6.4] — 2026-10-21
 

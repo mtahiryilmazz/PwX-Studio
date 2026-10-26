@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mtahiryilmazz/PwX-Studio/releases/latest"><img src="https://img.shields.io/badge/release-v1.6.4-blue.svg?style=flat-square" alt="Latest Release"></a>
+  <a href="https://github.com/mtahiryilmazz/PwX-Studio/releases/latest"><img src="https://img.shields.io/badge/release-v1.7.0-blue.svg?style=flat-square" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg?style=flat-square" alt="Platform: Windows">
-  <img src="https://img.shields.io/badge/Engine-pwxe%20v1.6.4-success.svg?style=flat-square" alt="Engine: pwxe v1.6.4">
+  <img src="https://img.shields.io/badge/Engine-pwxe%20v1.7.0-success.svg?style=flat-square" alt="Engine: pwxe v1.7.0">
   <img src="https://img.shields.io/badge/security-audited-success.svg?style=flat-square" alt="Security Audited">
 </p>
 
@@ -49,6 +49,10 @@ PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız
 
 Studio artık pwxe motoruna x86/x64, yönetici yetkisi, DPI farkındalığı, Windows sürüm uyumluluğu, uzun dosya yolları, EXE.config, UTF-8/Unicode çıktı ve çıktı bastırma seçeneklerini aktarır. PS7 için SelfContained varsayılandır; Küçük boyut seçeneği FrameworkDependent üretir.
 
+- **🔏 Authenticode Kod İmzalama:** Sertifika deposu veya PFX dosyası ile RFC 3161 zaman damgalı otomatik dijital imzalama
+- **🛡️ UAC Manifest Denetimi:** `asInvoker`, `requireAdministrator` veya `highestAvailable` izin düzeylerini tek tıkla yapılandırma
+- **🖼️ Evrensel Simge Enjeksiyonu:** Hem Windows Forms hem de modern WPF / XAML pencerelerine otomatik pencere simgesi bağlama
+- **✨ Windows 11 Fluent ComboBox:** Açık ve Koyu mod ile tam uyumlu dinamik açılır seçim kutuları
 - **🖥️ Responsive arayüz:** pencere yeniden boyutlandırılabilir ve küçük ekranlarda kullanılabilir
 - **⚡ Dahili pwxe motoru:** Sıfır dış bağımlılık, tamamen çevrimdışı ve bağımsız çalışır
 - **🎯 Çift hedef çalışma zamanı:**
@@ -56,7 +60,6 @@ Studio artık pwxe motoruna x86/x64, yönetici yetkisi, DPI farkındalığı, Wi
   - **PowerShell 7.4+:** modern dil özellikleri ve modern `.NET` altyapısı
 - **📦 İsteğe bağlı küçük PS7 çıktısı:** "Küçük boyut" (`FrameworkDependent`) seçeneği EXE boyutunu önemli ölçüde düşürür; hedefte .NET 8 Runtime gerekir
 - **🧪 Deneysel CLI seçenekleri:** `-EnableTrim` (yalnızca `SelfContained` ile) ve `-EnableUpx`; Studio arayüzünde sunulmaz
-- **🖼️ Simge ve WinForms entegrasyonu:** uygulama simgesi ve form başlık simgesi otomatik olarak eklenir
 - **🌗 Açık / koyu tema:** modern kullanıcı deneyimi
 
 ---
