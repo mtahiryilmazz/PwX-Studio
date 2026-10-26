@@ -8,6 +8,14 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ---
 
+## [1.8.0] — 2026-10-26
+
+### Added
+- **pwxe 1.8.0 Entegrasyonu:** PwX Studio içerisindeki dahili derleme motoru `pwxe v1.8.0` sürümüne yükseltildi. Gömülü motor arşivi (Base64) ve SHA-256 bütünlük kontrolü güncellendi.
+- **Yük Koruma & AES-256 Şifreleme (Payload Protection):** Arayüze "Betiği Şifrele (AES-256)" (`ChkEncryptPayload`) onay kutusu eklendi. Gömülü PowerShell betikleri `PWXENC01` şifreli zarfı (AES-256-CBC + rastgele IV + HMAC-SHA256 bütünlük doğrulama) ile derlenerek düz metin sızıntısı engellenir.
+- **Makine & Kullanıcı Kilitleme (DPAPI):** Arayüze "Makineye Kilitle (DPAPI)" (`ChkBindToMachine`) onay kutusu eklendi. Şifreleme anahtarı Windows DPAPI ile mevcut makineye ve kullanıcı hesabına kilitlenerek üretilen EXE'nin başka sistemlerde çalıştırılması engellenir.
+- **Çift Dilli Arayüz Senkronizasyonu (TR/EN):** Yeni şifreleme ve kilitleme seçenekleri Türkçe ve İngilizce dil paketlerine eksiksiz entegre edildi.
+
 ## [1.7.0] — 2026-10-26
 
 ### Added
