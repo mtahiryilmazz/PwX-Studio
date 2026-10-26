@@ -1053,10 +1053,10 @@ function Set-WindowFitToWorkArea {
 
                                 <StackPanel Grid.Column="0">
                                     <TextBlock x:Name="LblUacLevel" Text="🛡️ UAC Yetki Düzeyi:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,3"/>
-                                    <ComboBox x:Name="CmbExecutionLevel" Height="32" Margin="0,0,0,6">
-                                        <ComboBoxItem Content="asInvoker (Standart)" Tag="asInvoker" IsSelected="True"/>
-                                        <ComboBoxItem Content="requireAdministrator (Yönetici)" Tag="requireAdministrator"/>
-                                        <ComboBoxItem Content="highestAvailable (En Yüksek)" Tag="highestAvailable"/>
+                                    <ComboBox x:Name="CmbExecutionLevel" Height="32" Margin="0,0,0,6" ToolTip="Windows UAC çalıştırma ve bildirim yetki düzeyini belirler.">
+                                        <ComboBoxItem x:Name="CmbItemAsInvoker" Content="asInvoker (Standart)" Tag="asInvoker" IsSelected="True" ToolTip="Uygulama çağıran kullanıcının standart yetkileriyle başlatılır. Ekstra yönetici onayı istemez."/>
+                                        <ComboBoxItem x:Name="CmbItemRequireAdmin" Content="requireAdministrator (Yönetici)" Tag="requireAdministrator" ToolTip="Uygulama her açılışta Windows UAC yönetici onayı ister ve tam yönetici ayrıcalıklarıyla çalışır."/>
+                                        <ComboBoxItem x:Name="CmbItemHighestAvailable" Content="highestAvailable (En Yüksek)" Tag="highestAvailable" ToolTip="Kullanıcı yöneticiyse yönetici onayı ister; standart kullanıcıysa ek onay istemeden çalışır."/>
                                     </ComboBox>
                                     <CheckBox x:Name="ChkAdmin" Content="Yönetici Yetkisi (UAC)" ToolTip="Windows UAC yönetici onayı ister." Margin="0,0,0,5"/>
                                     <CheckBox x:Name="ChkUtf8" Content="Konsol UTF-8" IsChecked="True" ToolTip="Türkçe karakterlerin doğru gösterilmesini sağlar."/>
@@ -1102,9 +1102,9 @@ function Set-WindowFitToWorkArea {
 
                             <StackPanel Grid.Row="0" Grid.Column="0">
                                 <TextBlock x:Name="LblCertType" Text="Sertifika Kaynağı:" FontSize="12" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,4"/>
-                                <ComboBox x:Name="CmbCertSource" Height="34" Margin="0,0,0,8">
-                                    <ComboBoxItem Content="Parmak İzi (Thumbprint - Windows Deposu)" Tag="Thumbprint" IsSelected="True"/>
-                                    <ComboBoxItem Content="PFX / P12 Dosyası" Tag="File"/>
+                                <ComboBox x:Name="CmbCertSource" Height="34" Margin="0,0,0,8" ToolTip="Authenticode dijital kod imzalama sertifikasının temin edileceği kaynağı seçin.">
+                                    <ComboBoxItem x:Name="CmbItemThumbprint" Content="Parmak İzi (Thumbprint - Windows Deposu)" Tag="Thumbprint" IsSelected="True" ToolTip="Windows Sertifika Deposundaki (CurrentUser\My) yüklü kod imzalama sertifikasını kullanır."/>
+                                    <ComboBoxItem x:Name="CmbItemFile" Content="PFX / P12 Dosyası" Tag="File" ToolTip="Diskte bulunan .pfx veya .p12 sertifika dosyasını kullanır."/>
                                 </ComboBox>
 
                                 <TextBlock x:Name="LblCertValue" Text="Sertifika Parmak İzi (Thumbprint):" FontSize="12" Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,4"/>
@@ -1281,6 +1281,11 @@ $rbGui          = $window.FindName('RbGui')
 
 $chkAdmin       = $window.FindName('ChkAdmin')
 $cmbExecutionLevel = $window.FindName('CmbExecutionLevel')
+$cmbItemAsInvoker        = $window.FindName('CmbItemAsInvoker')
+$cmbItemRequireAdmin     = $window.FindName('CmbItemRequireAdmin')
+$cmbItemHighestAvailable = $window.FindName('CmbItemHighestAvailable')
+$cmbItemThumbprint       = $window.FindName('CmbItemThumbprint')
+$cmbItemFile             = $window.FindName('CmbItemFile')
 $lblUacLevel       = $window.FindName('LblUacLevel')
 $lblCodeSigningTitle = $window.FindName('LblCodeSigningTitle')
 $chkSign           = $window.FindName('ChkSign')
@@ -1416,7 +1421,33 @@ function Set-AppLanguage([string]$lang) {
             $chkEmbeddedEngine.ToolTip = "Runs the build engine directly from the embedded package without external dependencies."
         }
         if ($lblBuildOptions) { $lblBuildOptions.Text = "🛠️ Build & Runtime Options" }
-                if ($lblUacLevel) { $lblUacLevel.Text = "🛡️ UAC Execution Level:" }
+                if ($lblUacLevel) { 
+            $lblUacLevel.Text = "🛡️ UAC Execution Level:" 
+            $lblUacLevel.ToolTip = "Sets the Windows UAC elevation and manifest permission level."
+        }
+        if ($cmbExecutionLevel) {
+            $cmbExecutionLevel.ToolTip = "Sets the Windows UAC elevation and manifest permission level."
+        }
+        if ($cmbItemAsInvoker) {
+            $cmbItemAsInvoker.Content = "asInvoker (Standard User)"
+            $cmbItemAsInvoker.ToolTip = "Application launches with caller's standard permissions without prompting for elevation."
+        }
+        if ($cmbItemRequireAdmin) {
+            $cmbItemRequireAdmin.Content = "requireAdministrator (Administrator)"
+            $cmbItemRequireAdmin.ToolTip = "Application always requests Windows UAC elevation and runs with full administrative rights."
+        }
+        if ($cmbItemHighestAvailable) {
+            $cmbItemHighestAvailable.Content = "highestAvailable (Highest Available)"
+            $cmbItemHighestAvailable.ToolTip = "Runs with elevated rights if the user is an admin, or standard rights otherwise."
+        }
+        if ($cmbItemThumbprint) {
+            $cmbItemThumbprint.Content = "Thumbprint (Windows Certificate Store)"
+            $cmbItemThumbprint.ToolTip = "Uses installed code signing certificate from Windows Certificate Store (CurrentUser\My)."
+        }
+        if ($cmbItemFile) {
+            $cmbItemFile.Content = "PFX / P12 File"
+            $cmbItemFile.ToolTip = "Uses .pfx or .p12 certificate file located on disk."
+        }
         if ($lblCodeSigningTitle) { $lblCodeSigningTitle.Text = "🔏 Authenticode Digital Code Signing (v1.7.0)" }
         if ($chkSign) { $chkSign.Content = "Signing Enabled" }
         if ($lblCertType) { $lblCertType.Text = "Certificate Source:" }
@@ -1527,7 +1558,33 @@ function Set-AppLanguage([string]$lang) {
         if ($lblCertType) { $lblCertType.Text = "Certificate Source:" }
         if ($lblCertPassword) { $lblCertPassword.Text = "Certificate Password (for PFX):" }
         if ($lblTimestampServer) { $lblTimestampServer.Text = "RFC 3161 Timestamp Server:" }
-                if ($lblUacLevel) { $lblUacLevel.Text = "🛡️ UAC Yetki Düzeyi:" }
+                if ($lblUacLevel) { 
+            $lblUacLevel.Text = "🛡️ UAC Yetki Düzeyi:" 
+            $lblUacLevel.ToolTip = "Windows UAC (Kullanıcı Hesabı Denetimi) çalıştırma ve bildirim düzeyini ayarlar."
+        }
+        if ($cmbExecutionLevel) {
+            $cmbExecutionLevel.ToolTip = "Windows UAC (Kullanıcı Hesabı Denetimi) çalıştırma ve bildirim düzeyini ayarlar."
+        }
+        if ($cmbItemAsInvoker) {
+            $cmbItemAsInvoker.Content = "asInvoker (Standart)"
+            $cmbItemAsInvoker.ToolTip = "Uygulama çağıran kullanıcının standart yetkileriyle başlatılır. Ekstra yönetici onayı istemez."
+        }
+        if ($cmbItemRequireAdmin) {
+            $cmbItemRequireAdmin.Content = "requireAdministrator (Yönetici)"
+            $cmbItemRequireAdmin.ToolTip = "Uygulama her açılışta Windows UAC yönetici onayı ister ve tam yönetici ayrıcalıklarıyla çalışır."
+        }
+        if ($cmbItemHighestAvailable) {
+            $cmbItemHighestAvailable.Content = "highestAvailable (En Yüksek)"
+            $cmbItemHighestAvailable.ToolTip = "Kullanıcı yöneticiyse yönetici onayı ister; standart kullanıcıysa ek onay istemeden çalışır."
+        }
+        if ($cmbItemThumbprint) {
+            $cmbItemThumbprint.Content = "Parmak İzi (Thumbprint - Windows Deposu)"
+            $cmbItemThumbprint.ToolTip = "Windows Sertifika Deposundaki (CurrentUser\My) yüklü kod imzalama sertifikasını kullanır."
+        }
+        if ($cmbItemFile) {
+            $cmbItemFile.Content = "PFX / P12 Dosyası"
+            $cmbItemFile.ToolTip = "Diskte bulunan .pfx veya .p12 sertifika dosyasını kullanır."
+        }
         if ($lblCodeSigningTitle) { $lblCodeSigningTitle.Text = "🔏 Authenticode Dijital Kod İmzalama (v1.7.0)" }
         if ($chkSign) { $chkSign.Content = "İmzalama Etkin" }
         if ($lblCertType) { $lblCertType.Text = "Sertifika Kaynağı:" }
