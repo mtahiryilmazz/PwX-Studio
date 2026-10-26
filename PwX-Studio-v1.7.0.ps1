@@ -1,4 +1,4 @@
-﻿﻿﻿#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
     PwX Studio v1.7.0 - PowerShell Executable Builder
     - Windows 11 Modern Arayüz (Saf WPF/XAML Mimarisi)
@@ -6,7 +6,7 @@
     - PowerShell 5.1 (Dahili csc.exe) ve PowerShell 7 (.NET 8 SDK) hedef desteği
     - Çok kaynaklı Web İkon Arama Hub'ı (Gelişmiş Türkçe/İngilizce Arama & Renk Kartelası)
     - Türkçe karakter uyumlu (UTF-8 dosya ve konsol UTF-8 çıktı motoru)
-    Çalıştırma: powershell.exe -STA -ExecutionPolicy Bypass -File .\PwX-Studio-v1.6.1.ps1
+    Çalıştırma: powershell.exe -STA -ExecutionPolicy Bypass -File .\PwX-Studio-v1.7.0.ps1
 #>
 
 Set-StrictMode -Version 2.0
@@ -233,7 +233,7 @@ function Search-Icons([string]$query, [int]$sourceIndex) {
                 try {
                     $wc = New-Object System.Net.WebClient
                     $wc.Encoding = [System.Text.Encoding]::UTF8
-                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.6.4'
+                    $wc.Headers['User-Agent'] = 'PwX-Studio/1.7.0'
                     $json = $wc.DownloadString($apiHost + '/search' + $queryPart) | ConvertFrom-Json
                     if ($json -and $null -ne $json.icons) { break }
                 } catch { }
@@ -445,7 +445,7 @@ function Get-IconBatchSvgs($iconItems) {
     $svgCache = @{}
     $wc = New-Object System.Net.WebClient
     $wc.Encoding = [System.Text.Encoding]::UTF8
-    $wc.Headers['User-Agent'] = 'PwX-Studio/1.6.4'
+    $wc.Headers['User-Agent'] = 'PwX-Studio/1.7.0'
 
     foreach ($p in $byPrefix.Keys) {
         $list = $byPrefix[$p]
@@ -885,7 +885,7 @@ function Set-WindowFitToWorkArea {
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="⚡ PwX Studio" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
                         <Border Background="{DynamicResource BorderBrush}" CornerRadius="4" Padding="8,2" Margin="12,2,0,2" VerticalAlignment="Center">
-                            <TextBlock Text="v1.6.4" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
+                            <TextBlock Text="v1.7.0" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
                         </Border>
                     </StackPanel>
                     <TextBlock x:Name="LblSubtitle" Text="PowerShell betiklerini (.ps1) sıfır bağımlılıkla yerel Windows çalıştırılabilir dosyalarına (.exe) dönüştürün." 
@@ -2394,7 +2394,7 @@ function Open-FluentIconDialog {
                         "https://api.unisvg.com/$prefix/$iconName.svg"
                     )
                     $wcSvg = New-Object System.Net.WebClient
-                    $wcSvg.Headers['User-Agent'] = 'PwX-Studio/1.6.4'
+                    $wcSvg.Headers['User-Agent'] = 'PwX-Studio/1.7.0'
                     $wcSvg.Encoding = [System.Text.Encoding]::UTF8
 
                     foreach ($sUrl in $svgUrls) {
@@ -2416,7 +2416,7 @@ function Open-FluentIconDialog {
             if (-not $downloadSuccess) {
                 $candidates = @(Get-IconPngCandidates $item 256 $hex)
                 $wc = New-Object System.Net.WebClient
-                $wc.Headers['User-Agent'] = 'PwX-Studio/1.6.4'
+                $wc.Headers['User-Agent'] = 'PwX-Studio/1.7.0'
 
                 foreach ($u in $candidates) {
                     try {
@@ -2798,11 +2798,16 @@ try {
             $iconBootstrap = $iconBootstrap.Replace('__PWX_ICON_BASE64__', $iconBase64)
 
             # Hem WinForms (Form) hem de WPF (Window/XamlReader) kalıplarını yakala
-            $windowPattern = '(?m)^(\s*)(\$[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:New-Object\s+(?:System\.)?(?:Windows\.Forms\.)?Form[^
-]*|\[(?:System\.)?(?:Windows\.Forms\.)?Form\]::new\([^
-]*\)|\[(?:System\.)?Windows\.Markup\.XamlReader\]::Load\([^
-]*\)|New-Object\s+(?:System\.)?(?:Windows\.)?Window[^
-]*|\[(?:System\.)?(?:Windows\.)?Window\]::new\([^
+            $windowPattern = '(?m)^(\s*)(\$[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:New-Object\s+(?:System\.)?(?:Windows\.Forms\.)?Form[^
+
+]*|\[(?:System\.)?(?:Windows\.Forms\.)?Form\]::new\([^
+
+]*\)|\[(?:System\.)?Windows\.Markup\.XamlReader\]::Load\([^
+
+]*\)|New-Object\s+(?:System\.)?(?:Windows\.)?Window[^
+
+]*|\[(?:System\.)?(?:Windows\.)?Window\]::new\([^
+
 ]*\))\s*$'
             $winMatches = [regex]::Matches($sourceText, $windowPattern)
 
