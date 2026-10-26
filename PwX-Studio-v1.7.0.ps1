@@ -1209,6 +1209,102 @@ function Deploy-EmbeddedIcon {
     return $null
 }
 
+# ============================================================
+#  pwxe Motor Arama & Gomulu Zip Cikarma (v1.7.0 patch)
+# ============================================================
+
+function Deploy-EmbeddedPwXEngine {
+    param([switch]$Force)
+    try {
+        $engineDir = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine'
+        $scriptPath = Join-Path $engineDir 'scripts\PwX-Build.ps1'
+        $hashFile = Join-Path $engineDir '.engine_hash'
+        $existingHash = if (Test-Path -LiteralPath $hashFile) { (Get-Content -LiteralPath $hashFile -Raw -ErrorAction SilentlyContinue).Trim() } else { '' }
+
+        if (-not $Force -and (Test-Path -LiteralPath $scriptPath) -and ($existingHash -eq $script:EmbeddedPwXEngineHash)) {
+            return $scriptPath
+        }
+
+        if (-not (Test-Path -LiteralPath $engineDir)) {
+            [System.IO.Directory]::CreateDirectory($engineDir) | Out-Null
+        }
+
+        $canonicalDir = [System.IO.Path]::GetFullPath($engineDir)
+        if (-not $canonicalDir.EndsWith([System.IO.Path]::DirectorySeparatorChar.ToString())) {
+            $canonicalDir += [System.IO.Path]::DirectorySeparatorChar
+        }
+
+        $bytes = [System.Convert]::FromBase64String($script:EmbeddedPwXEngineZipBase64)
+        $ms = New-Object System.IO.MemoryStream (,$bytes)
+        $zip = New-Object System.IO.Compression.ZipArchive($ms, [System.IO.Compression.ZipArchiveMode]::Read)
+        foreach ($entry in $zip.Entries) {
+            if ([string]::IsNullOrEmpty($entry.Name)) { continue }
+            $destPath = [System.IO.Path]::GetFullPath((Join-Path $engineDir $entry.FullName))
+            if (-not $destPath.StartsWith($canonicalDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+                Write-Warning "Zip Slip engellendi: $($entry.FullName)"
+                continue
+            }
+            $parentDir = Split-Path -Parent $destPath
+            if (-not (Test-Path -LiteralPath $parentDir)) {
+                [System.IO.Directory]::CreateDirectory($parentDir) | Out-Null
+            }
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
+        }
+        $zip.Dispose()
+        $ms.Dispose()
+
+        [System.IO.File]::WriteAllText($hashFile, $script:EmbeddedPwXEngineHash, [System.Text.Encoding]::UTF8)
+
+        if (Test-Path -LiteralPath $scriptPath) {
+            $cfgDir = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio'
+            if (-not (Test-Path -LiteralPath $cfgDir)) { [System.IO.Directory]::CreateDirectory($cfgDir) | Out-Null }
+            [System.IO.File]::WriteAllText((Join-Path $cfgDir 'engine_path.txt'), $scriptPath, [System.Text.Encoding]::UTF8)
+            return $scriptPath
+        }
+    } catch {
+        Write-Warning "Dahili pwxe motoru cikarilamadi: $($_.Exception.Message)"
+    }
+    return $null
+}
+
+function Get-PwXEnginePath {
+    param([switch]$ForceRedeploy)
+
+    $cfgFile = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine_path.txt'
+    if (-not $ForceRedeploy -and (Test-Path -LiteralPath $cfgFile)) {
+        try {
+            $saved = (Get-Content -LiteralPath $cfgFile -Raw).Trim()
+            if ($saved -and (Test-Path -LiteralPath $saved)) { return $saved }
+        } catch {}
+    }
+
+    if ($PSScriptRoot) {
+        $relCandidates = @(
+            (Join-Path $PSScriptRoot 'pwxe\scripts\PwX-Build.ps1'),
+            (Join-Path $PSScriptRoot '..\pwxe\scripts\PwX-Build.ps1')
+        )
+        foreach ($c in $relCandidates) {
+            if ($c -and (Test-Path -LiteralPath $c)) { return (Resolve-Path -LiteralPath $c).Path }
+        }
+    }
+
+    try {
+        $pwxeMod = Get-Module -ListAvailable pwxe -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1
+        if ($pwxeMod) {
+            $modCand = Join-Path $pwxeMod.ModuleBase 'scripts\PwX-Build.ps1'
+            if (Test-Path -LiteralPath $modCand) { return $modCand }
+        }
+    } catch {}
+
+    $appDataScript = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine\scripts\PwX-Build.ps1'
+    $hashFile = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PwX-Studio\engine\.engine_hash'
+    $hashMatches = if (Test-Path -LiteralPath $hashFile) { (Get-Content -LiteralPath $hashFile -Raw -ErrorAction SilentlyContinue).Trim() -eq $script:EmbeddedPwXEngineHash } else { $false }
+    if (-not $ForceRedeploy -and $hashMatches -and (Test-Path -LiteralPath $appDataScript)) {
+        return $appDataScript
+    }
+
+    return Deploy-EmbeddedPwXEngine -Force:$ForceRedeploy
+}
 if ($PSScriptRoot) { $iconPaths += (Join-Path $PSScriptRoot 'ico\PwX-Studio.ico') }
 $iconPaths += '.\ico\PwX-Studio.ico'
 $iconPaths += (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Github\PwX-Studio\ico\PwX-Studio.ico')
@@ -2161,129 +2257,6 @@ function Open-FluentIconDialog {
             </Setter>
         </Style>
     
-        <!-- Fluent ComboBox ToggleButton Şablonu -->
-        <ControlTemplate x:Key="FluentComboBoxToggleButton" TargetType="ToggleButton">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="32" />
-                </Grid.ColumnDefinitions>
-                <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="6" 
-                        Background="{DynamicResource InputBgBrush}" 
-                        BorderBrush="{DynamicResource InputBorderBrush}" 
-                        BorderThickness="1" />
-                <Path x:Name="Arrow" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" 
-                      Data="M 0 0 L 4.5 4.5 L 9 0" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.5" 
-                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" SnapsToDevicePixels="True"/>
-            </Grid>
-            <ControlTemplate.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                    <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
-                </Trigger>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                    <Setter TargetName="Arrow" Property="Data" Value="M 0 4.5 L 4.5 0 L 9 4.5"/>
-                    <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter TargetName="Border" Property="Opacity" Value="0.45"/>
-                    <Setter TargetName="Arrow" Property="Opacity" Value="0.45"/>
-                </Trigger>
-            </ControlTemplate.Triggers>
-        </ControlTemplate>
-
-        <!-- Fluent ComboBoxItem Şablonu -->
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}" Margin="3,1.5">
-                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource AccentBrush}"/>
-                                <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource AccentBorderBrush}"/>
-                                <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Genel ComboBox Stili -->
-        <Style TargetType="ComboBox">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="Background" Value="{DynamicResource InputBgBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,4"/>
-            <Setter Property="Height" Value="34"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Name="ToggleButton" 
-                                          Template="{StaticResource FluentComboBoxToggleButton}" 
-                                          Focusable="false"
-                                          IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
-                                          ClickMode="Press">
-                            </ToggleButton>
-                            <ContentPresenter Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}"
-                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                              Margin="10,3,32,3"
-                                              VerticalAlignment="Center"
-                                              HorizontalAlignment="Left" />
-                            <Popup Name="Popup"
-                                   Placement="Bottom"
-                                   IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   AllowsTransparency="True" 
-                                   Focusable="False"
-                                   PopupAnimation="Fade">
-                                <Grid Name="DropDown"
-                                      SnapsToDevicePixels="True"
-                                      MinWidth="{TemplateBinding ActualWidth}"
-                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                    <Border x:Name="DropDownBorder"
-                                            Background="{DynamicResource CardBrush}"
-                                            BorderThickness="1"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            CornerRadius="6"
-                                            Margin="0,4,0,4"
-                                            Padding="4">
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.3" Color="#000000"/>
-                                        </Border.Effect>
-                                        <ScrollViewer SnapsToDevicePixels="True" MaxHeight="240">
-                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
-                                        </ScrollViewer>
-                                    </Border>
-                                </Grid>
-                            </Popup>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="HasItems" Value="false">
-                                <Setter TargetName="DropDownBorder" Property="MinHeight" Value="40"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- PasswordBox Stili -->
         <Style TargetType="PasswordBox">
             <Setter Property="Background" Value="{DynamicResource InputBgBrush}" />
