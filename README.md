@@ -125,6 +125,17 @@ Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-upx.exe -Target PS7 -EnableUpx
 
 ---
 
+## 📚 Dokümantasyon & Belgeler
+
+Detaylı teknik mimari, sürüm notları ve rehberler `docs/` dizininde yer almaktadır:
+
+- **[Yol Haritası (Roadmap)](docs/ROADMAP.md):** Planlanan geliştirmeler ve kilometre taşları
+- **[Sürüm Notları (v1.7.0)](docs/RELEASE_NOTES_v1.7.0.md):** v1.7.0 Authenticode imzalama, UAC manifest denetimi ve evrensel simge enjeksiyonu detayları
+- **[Katkı Rehberi](docs/CONTRIBUTING.md):** Geliştirme ortamı, kodlama standartları ve PR süreci
+- **[Güvenlik Politikası](docs/SECURITY.md):** Güvenlik sertleştirmesi ve bildirim kanalları
+
+---
+
 ## 📄 Lisans
 
 Bu proje [MIT Lisansı](LICENSE) kapsamında lisanslanmıştır.
