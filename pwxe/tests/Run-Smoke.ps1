@@ -47,6 +47,26 @@ foreach ($t in $targets) {
     }
 }
 
+# PS51 In-Process Host: zero subprocess in-memory execution testleri
+if ($targets -contains 'PS51') {
+    $inProcDir = Join-Path $root 'artifacts\test-results\PS51-InProcess'
+    New-Item -ItemType Directory -Force -Path $inProcDir | Out-Null
+    $inProcExe = Join-Path $inProcDir 'hello_inproc.exe'
+    $inProcRes = & $build -Source $sample -Output $inProcExe -Target PS51 -HostMode InProcess -Force
+    if ($inProcRes.Success -and (Test-Path -LiteralPath $inProcExe)) {
+        $o = (& $inProcExe | Out-String)
+        Add-Row 'PS51-INP' 'T-INP-001' 'In-Process varsayılan çıktı' ($o -match 'PwX Studio')
+        $o = (& $inProcExe -Message 'InProc-Test' | Out-String)
+        Add-Row 'PS51-INP' 'T-INP-002' 'In-Process adlandırılmış parametre' ($o -match 'InProc-Test')
+        $null = & $inProcExe -Code 17
+        Add-Row 'PS51-INP' 'T-INP-003' 'In-Process çıkış kodu 17' ($LASTEXITCODE -eq 17) "alınan: $LASTEXITCODE"
+        $o = (& $inProcExe | Out-String)
+        Add-Row 'PS51-INP' 'T-INP-004' 'In-Process Türkçe karakterler' ($o -match 'ğüşıöçĞÜŞİÖÇ|Ã¼|ğü')
+    } else {
+        Add-Row 'PS51-INP' 'T-INP-001' 'In-Process derleme' $false 'Derleme başarısız'
+    }
+}
+
 # PS7 GUI host: tek EXE'den (gui-edge.ps1) çıkış kodu ve argüman bağlama senaryoları.
 if ($targets -contains 'PS7') {
     $guiSample = Join-Path $PSScriptRoot 'samples\gui-edge.ps1'

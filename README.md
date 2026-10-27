@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mtahiryilmazz/PwX-Studio/releases/latest"><img src="https://img.shields.io/badge/release-v1.8.0-blue.svg?style=flat-square" alt="Latest Release"></a>
+  <a href="https://github.com/mtahiryilmazz/PwX-Studio/releases/latest"><img src="https://img.shields.io/badge/release-v2.0.0-blue.svg?style=flat-square" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg?style=flat-square" alt="Platform: Windows">
-  <img src="https://img.shields.io/badge/Engine-pwxe%20v1.8.0-success.svg?style=flat-square" alt="Engine: pwxe v1.8.0">
+  <img src="https://img.shields.io/badge/Engine-pwxe%20v2.0.0-success.svg?style=flat-square" alt="Engine: pwxe v2.0.0">
   <img src="https://img.shields.io/badge/security-audited-success.svg?style=flat-square" alt="Security Audited">
 </p>
 
@@ -49,6 +49,7 @@ PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız
 
 Studio artık pwxe motoruna x86/x64, yönetici yetkisi, DPI farkındalığı, Windows sürüm uyumluluğu, uzun dosya yolları, EXE.config, UTF-8/Unicode çıktı ve çıktı bastırma seçeneklerini aktarır. PS7 için SelfContained varsayılandır; Küçük boyut seçeneği FrameworkDependent üretir.
 
+- **⚡ Süreç İçi Çalıştırma (In-Process SMA Runspace Hosting):** PS51 için harici powershell.exe alt süreci açmadan doğrudan System.Management.Automation Runspace içinde çalıştırma (sıfır alt süreç, EDR/antivirüs dostu)
 - **🔒 AES-256 Betik Şifreleme (Payload Protection):** Gömülü betikleri AES-256-CBC ve HMAC-SHA256 (`PWXENC01`) ile şifreler, düz metin sızıntısını önler
 - **🛡️ Makineye ve Kullanıcıya Kilitleme (DPAPI):** Windows DPAPI ile şifreleme anahtarını mevcut bilgisayara kilitler; başka sistemlerde çalıştırılamaz
 - **🔏 Authenticode Kod İmzalama:** Sertifika deposu veya PFX dosyası ile RFC 3161 zaman damgalı otomatik dijital imzalama

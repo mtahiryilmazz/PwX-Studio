@@ -8,6 +8,19 @@ Proje: PwX Studio — PowerShell to EXE Builder
 
 ---
 
+## [2.0.0] — 2026-10-27
+
+### Added
+- **Grand Final Major Release:** PwX Studio ve çekirdek `pwxe` derleme motoru tüm yol haritası aşamalarını tamamlayarak nihai olgunluk ve kararlılık seviyesine ulaştı.
+- **pwxe 2.0.0 Entegrasyonu:** Dahili derleme motoru `pwxe v2.0.0` sürümüne yükseltildi. Gömülü motor arşivi (Base64) ve SHA-256 bütünlük kontrolü güncellendi.
+- **Süreç İçi Çalıştırma (In-Process SMA Runspace Hosting):** Arayüze "Süreç İçi Çalıştırma (In-Process)" (`ChkInProcess`) seçeneği eklendi. PS51 hedefleri için harici `powershell.exe` alt süreci başlatmadan, bellek içi `System.Management.Automation` Runspace üzerinde sıfır alt süreçle çalıştırma imkanı sunar (EDR/antivirüs dostu).
+- **Sadeleştirilmiş UAC Yetki Seçimi:** UAC çalıştırma düzeyi ComboBox etiketleri sade ve anlaşılır terimlerle yenilendi:
+  - `Standart` (asInvoker)
+  - `En Yüksek` (highestAvailable)
+  - `Tam Yetki (Yönetici)` (requireAdministrator)
+  - Fare üzerine gelindiğinde beliren zengin `ToolTip` ile teknik detaylar sunuldu.
+- **Çift Dilli Arayüz Senkronizasyonu (TR/EN):** Yeni tüm kontroller Türkçe ve İngilizce dil paketlerine eksiksiz entegre edildi.
+
 ## [1.8.0] — 2026-10-26
 
 ### Added
