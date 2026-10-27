@@ -49,12 +49,12 @@ PwX Studio içinde çalışan çekirdek derleme motoru `pwxe` olarak bağımsız
 
 Studio artık pwxe motoruna x86/x64, yönetici yetkisi, DPI farkındalığı, Windows sürüm uyumluluğu, uzun dosya yolları, EXE.config, UTF-8/Unicode çıktı ve çıktı bastırma seçeneklerini aktarır. PS7 için SelfContained varsayılandır; Küçük boyut seçeneği FrameworkDependent üretir.
 
-- **⚡ Süreç İçi Çalıştırma (In-Process SMA Runspace Hosting):** PS51 için harici powershell.exe alt süreci açmadan doğrudan System.Management.Automation Runspace içinde çalıştırma (sıfır alt süreç, EDR/antivirüs dostu)
-- **🔒 AES-256 Betik Şifreleme (Payload Protection):** Gömülü betikleri AES-256-CBC ve HMAC-SHA256 (`PWXENC01`) ile şifreler, düz metin sızıntısını önler
-- **🛡️ Makineye ve Kullanıcıya Kilitleme (DPAPI):** Windows DPAPI ile şifreleme anahtarını mevcut bilgisayara kilitler; başka sistemlerde çalıştırılamaz
-- **🔏 Authenticode Kod İmzalama:** Sertifika deposu veya PFX dosyası ile RFC 3161 zaman damgalı otomatik dijital imzalama
-- **🛡️ UAC Manifest Denetimi:** `asInvoker`, `requireAdministrator` veya `highestAvailable` izin düzeylerini tek tıkla yapılandırma
-- **🖼️ Evrensel Simge Enjeksiyonu:** Hem Windows Forms hem de modern WPF / XAML pencerelerine otomatik pencere simgesi bağlama
+- **⚡ Süreç İçi Çalıştırma (In-Process SMA Runspace Hosting - pwxe v2.0.0):** PS51 için harici `powershell.exe` alt süreci açmadan doğrudan `System.Management.Automation` Runspace içinde çalıştırma (sıfır alt süreç, EDR/antivirüs dostu, yüksek başlatma hızı)
+- **🔒 AES-256 Betik Şifreleme (Payload Protection):** Gömülü betikleri AES-256-CBC ve HMAC-SHA256 (`PWXENC01`) ile şifreler, ikili dosyalardan düz metin sızıntısını önler
+- **🛡️ Makineye ve Kullanıcıya Kilitleme (DPAPI):** Windows DPAPI ile şifreleme anahtarını mevcut bilgisayara ve kullanıcıya kilitler; başka sistemlerde çalıştırılamaz
+- **🔏 Authenticode Kod İmzalama:** Sertifika deposu veya PFX dosyası ile RFC 3161 zaman damgalı otomatik dijital kod imzalama
+- **🛡️ Sadeleştirilmiş UAC Yetki Denetimi:** "Standart" (`asInvoker`), "En Yüksek" (`highestAvailable`) veya "Tam Yetki (Yönetici)" (`requireAdministrator`) seçenekleri ve zengin teknik ToolTip ipuçlarıyla sezgisel yetki yönetimi
+- **🖼️ Evrensel Simge Enjeksiyonu:** Hem Windows Forms hem de modern WPF / XAML pencerelerine çalışma zamanında otomatik pencere simgesi bağlama
 - **✨ Windows 11 Fluent ComboBox:** Açık ve Koyu mod ile tam uyumlu dinamik açılır seçim kutuları
 - **🖥️ Responsive arayüz:** pencere yeniden boyutlandırılabilir ve küçük ekranlarda kullanılabilir
 - **⚡ Dahili pwxe motoru:** Sıfır dış bağımlılık, tamamen çevrimdışı ve bağımsız çalışır
@@ -132,7 +132,8 @@ Invoke-Pwxe -Source .\modern.ps1 -Output .\modern-upx.exe -Target PS7 -EnableUpx
 
 Detaylı teknik mimari, sürüm notları ve rehberler `docs/` dizininde yer almaktadır:
 
-- **[Yol Haritası (Roadmap)](docs/ROADMAP.md):** Planlanan geliştirmeler ve kilometre taşları
+- **[Yol Haritası (Roadmap)](docs/ROADMAP.md):** Planlanan geliştirmeler, mimari ve kilometre taşları
+- **[Sürüm Notları (v2.0.0)](docs/RELEASE_NOTES_v2.0.0.md):** v2.0.0 Grand Final Major Release — pwxe 2.0.0 motor yükseltmesi, Süreç İçi (In-Process) Runspace desteği, sadeleştirilmiş UAC denetimi ve kurumsal güvenlik özellikleri
 - **[Sürüm Notları (v1.7.0)](docs/RELEASE_NOTES_v1.7.0.md):** v1.7.0 Authenticode imzalama, UAC manifest denetimi ve evrensel simge enjeksiyonu detayları
 - **[Katkı Rehberi](docs/CONTRIBUTING.md):** Geliştirme ortamı, kodlama standartları ve PR süreci
 - **[Güvenlik Politikası](docs/SECURITY.md):** Güvenlik sertleştirmesi ve bildirim kanalları

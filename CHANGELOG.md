@@ -1,6 +1,6 @@
 # PwX Studio — Changelog
 
-PwX Studio geliştirme sürecinde yapılan önemli değişiklikler, yeni özellikler, arayüz iyileştirmeleri ve hata düzeltmeleri bu dosyada listelenir. Bu kayıt yalnızca son iki ana sürümü ([1.7.0] ve [1.6.4]) kapsar.
+PwX Studio geliştirme sürecinde yapılan önemli değişiklikler, yeni özellikler, arayüz iyileştirmeleri ve hata düzeltmeleri bu dosyada listelenir.
 
 Biçim: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)  
 Sürümleme yaklaşımı: Semantic Versioning  
