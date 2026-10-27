@@ -806,18 +806,13 @@ Referanslar uygulama öncesinde tekrar kontrol edilmelidir. SDK, runtime, paket 
 
 ## 19. Sonuç
 
-## 20. Güncel uygulama durumu — 2026-10-19
+## 20. Güncel uygulama durumu — 2026-10-27 (v2.0.0 Grand Final Major Release)
 
-pwxe motoru ve PwX Studio entegrasyonu doğrulanmıştır. PS5.1 ve PS7 Console/GUI, SelfContained, FrameworkDependent ve SingleFile yolları test edilmiştir. Studio seçenekleri artık motor parametrelerine aktarılır: mimari, yönetici manifesti, DPI, Windows uyumluluğu, uzun yollar, EXE.config, UTF-8/Unicode ve çıktı bastırma.
+`pwxe` motoru ve PwX Studio entegrasyonu başarıyla tamamlanmış ve `v2.0.0` nihai sürümü olarak yayımlanmıştır:
+- **Çift Çalışma Zamanı:** PS5.1 (hafif yerel C# host) ve PS7 (modern .NET 8 / Microsoft.PowerShell.SDK).
+- **Süreç İçi Çalıştırma (In-Process SMA Runspaces):** Harici `powershell.exe` alt süreci açmadan doğrudan bellek içinde çalıştırma desteği (`-HostMode InProcess`).
+- **Kurumsal Güvenlik (Enterprise Hardening):** AES-256-CBC ve HMAC-SHA256 yük şifreleme (`PWXENC01`), Windows DPAPI makine/kullanıcı kilitleme.
+- **Authenticode Kod İmzalama & UAC Manifest:** GUI ve CLI üzerinden RFC 3161 zaman damgalı otomatik imzalama ve sadeleştirilmiş UAC yetki yönetimi ("Standart", "En Yüksek", "Tam Yetki (Yönetici)").
+- **Dağıtım ve Paketleme:** PowerShell Gallery (`pwxe`), NuGet.org ve GitHub Releases üzerinden eşzamanlı resmi yayımlama.
 
-PS7 FrameworkDependent hedefte .NET 8 Runtime, GUI hedefinde Windows Desktop Runtime 8 ister; pwsh kurulumu gerekmez. SelfContained varsayılandır. Test sonuçları ve boyut ölçümleri proje dışındaki çalışma raporunda ve pwxe test artefaktlarında tutulur.
-
-PwX Studio'nun bağımsız EXE dönüştürme motoru projesi, mevcut arayüzü koruyarak ayrı bir derleme altyapısı geliştirme yaklaşımıyla yürütülecektir.
-
-İlk hedef, bütün özellikleri aynı anda tamamlamak değil; **bağımsız, kontrollü testleri geçen minimal bir motor** oluşturmaktır.
-
-PowerShell 7 için self-contained paketleme ana teknik hedeflerden biridir. Windows PowerShell 5.1 içinse Windows'taki mevcut çalışma ortamını kullanma yaklaşımı başlangıçta daha uygulanabilir görünmektedir.
-
-Proje ancak teknik testler, güvenlik kontrolleri ve lisans incelemeleri tamamlandıktan sonra kararlı sürüm olarak yayımlanmalıdır.
-
-**Belge durumu:** Planlama tamamlandı; uygulama ve prototip testleri henüz gerçekleştirilmiş sayılmaz.
+**Belge durumu:** Tamamlandı. Proje nihai kararlı hedefine (v2.0.0) ulaşmıştır.
