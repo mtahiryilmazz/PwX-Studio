@@ -47,6 +47,6 @@
 
 | Dosya | Boyut | SHA-256 Özeti |
 |---|---|---|
-| **`PwX-Studio-v2.0.0.exe`** | 736 KB | `c62be864f34d2c995caee9f3af762f13a29266fcd15c4464f59425b1028d63f9` |
-| **`PwX-Studio-v2.0.0.ps1`** | 413 KB | `8d29ce47e9b6bad20acfead6765d65887da9e536a7eb49d7a705ae9eec205a8d` |
+| **`PwX-Studio-v2.0.0.exe`** | 736 KB | `f27e41573a32b6441a8cd23d8b2c7ba29e0644aa2d9d38e4a6d4b012657f4d82` |
+| **`PwX-Studio-v2.0.0.ps1`** | 413 KB | `1a1eafa97faeba9a4b97cfd99fa573943b0163323dfbbfb59fe52a1c5f9b204e` |
 | **`SHA256SUMS.txt`** | - | `SHA256 doğrulama tablosu` |
